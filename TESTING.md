@@ -91,6 +91,25 @@ cp test.conf.dist test.conf   # edit the paths first
 make legacytest               # or: perl test.pl
 ```
 
+## Parallel-load stress test (root, `/dev/fuse0`)
+
+```
+make paralleltest        # runs tests/integration/parallel.pl
+```
+
+`tests/integration/parallel.pl` formats and mounts a two-device array and then
+runs **32 concurrent client processes** (override with `PARALLEL_WORKERS`),
+each doing `PARALLEL_ITERS` (default 20) rounds of
+mkdir/create/write/read/rename/read/unlink/rmdir on names of its own, and each
+leaving one deterministic marker file.  The FUSE daemon is single-threaded, so
+the requests are serialized inside it; the test exercises the concurrent
+arrival path through the kernel and, more importantly, that the committed
+state is correct afterwards.  When every worker has exited it unmounts, runs
+`audit` (which must be clean), checks every marker file on the mount and on
+both mirrors, and compares the two device trees byte-for-byte (modes, sizes,
+contents and symlink targets), excluding `.muxfs`.  A worker that does not
+finish within `PARALLEL_TIMEOUT` seconds (default 900) is killed and reported.
+
 ## Crash consistency (`EMUXFS_FAULT_INJECTION`)
 
 ```

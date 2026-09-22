@@ -7,9 +7,10 @@ checksum databases to validate and restore files automatically.
 > **emuxfs is stable and ready for production use.**
 >
 > The on-disk format is frozen at version 1, and the complete validation
-> suite — strict-warning build, unit tests, FUSE integration, fault-injection
-> recovery and a bounded parser fuzz run — passes in CI on OpenBSD 7.9, on
-> both amd64 and arm64.  `make stability` reproduces that evidence locally.
+> suite — strict-warning build, unit tests, FUSE integration, a 32-worker
+> parallel-load stress test, fault-injection recovery and a bounded parser
+> fuzz run — passes in CI on OpenBSD 7.9, on both amd64 and arm64.
+> `make stability` reproduces that evidence locally.
 >
 > As with any mirror, a mirror is not a backup: keep at least one independent
 > copy of anything irreplaceable.  The operational notes in
@@ -37,22 +38,24 @@ Stability is described in terms of evidence rather than aspiration:
   in CI on a real OpenBSD VM (amd64 and arm64), with no known correctness
   defects.
 * **Hardened**: additionally, the sandboxed FUSE suites (the daemon runs
-  under `pledge(2)`/`unveil(2)`), the fault-injection suite (recovery from an
-  interrupted create, update, delete, heal and sync), repeated mount/unmount
-  cycles and a bounded parser fuzz run pass, and the on-disk format is frozen.
+  under `pledge(2)`/`unveil(2)`), the parallel-load stress test, the
+  fault-injection suite (recovery from an interrupted create, update, delete,
+  heal and sync), repeated mount/unmount cycles and a bounded parser fuzz run
+  pass, and the on-disk format is frozen.
 
 The evidence for both levels is one command, `make stability`: strict-warning
-build, headless unit tests, the FUSE integration suite, the fault-injection
-suite and a bounded parser fuzz run (libFuzzer where available, otherwise the
-standalone mutation driver).  `.github/workflows/ci.yml` runs the same
-sequence on OpenBSD 7.9 amd64 and arm64.  A stability claim is never made from
-static analysis alone.
+build, headless unit tests, the FUSE integration suite, the parallel-load
+stress test, the fault-injection suite and a bounded parser fuzz run (libFuzzer
+where available, otherwise the standalone mutation driver).
+`.github/workflows/ci.yml` runs the same sequence on OpenBSD 7.9 amd64 and
+arm64.  A stability claim is never made from static analysis alone.
 
 emuxfs is **Tested and Hardened**: the CI run above is green on OpenBSD 7.9
-amd64 and arm64 for the full sequence, including fault-injection recovery from
-an interrupted create, update, delete, heal and sync, repeated mount/unmount
-cycles, the refusal of a second mount of a mounted array, and the bounded
-parser fuzz run.  The on-disk format is frozen at version 1.
+amd64 and arm64 for the full sequence, including the 32-worker parallel-load
+stress test with a clean `audit` and byte-identical mirrors, fault-injection
+recovery from an interrupted create, update, delete, heal and sync, repeated
+mount/unmount cycles, the refusal of a second mount of a mounted array, and
+the bounded parser fuzz run.  The on-disk format is frozen at version 1.
 
 ## Installation
 

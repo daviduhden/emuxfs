@@ -76,6 +76,13 @@ jobs:
                 echo "SKIP: /dev/fuse0 is not available on this architecture"
             fi
 
+            echo "== Parallel-load stress test (32 workers) =="
+            if [ -c /dev/fuse0 ]; then
+                EMUXFS="$PWD/emuxfs" perl tests/integration/parallel.pl
+            else
+                echo "SKIP: /dev/fuse0 is not available on this architecture"
+            fi
+
             echo "== Fault-injection tests =="
             make faultbuild
             EMUXFS="$PWD/emuxfs" EMUXFS_FAULT="$PWD/emuxfs-fault" \
@@ -165,6 +172,13 @@ jobs:
             if [ -c /dev/fuse0 ]; then
                 make
                 EMUXFS="$PWD/emuxfs" perl tests/integration/integration.pl
+            else
+                echo "SKIP: /dev/fuse0 is not available on this architecture"
+            fi
+
+            echo "== Parallel-load stress test (32 workers) =="
+            if [ -c /dev/fuse0 ]; then
+                EMUXFS="$PWD/emuxfs" perl tests/integration/parallel.pl
             else
                 echo "SKIP: /dev/fuse0 is not available on this architecture"
             fi

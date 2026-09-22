@@ -3,12 +3,13 @@
 ## Production readiness (2026-09-22)
 
 emuxfs is declared **stable and ready for production use**.  The complete
-validation sequence — strict-warning build, unit tests, FUSE integration,
-fault-injection recovery (interrupted create, update, delete, heal and sync),
-repeated mount/unmount cycles, the refusal of a second mount and a bounded
-parser fuzz run — passes in CI on OpenBSD 7.9 amd64 and arm64, and the on-disk
-format is frozen at version 1.  See README.md (Stability levels) and
-TESTING.md for the criteria and the evidence.
+validation sequence — strict-warning build, unit tests, FUSE integration, a
+32-worker parallel-load stress test, fault-injection recovery (interrupted
+create, update, delete, heal and sync), repeated mount/unmount cycles, the
+refusal of a second mount and a bounded parser fuzz run — passes in CI on
+OpenBSD 7.9 amd64 and arm64, and the on-disk format is frozen at version 1.
+See README.md (Stability levels) and TESTING.md for the criteria and the
+evidence.
 
 ## 1.4-enhanced (2026-09-22)
 
@@ -47,10 +48,16 @@ Fifth phase: commit ordering, identity and the v1/v2 decision.
   recovery marker, the difference between readback (consistency) and
   durability, the v1 integrity guarantee, logical object identity, inode/eno
   limits, and a proposed format version 2 (not implemented).
-* **One-command validation.**  `make stability` runs the strict-warning build,
-  the unit tests, the FUSE integration suite, the fault-injection suite and a
-  bounded libFuzzer run over the `muxfs.conf` parser; CI runs the same
-  sequence on OpenBSD 7.9 amd64 and arm64.
+* **One-command validation.**  `make stability` runs the strict-warning
+  build, the unit tests, the FUSE integration suite, the parallel-load stress
+  test, the fault-injection suite and a bounded libFuzzer run over the
+  `muxfs.conf` parser; CI runs the same sequence on OpenBSD 7.9 amd64 and
+  arm64.
+* **`tests/integration/parallel.pl`.**  A new stress test runs 32 concurrent
+  client processes (mkdir/create/write/read/rename/unlink/rmdir on private
+  names) against a mounted array, then requires a clean `audit` and
+  byte-for-byte identical mirrors, with a bounded wait that kills and reports
+  a stuck worker.
 * **FUSE-time crash recovery is now automated.**  The crash suite interrupts a
   create, an update and a delete at `*/after_meta`, recovers with `sync`, and
   requires `audit` to be clean and the uncommitted operation to be rolled back.

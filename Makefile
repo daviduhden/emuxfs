@@ -136,6 +136,11 @@ tests/unit/test_core: tests/unit/test_core.c ${CORE_OBJ}
 integration: ${PROG}
 	perl tests/integration/integration.pl
 
+# Parallel-load stress test (Perl).  Requires root and a working FUSE device;
+# it creates and destroys its own temporary sandbox.
+paralleltest: ${PROG}
+	EMUXFS="$(pwd)/emuxfs" perl tests/integration/parallel.pl
+
 # Legacy end-to-end suite (Perl).  Requires test.conf and root.
 legacytest: ${PROG}
 	perl test.pl
@@ -201,6 +206,7 @@ stability: check
 	${MAKE} unittest
 	./tests/unit/test_core
 	${MAKE} integration
+	${MAKE} paralleltest
 	${MAKE} faulttest
 	${MAKE} fuzz-smoke
 
@@ -216,5 +222,5 @@ clean:
 	    tests/fuzz/fuzz_conf_standalone \
 	    ${OBJ} >/dev/null 2>&1 || true
 
-.PHONY: all check unittest integration legacytest test check-tests \
+.PHONY: all check unittest integration paralleltest legacytest test check-tests \
 	fuzz-conf fuzz-smoke faultbuild faulttest stability install clean
