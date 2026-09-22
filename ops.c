@@ -342,6 +342,7 @@ emuxfs_op_create(struct emuxfs_op_create_args *args)
 
 	if (emuxfs_parent_gid(&parent_gid, args->path))
 		return -EIO;
+	dprintf(2, "op_create: parent_gid ok\n");
 
 	now = time(NULL);
 
@@ -446,11 +447,14 @@ emuxfs_op_create(struct emuxfs_op_create_args *args)
 		};
 
 		emuxfs_fault_point("create/before_meta");
+		dprintf(2, "op_create: before meta\n");
 		if (emuxfs_meta_write(&meta, i, ino))
 			goto fail;
 		emuxfs_fault_point("create/after_meta");
+		dprintf(2, "op_create: after meta\n");
 		if (emuxfs_assign_write(&assign, i, eno))
 			goto fail;
+		dprintf(2, "op_create: after assign\n");
 
 		if (fsync(dev->meta_fd))
 			exit(-1);
@@ -461,6 +465,7 @@ emuxfs_op_create(struct emuxfs_op_create_args *args)
 
 		if (emuxfs_readback(i, args->path, 0, &meta))
 			goto fail;
+		dprintf(2, "op_create: readback ok\n");
 
 		cud.type = EMUXFS_CUD_CREATE;
 		cud.path = args->path;
