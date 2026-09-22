@@ -69,7 +69,6 @@ emuxfs_desc_chk_reg_content(struct emuxfs_desc *desc, dind dev_index,
 		rc = 0;
 out2:
 		if (close(fd))
-			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 out:
 		return rc;
@@ -95,14 +94,11 @@ emuxfs_desc_chk_dir_content(struct emuxfs_desc *desc, dind dev_index,
 	    -1)
 		return 1;
 	if (emuxfs_pushdir(&dir, fd, "."))
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	rc = emuxfs_dir_content_chk(desc->content_checksum, dev_index, &dir);
 	if (emuxfs_popdir(&dir))
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	if (close(fd))
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	return rc;
 }
@@ -165,7 +161,6 @@ emuxfs_desc_chk_node_content(struct emuxfs_desc *desc, dind dev_index,
 		return 1;
 	}
 
-	EMUXFS_TRACE("exit(-1)");
 	exit(-1); /* Unreachable. */
 }
 

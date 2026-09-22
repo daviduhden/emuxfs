@@ -117,12 +117,10 @@ emuxfs_dev_format(const char *dev_root, enum emuxfs_chk_alg_type alg,
 		goto out;
 	if (emuxfs_conf_write(&conf, fd)) {
 		if (close(fd))
-			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		goto out;
 	}
 	if (close(fd))
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	dstate = (struct emuxfs_dev_state){
@@ -143,18 +141,15 @@ emuxfs_dev_format(const char *dev_root, enum emuxfs_chk_alg_type alg,
 		goto out;
 	if (emuxfs_dev_state_write_fd(fd, &dstate)) {
 		if (close(fd))
-			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		goto out;
 	}
 	if (fsync(fd)) {
 		if (close(fd))
-			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		goto out;
 	}
 	if (close(fd))
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	if (stat(dev_root, &st))
@@ -183,18 +178,15 @@ emuxfs_dev_format(const char *dev_root, enum emuxfs_chk_alg_type alg,
 		goto out;
 	if (emuxfs_meta_write_fd(fd, &meta, ino, metasz)) {
 		if (close(fd))
-			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		goto out;
 	}
 	if (fsync(fd)) {
 		if (close(fd))
-			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		goto out;
 	}
 	if (close(fd))
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	assign = (struct emuxfs_assign){
@@ -212,18 +204,15 @@ emuxfs_dev_format(const char *dev_root, enum emuxfs_chk_alg_type alg,
 		goto out;
 	if (emuxfs_assign_write_fd(fd, &assign, eno)) {
 		if (close(fd))
-			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		goto out;
 	}
 	if (fsync(fd)) {
 		if (close(fd))
-			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		goto out;
 	}
 	if (close(fd))
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	if (strlen(dev_root) + strlen(sepdotemuxfs) +
@@ -280,7 +269,6 @@ emuxfs_format_main(int argc, char *argv[])
 			break;
 		default:
 			emuxfs_format_usage();
-			EMUXFS_TRACE("exit(1)");
 			exit(1);
 		}
 	}
@@ -336,7 +324,6 @@ emuxfs_format_main(int argc, char *argv[])
 	rc = 0;
 out:
 	if (emuxfs_dsfinal())
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	return rc;
 }

@@ -419,37 +419,31 @@ emuxfs_dev_unmount(size_t index)
 
 	if (!dev->readonly_now) {
 		if (emuxfs_dev_state_unmount(&dev->state, dev->state_fd))
-			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 	}
 
 	if (dev->lfile_fd != -1) {
 		if (close(dev->lfile_fd))
-			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		dev->lfile_fd = -1;
 	}
 	if (dev->assign_fd != -1) {
 		if (close(dev->assign_fd))
-			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		dev->assign_fd = -1;
 	}
 	if (dev->meta_fd != -1) {
 		if (close(dev->meta_fd))
-			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		dev->meta_fd = -1;
 	}
 	if (dev->state_fd != -1) {
 		if (close(dev->state_fd))
-			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		dev->state_fd = -1;
 	}
 	if (dev->root_fd != -1) {
 		if (close(dev->root_fd))
-			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		dev->root_fd = -1;
 	}
@@ -480,7 +474,6 @@ emuxfs_working_push(size_t index)
 		 * recovery contract (an interrupted operation must be
 		 * detectable), so fail closed.
 		 */
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	}
 
@@ -497,7 +490,6 @@ emuxfs_working_pop(size_t index, time_t now)
 		return 1;
 
 	if (dev->state.working == 0)
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	(void)now;
@@ -524,7 +516,6 @@ emuxfs_working_pop(size_t index, time_t now)
 		 * on-disk state divergent; recovery then sees an interrupted
 		 * device and requires 'sync'.
 		 */
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	}
 
@@ -544,7 +535,6 @@ emuxfs_restoring_push(size_t index)
 
 	dev->state.restoring++;
 	if (emuxfs_dev_state_write_fd(dev->state_fd, &dev->state))
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	return 0;
@@ -560,12 +550,10 @@ emuxfs_restoring_pop(size_t index)
 		return 1;
 
 	if (dev->state.restoring == 0)
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	dev->state.restoring--;
 	if (emuxfs_dev_state_write_fd(dev->state_fd, &dev->state))
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	return 0;
@@ -587,7 +575,6 @@ emuxfs_degraded_set_val(size_t dev_index, uint64_t val)
 		val ? ++emuxfs_dev_array_degraded_count :
 		    --emuxfs_dev_array_degraded_count;
 		if (emuxfs_dev_state_write_fd(dev->state_fd, &dev->state))
-			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 	}
 

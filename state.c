@@ -119,7 +119,6 @@ emuxfs_restore_queue_reserve(size_t extra)
 
 	q = reallocarray(st->restore_queue, newsz, 1);
 	if (q == NULL)
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	st->restore_queue = q;
 	st->restore_queue_size = newsz;
@@ -292,7 +291,6 @@ emuxfs_state_eno_next_return(uint64_t eno)
 
 	/* Using the largest possible value for an eno as the invalid value. */
 	if (eno == UINT64_MAX)
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	ne = &emuxfs_global_state.next_eno;
@@ -329,7 +327,6 @@ emuxfs_state_syslog_final(void)
 	EMUXFS_TRACE("enter");
 	if (emuxfs_trace_fd >= 0) {
 		if (close(emuxfs_trace_fd))
-			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		emuxfs_trace_fd = -1;
 	}
@@ -419,14 +416,12 @@ emuxfs_init(int skip_first_mount)
 
 	emuxfs_dev_module_init();
 	if (emuxfs_state_restore_queue_init())
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	mnts = 0;
 	max_next_eno = 0;
 	for (i = 0; i < args->dev_count; ++i) {
 		if (emuxfs_dev_append(&j, args->dev_paths[i]))
-			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		if (skip_first_mount && (i == 0))
 			continue;
@@ -434,12 +429,10 @@ emuxfs_init(int skip_first_mount)
 			dprintf(2, "Error: Unable to mount %s.\n",
 			    args->dev_paths[i]);
 			emuxfs_final();
-			EMUXFS_TRACE("exit(1)");
 			exit(1);
 		}
 		if (emuxfs_assign_peek_next_eno(&next_eno, j)) {
 			emuxfs_final();
-			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		}
 		++mnts;
@@ -447,16 +440,13 @@ emuxfs_init(int skip_first_mount)
 			max_next_eno = next_eno;
 	}
 	if (mnts == 0)
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	EMUXFS_TRACE("init: opened %lu devices\n", (unsigned long)mnts);
 
 	if (emuxfs_state_eno_next_init(max_next_eno))
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	if (emuxfs_state_wrbuf_reset())
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	return 0;
@@ -478,16 +468,13 @@ emuxfs_final(void)
 		j = i - 1;
 		if (emuxfs_dev_is_mounted(j)) {
 			if (emuxfs_dev_unmount(j))
-				EMUXFS_TRACE("exit(-1)");
 				exit(-1);
 		}
 	}
 	emuxfs_state_restore_queue_final();
 	if (emuxfs_state_syslog_final())
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	if (emuxfs_dsfinal())
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	return 0;

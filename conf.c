@@ -314,7 +314,6 @@ emuxfs_version_flavor_str(enum emuxfs_version_flavor flavor)
 	case VF_STABLE:
 		return "stable";
 	}
-	EMUXFS_TRACE("exit(-1)");
 	exit(-1); /* Programming error. */
 }
 

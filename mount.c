@@ -99,30 +99,24 @@ emuxfs_mount_main(int argc, char *argv[])
 
 	if (emuxfs_parse_args(argc, argv, 0)) {
 		emuxfs_mount_usage();
-		EMUXFS_TRACE("exit(1)");
 		exit(1);
 	}
 	if (emuxfs_mount_absolutize(&emuxfs_cmdline)) {
 		fprintf(stderr, "Error: Unable to resolve array directories.\n");
-		EMUXFS_TRACE("exit(1)");
 		exit(1);
 	}
 
 	if (emuxfs_init(0))
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	switch (emuxfs_dev_seq_check()) {
 	case 0:
 		break; /* Match. */
 	case 1:
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1); /* Error. */
 	case 2:
-		EMUXFS_TRACE("exit(1)");
 		exit(1); /* Mismatch.  Error message already printed. */
 	default:
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1); /* Programming error. */
 	}
 
@@ -142,7 +136,6 @@ emuxfs_mount_main(int argc, char *argv[])
 		fprintf(stderr, "Error: Unable to mount %s.\n",
 		    emuxfs_cmdline.mp_path);
 		emuxfs_final();
-		EMUXFS_TRACE("exit(1)");
 		exit(1);
 	}
 
@@ -156,20 +149,17 @@ emuxfs_mount_main(int argc, char *argv[])
 		fprintf(stderr, "Error: Unable to restrict filesystem "
 		    "visibility.\n");
 		emuxfs_mount_teardown(fuse, mp);
-		EMUXFS_TRACE("exit(1)");
 		exit(1);
 	}
 	if (emuxfs_sandbox_unveil_lock()) {
 		EMUXFS_TRACE("unveil lock failed");
 		emuxfs_mount_teardown(fuse, mp);
-		EMUXFS_TRACE("exit(1)");
 		exit(1);
 	}
 	if (emuxfs_sandbox_pledge(EMUXFS_PLEDGE_MOUNT)) {
 		EMUXFS_TRACE("pledge failed");
 		fprintf(stderr, "Error: Unable to restrict system calls.\n");
 		emuxfs_mount_teardown(fuse, mp);
-		EMUXFS_TRACE("exit(1)");
 		exit(1);
 	}
 

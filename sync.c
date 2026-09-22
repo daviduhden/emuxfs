@@ -44,73 +44,57 @@ emuxfs_sync_main(int argc, char *argv[])
 
 	if (emuxfs_parse_args(argc, argv, 1)) {
 		emuxfs_sync_usage();
-		EMUXFS_TRACE("exit(1)");
 		exit(1);
 	}
 
 	if (emuxfs_sandbox_unveil_mirrors(&emuxfs_cmdline))
-		EMUXFS_TRACE("exit(1)");
 		exit(1);
 	if (emuxfs_sandbox_unveil_lock())
-		EMUXFS_TRACE("exit(1)");
 		exit(1);
 	if (emuxfs_sandbox_pledge(EMUXFS_PLEDGE_SYNC))
-		EMUXFS_TRACE("exit(1)");
 		exit(1);
 
 	if (emuxfs_init(1))
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	if (emuxfs_dev_count() < 2) {
 		dprintf(2, "Error: There are less than 2 directories in the "
 		    "array.\n");
-		EMUXFS_TRACE("exit(1)");
 		exit(1);
 	}
 	if (emuxfs_dev_get(&ddev, ddev_index, 1))
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	if (emuxfs_dev_get(&sdev, sdev_index, 0))
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	ddev_path = ddev->root_path;
 	alg = sdev->conf.chk_alg_type;
 	chksz = emuxfs_chk_size(alg);
 	if (emuxfs_meta_size_raw(&metasz, alg))
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	seq_zero_time = sdev->conf.seq_zero_time;
 	array_uuid = sdev->conf.array_uuid;
 
 	if (emuxfs_dir_is_empty(&empty, ddev_path))
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	if (empty) {
 		if (emuxfs_dev_format(ddev_path, alg, chksz, metasz,
 		    seq_zero_time, array_uuid))
-			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 	}
 
 	if (emuxfs_dev_mount(ddev_index, 1))
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	if (emuxfs_state_restore_only_set(ddev_index))
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	if (emuxfs_state_restore_push_back(ddev_index, "."))
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	emuxfs_restore_now();
 
 	if (emuxfs_dev_get(&ddev, ddev_index, 0))
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	if (emuxfs_dev_get(&sdev, sdev_index, 0))
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	/*
@@ -127,20 +111,16 @@ emuxfs_sync_main(int argc, char *argv[])
 	ddev->state.restoring = 0;
 	ddev->state.seq = sdev->state.seq;
 	if (emuxfs_dev_state_write_fd(ddev->state_fd, &ddev->state))
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	if (emuxfs_existsat(&exists, ddev->root_fd, ".muxfs/rename.tmp"))
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	if (exists) {
 		if (emuxfs_removeat(ddev->root_fd, ".muxfs/rename.tmp"))
-			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 	}
 
 	if (emuxfs_final())
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	return 0;

@@ -30,15 +30,12 @@ main(int argc, char *argv[])
 	const char *cmd;
 
 	if (emuxfs_state_syslog_init())
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	if (emuxfs_dsinit())
-		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	if (argc < 2) {
 		usage();
-		EMUXFS_TRACE("exit(1)");
 		exit(1);
 	}
 	cmd = argv[1];
@@ -55,13 +52,11 @@ main(int argc, char *argv[])
 		return emuxfs_sync_main(argc, argv);
 	else if (strcmp(cmd, "version") == 0) {
 		if (emuxfs_sandbox_pledge(EMUXFS_PLEDGE_VERSION))
-			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		emuxfs_version_print();
 		exit(0);
 	}
 
 	usage();
-	EMUXFS_TRACE("exit(1)");
 	exit(1);
 }
