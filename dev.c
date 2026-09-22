@@ -205,6 +205,9 @@ emuxfs_dev_module_init(void)
 	memset(&emuxfs_dev_roots, 0, EMUXFS_DEV_COUNT_MAX * (PATH_MAX));
 	for (i = 0; i < EMUXFS_DEV_COUNT_MAX; ++i)
 		emuxfs_dev_init(i);
+	emuxfs_dev_array_count = 0;
+	emuxfs_dev_array_mounted_count = 0;
+	emuxfs_dev_array_degraded_count = 0;
 }
 
 EMUXFS int

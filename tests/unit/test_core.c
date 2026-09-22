@@ -512,6 +512,7 @@ test_dev_format_mount(void)
 		++failures;
 		return;
 	}
+	fprintf(stderr, "  dev_format ok\n");
 
 	emuxfs_dev_module_init();
 	if (emuxfs_dev_append(&i, root)) {
@@ -523,6 +524,7 @@ test_dev_format_mount(void)
 		++failures;
 		return;
 	}
+	fprintf(stderr, "  mount ok\n");
 	CHECK(emuxfs_dev_is_mounted(i) == 1);
 	CHECK(emuxfs_dev_get(&dev, i, 0) == 0);
 	CHECK(dev->state.mounted == 1);
@@ -551,6 +553,7 @@ test_dev_format_mount(void)
 			CHECK(assign.ino == root_ino);
 	}
 	CHECK(emuxfs_assign_peek_next_eno(&next, i) == 0 && next == 1);
+	fprintf(stderr, "  meta/assign ok\n");
 
 	/* Large-file checksum tree file management. */
 	if (emuxfs_lfile_create(dev->lfile_fd, chksz, (ino_t)4242, 10000)) {
@@ -566,6 +569,7 @@ test_dev_format_mount(void)
 		CHECK(emuxfs_lfile_exists(&exists, dev->lfile_fd,
 		    (ino_t)4242) == 0 && exists == 0);
 	}
+	fprintf(stderr, "  lfile ok\n");
 
 	range.byte_begin = 1;
 	range.byte_end = EMUXFS_BLOCK_SIZE + 1;
@@ -576,12 +580,14 @@ test_dev_format_mount(void)
 	CHECK(emuxfs_working_push(i) == 0);
 	CHECK(emuxfs_working_pop(i, now) == 0);
 	CHECK(dev->state.seq == 1);
+	fprintf(stderr, "  working ok\n");
 
 	/* A clean unmount and a successful remount. */
 	CHECK(emuxfs_dev_unmount(i) == 0);
 	CHECK(emuxfs_dev_is_mounted(i) == 0);
 	CHECK(emuxfs_dev_mount(i, 0) == 0);
 	CHECK(emuxfs_dev_unmount(i) == 0);
+	fprintf(stderr, "  remount ok\n");
 
 	/* Metadata write through the device wrapper for the root inode. */
 	if (have_root_ino) {
@@ -595,6 +601,7 @@ test_dev_format_mount(void)
 			emuxfs_dev_unmount(i);
 		}
 	}
+	fprintf(stderr, "  dev_format_mount done\n");
 }
 
 static int
