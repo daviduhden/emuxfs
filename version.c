@@ -17,24 +17,23 @@
 
 #include <stdio.h>
 
-#include "muxfs.h"
+#include "emuxfs.h"
 
-struct muxfs_version
-muxfs_program_version = {
-	.number   = 0,
-	.revision = 5,
+struct emuxfs_version emuxfs_program_version = {
+	.number   = 1,
+	.revision = 0,
 	.flavor   = VF_CURRENT
 };
 
-MUXFS void
-muxfs_version_print(void)
+EMUXFS void
+emuxfs_version_print(void)
 {
 	static const char *flavors[] = {
 		"current",
 		"release",
 		"stable"
 	};
-	printf("muxfs %u.%u-%s\n", muxfs_program_version.number,
-	    muxfs_program_version.revision,
-	    flavors[muxfs_program_version.flavor]);
+	printf("emuxfs %u.%u-%s (The Enhanced Multiplexed File System)\n",
+	    emuxfs_program_version.number, emuxfs_program_version.revision,
+	    flavors[emuxfs_program_version.flavor]);
 }

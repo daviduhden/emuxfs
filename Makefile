@@ -1,94 +1,165 @@
-all: unity
-#all: incremental
+# Makefile for emuxfs (The Enhanced Multiplexed File System).
+#
+# Toolchain policy: clang(1) only, C17 only.  The warning policy matches the
+# other projects (openbar, openutils, wip-openbsd-src):
+#
+#   default:  -std=c17 -Wall -Wextra -Wpedantic
+#   check:    the above plus -Wshadow -Wformat=2 -Wundef
+#             -Wstrict-prototypes -Wmissing-prototypes -Wconversion
+#             -Wsign-conversion, and -Werror
+#
+# emuxfs uses the FUSE implementation shipped with OpenBSD (libfuse in the
+# base system, FUSE 2.6 high-level API).  There is no external FUSE dependency.
+#
+# GNU make extensions are not used; this file targets OpenBSD make(1).
 
-COMMON_CFLAGS=-std=c99 -pedantic -Wdeprecated -Wall -Wno-unused-function \
-    -Werror
-CFLAGS=$(COMMON_CFLAGS) -O2 -DNDEBUG=1
-#CFLAGS=$(COMMON_CFLAGS) -O0 -g
-#CFLAGS=$(COMMON_CFLAGS) -O0 -g -pg -static
-CC=cc
+CC =		clang
+DEBUGGER =	lldb
+CSTD =		-std=c17
 
-MKPROF=
-#MKPROF=time
+CFLAGS ?=	-O2 -pipe
+WARNINGS ?=	-Wall -Wextra -Wpedantic
+CFLAGS +=	${CSTD} ${WARNINGS}
 
-MUXFS_DS_MALLOC=0
-.if $(MUXFS_DS_MALLOC)
-DS=ds_malloc
+# emuxfs uses the FUSE implementation shipped with OpenBSD (libfuse in the
+# base system, FUSE 2.6 high-level API).  There is no external FUSE
+# dependency and no libfuse3 requirement; see COMPATIBILITY.md.
+LDLIBS +=	-lfuse -lz
+
+# Full strict set (openutils "check" policy).
+CHECK_WARNINGS = -Wall -Wextra -Wpedantic -Wshadow -Wformat=2 -Wundef \
+	-Wstrict-prototypes -Wmissing-prototypes \
+	-Wconversion -Wsign-conversion
+
+PREFIX ?=	/usr/local
+BINDIR ?=	${PREFIX}/sbin
+MANDIR ?=	${PREFIX}/man/man
+
+EMUXFS_DS_MALLOC ?=0
+.if ${EMUXFS_DS_MALLOC} == 1
+DS =		ds_malloc
 .else
-DS=ds
+DS =		ds
 .endif
 
-OBJ=chk.o \
-    conf.o \
-    desc.o \
-    dev.o \
-    $(DS).o \
-    format.o \
-    lfile.o \
-    mount.o \
-    muxfs.o \
-    ops.o \
-    scan.o \
-    state.o \
-    sync.o \
-    util.o \
-    version.o
+PROG =		emuxfs
 
-incremental: muxfs_incremental
+OBJ =	chk.o \
+	conf.o \
+	desc.o \
+	dev.o \
+	${DS}.o \
+	fault.o \
+	format.o \
+	lfile.o \
+	mount.o \
+	emuxfs.o \
+	ops.o \
+	sandbox.o \
+	scan.o \
+	state.o \
+	sync.o \
+	util.o \
+	version.o
 
-unity: muxfs_unity
+# Everything except the FUSE frontend and the program entry point; used by the
+# headless unit tests so that integrity logic can be exercised without FUSE.
+CORE_OBJ =	chk.o \
+	conf.o \
+	desc.o \
+	dev.o \
+	${DS}.o \
+	fault.o \
+	format.o \
+	lfile.o \
+	sandbox.o \
+	scan.o \
+	state.o \
+	sync.o \
+	util.o \
+	version.o
 
-gen: ds.h gen.c chk.h
-	${MKPROF} ${CC} ${COMMON_CFLAGS} \
-	    -I. \
-	    -DMUXFS= \
-	    -DMUXFS_DEC=extern \
-	    -o gen \
-	    gen.c
+# Same objects built with fault injection enabled.  This is the normal
+# modular build plus -DEMUXFS_FAULT_INJECTION, not a unity build.
+FAULT_OBJ =	chk.fault.o \
+	conf.fault.o \
+	desc.fault.o \
+	dev.fault.o \
+	${DS}.fault.o \
+	fault.fault.o \
+	format.fault.o \
+	lfile.fault.o \
+	mount.fault.o \
+	emuxfs.fault.o \
+	ops.fault.o \
+	sandbox.fault.o \
+	scan.fault.o \
+	state.fault.o \
+	sync.fault.o \
+	util.fault.o \
+	version.fault.o
 
-gen.h: gen
-	${MKPROF} ./gen >gen.h
+all: ${PROG}
 
-.SUFFIXES: .c .o
-.c.o: ds.h gen.h muxfs.h
-	${MKPROF} ${CC} ${CFLAGS} \
-	    -I. \
-	    -DMUXFS= \
-	    -DMUXFS_DEC=extern \
-	    -c \
-	    -o $@  $<
+${PROG}: ${OBJ}
+	${CC} ${LDFLAGS} -o $@ ${OBJ} ${LDLIBS}
 
-muxfs_incremental: ds.h gen.h muxfs.h ${OBJ}
-	${MKPROF} ${CC} ${CFLAGS} \
-	    -I. \
-	    -DMUXFS= \
-	    -DMUXFS_DEC=extern \
-	    -lfuse -lz \
-	    -o muxfs \
-	    ${OBJ}
+.SUFFIXES: .c .o .fault.o
+.c.o: emuxfs.h chk.h ds.h fault.h ops.h sandbox.h
+	${CC} ${CFLAGS} ${CPPFLAGS} -DEMUXFS= -c -o $@ $<
 
-gen_h_unity:
-	${MKPROF} echo \
-	    '/* gen.h contents not needed for unity build. */' \
-	    >gen.h
+.c.fault.o: emuxfs.h chk.h ds.h fault.h ops.h sandbox.h
+	${CC} ${CFLAGS} ${CPPFLAGS} -DEMUXFS= -DEMUXFS_FAULT_INJECTION -c -o $@ $<
 
-muxfs_unity: gen_h_unity
-	${MKPROF} ${CC} ${CFLAGS} \
-	    -I. \
-	    -DMUXFS=static \
-	    -DMUXFS_DEC=static \
-	    -DMUXFS_DS_MALLOC=$(MUXFS_DS_MALLOC) \
-	    -Dmuxfs_chk=muxfs_chk_p \
-	    -lfuse -lz \
-	    -o muxfs \
-	    unity.c
+# Strict-warning build: same policy as the openutils 'check' target.
+# Any diagnostic is treated as an error; -Wno-* is not used.
+check:
+	${MAKE} clean
+	${MAKE} WARNINGS="${CHECK_WARNINGS} -Werror" ${PROG}
 
-install:
-	install -o root -g bin -m 0755 muxfs	/usr/local/sbin/muxfs
-	install -o root -g bin -m 0644 muxfs.1	/usr/local/man/man1/muxfs.1
+# Headless unit tests: no FUSE, no mounts.
+unittest: tests/unit/test_core
+tests/unit/test_core: tests/unit/test_core.c ${CORE_OBJ}
+	${CC} ${CFLAGS} ${CPPFLAGS} -DEMUXFS= -I. \
+	    -o $@ tests/unit/test_core.c ${CORE_OBJ} -lz
+
+# Full integration suite (Perl).  Requires root and a working FUSE device; it
+# creates and destroys its own temporary sandbox.
+integration: ${PROG}
+	perl tests/integration/integration.pl
+
+# Legacy end-to-end suite (Perl).  Requires test.conf and root.
+legacytest: ${PROG}
+	perl test.pl
+
+test: unittest
+check-tests: test integration
+
+# Optional libFuzzer target.  Not built by 'all' and not run by CI.
+fuzz-conf: tests/fuzz/fuzz_conf.c ${CORE_OBJ}
+	${CC} ${CFLAGS} ${CPPFLAGS} -DEMUXFS= -I. \
+	    -fsanitize=fuzzer,address \
+	    -o tests/fuzz/fuzz_conf tests/fuzz/fuzz_conf.c ${CORE_OBJ} -lz
+
+# Crash-consistency build: the normal modular objects plus fault injection.
+faultbuild: emuxfs-fault
+emuxfs-fault: ${FAULT_OBJ}
+	${CC} ${LDFLAGS} -o $@ ${FAULT_OBJ} ${LDLIBS}
+
+faulttest: ${PROG} emuxfs-fault
+	EMUXFS="$(pwd)/emuxfs" EMUXFS_FAULT="$(pwd)/emuxfs-fault" \
+	    perl tests/integration/crash.pl
+
+install: ${PROG}
+	install -o root -g bin -m 0755 ${PROG} ${DESTDIR}${BINDIR}/${PROG}
+	install -o root -g bin -m 0644 emuxfs.1 \
+	    ${DESTDIR}${MANDIR}/man1/emuxfs.1
 
 clean:
-	rm ds.o ds_malloc.o ${OBJ} \
-	    muxfs \
-	    gen.h gen \
-	    >/dev/null 2>&1 || true
+	rm -f ${PROG} emuxfs-fault \
+	    ${FAULT_OBJ} \
+	    tests/unit/test_core tests/fuzz/fuzz_conf \
+	    ${OBJ} >/dev/null 2>&1 || true
+
+.PHONY: all check unittest integration legacytest test check-tests \
+	fuzz-conf faultbuild faulttest install clean

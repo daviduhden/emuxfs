@@ -1,0 +1,177 @@
+---
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  openbsd-79-amd64:
+    name: OpenBSD 7.9 (amd64)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build and test on OpenBSD 7.9 (amd64)
+        uses: vmactions/openbsd-vm@e6c68b637a12e83519688d115d57d5b0b53923cd  # v1.4.6
+        with:
+          release: "7.9"
+          arch: amd64
+          sync-time: true
+          copyback: false
+          prepare: |
+            set -eu
+
+            echo "== VM environment =="
+            uname -a
+            uname -m
+
+            echo "== FUSE device =="
+            # The FUSE library is in the base system; only the device node may
+            # be missing from a minimal image.
+            (cd /dev && MAKEDEV fuse) || true
+            test -f /usr/include/fuse.h
+
+            echo "== Clang =="
+            clang --version
+
+          run: |
+            set -eu
+            cd "$GITHUB_WORKSPACE"
+
+            echo "== Build (clang, C17) =="
+            make clean
+            make
+            ./emuxfs version
+
+            echo "== Strict warnings (clang, full set, -Werror) =="
+            make check
+
+            echo "== Unit tests =="
+            make unittest
+            ./tests/unit/test_core
+
+            echo "== FUSE integration tests =="
+            if [ -c /dev/fuse0 ]; then
+                make
+                EMUXFS="$PWD/emuxfs" perl tests/integration/integration.pl
+            else
+                echo "SKIP: /dev/fuse0 is not available on this architecture"
+            fi
+
+            echo "== Fault-injection tests =="
+            make faultbuild
+            EMUXFS="$PWD/emuxfs" EMUXFS_FAULT="$PWD/emuxfs-fault" \
+                perl tests/integration/crash.pl
+
+            echo "== Install =="
+            make install
+            test -x /usr/local/sbin/emuxfs
+            test -f /usr/local/man/man1/emuxfs.1
+
+            echo "== Manual page =="
+            mandoc -T lint emuxfs.1
+            MANWIDTH=80 man -M /usr/local/man emuxfs >/dev/null
+
+            echo "== Linkage =="
+            ldd ./emuxfs
+
+            echo "== Clean rebuild =="
+            make clean
+            make
+            echo "All CI steps passed."
+
+  openbsd-79-arm64:
+    name: OpenBSD 7.9 (arm64)
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build and test on OpenBSD 7.9 (arm64)
+        uses: vmactions/openbsd-vm@e6c68b637a12e83519688d115d57d5b0b53923cd  # v1.4.6
+        with:
+          release: "7.9"
+          arch: aarch64
+          sync-time: true
+          copyback: false
+          prepare: |
+            set -eu
+
+            echo "== VM environment =="
+            uname -a
+            uname -m
+
+            echo "== FUSE device =="
+            # The FUSE library is in the base system; only the device node may
+            # be missing from a minimal image.
+            (cd /dev && MAKEDEV fuse) || true
+            test -f /usr/include/fuse.h
+
+            echo "== Clang =="
+            clang --version
+
+          run: |
+            set -eu
+            cd "$GITHUB_WORKSPACE"
+
+            echo "== Build (clang, C17) =="
+            make clean
+            make
+            ./emuxfs version
+
+            echo "== Strict warnings (clang, full set, -Werror) =="
+            make check
+
+            echo "== Unit tests =="
+            make unittest
+            ./tests/unit/test_core
+
+            echo "== FUSE integration tests =="
+            if [ -c /dev/fuse0 ]; then
+                make
+                EMUXFS="$PWD/emuxfs" perl tests/integration/integration.pl
+            else
+                echo "SKIP: /dev/fuse0 is not available on this architecture"
+            fi
+
+            echo "== Fault-injection tests =="
+            make faultbuild
+            EMUXFS="$PWD/emuxfs" EMUXFS_FAULT="$PWD/emuxfs-fault" \
+                perl tests/integration/crash.pl
+
+            echo "== Install =="
+            make install
+            test -x /usr/local/sbin/emuxfs
+            test -f /usr/local/man/man1/emuxfs.1
+
+            echo "== Manual page =="
+            mandoc -T lint emuxfs.1
+            MANWIDTH=80 man -M /usr/local/man emuxfs >/dev/null
+
+            echo "== Linkage =="
+            ldd ./emuxfs
+
+            echo "== Clean rebuild =="
+            make clean
+            make
+            echo "All CI steps passed."

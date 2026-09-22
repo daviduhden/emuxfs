@@ -18,86 +18,107 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "muxfs.h"
+#include "emuxfs.h"
+#include "sandbox.h"
 
 static void
-muxfs_sync_usage(void)
+emuxfs_sync_usage(void)
 {
-	dprintf(2, "usage: muxfs sync destination source ...\n");
+	dprintf(2, "usage: emuxfs sync destination source ...\n");
 }
 
-MUXFS int
-muxfs_sync_main(int argc, char *argv[])
+EMUXFS int
+emuxfs_sync_main(int argc, char *argv[])
 {
 	int empty, exists;
-	struct muxfs_dev *ddev, *sdev;
+	struct emuxfs_dev *ddev, *sdev;
 	const char *ddev_path;
-	enum muxfs_chk_alg_type alg;
+	enum emuxfs_chk_alg_type alg;
 	size_t chksz, metasz;
 	time_t seq_zero_time;
 	const uint8_t *array_uuid;
 
 	static const dind ddev_index = 0, sdev_index = 1;
 
-	if (muxfs_parse_args(argc, argv, 1)) {
-		muxfs_sync_usage();
+	if (emuxfs_parse_args(argc, argv, 1)) {
+		emuxfs_sync_usage();
 		exit(1);
 	}
 
-	if (muxfs_init(1))
+	if (emuxfs_sandbox_unveil_mirrors(&emuxfs_cmdline))
+		exit(1);
+	if (emuxfs_sandbox_unveil_lock())
+		exit(1);
+	if (emuxfs_sandbox_pledge(EMUXFS_PLEDGE_SYNC))
+		exit(1);
+
+	if (emuxfs_init(1))
 		exit(-1);
 
-	if (muxfs_dev_count() < 2) {
+	if (emuxfs_dev_count() < 2) {
 		dprintf(2, "Error: There are less than 2 directories in the "
 		    "array.\n");
 		exit(1);
 	}
-	if (muxfs_dev_get(&ddev, ddev_index, 1))
+	if (emuxfs_dev_get(&ddev, ddev_index, 1))
 		exit(-1);
-	if (muxfs_dev_get(&sdev, sdev_index, 0))
+	if (emuxfs_dev_get(&sdev, sdev_index, 0))
 		exit(-1);
 
 	ddev_path = ddev->root_path;
 	alg = sdev->conf.chk_alg_type;
-	chksz = muxfs_chk_size(alg);
-	if (muxfs_meta_size_raw(&metasz, alg))
+	chksz = emuxfs_chk_size(alg);
+	if (emuxfs_meta_size_raw(&metasz, alg))
 		exit(-1);
 	seq_zero_time = sdev->conf.seq_zero_time;
 	array_uuid = sdev->conf.array_uuid;
 
-	if (muxfs_dir_is_empty(&empty, ddev_path))
+	if (emuxfs_dir_is_empty(&empty, ddev_path))
 		exit(-1);
 	if (empty) {
-		if (muxfs_dev_format(ddev_path, alg, chksz, metasz,
+		if (emuxfs_dev_format(ddev_path, alg, chksz, metasz,
 		    seq_zero_time, array_uuid))
 			exit(-1);
 	}
 
-	if (muxfs_dev_mount(ddev_index, 1))
+	if (emuxfs_dev_mount(ddev_index, 1))
 		exit(-1);
 
-	if (muxfs_state_restore_only_set(ddev_index))
+	if (emuxfs_state_restore_only_set(ddev_index))
 		exit(-1);
-	if (muxfs_state_restore_push_back(ddev_index, "."))
+	if (emuxfs_state_restore_push_back(ddev_index, "."))
 		exit(-1);
-	muxfs_restore_now();
+	emuxfs_restore_now();
 
-	if (muxfs_dev_get(&ddev, ddev_index, 0))
+	if (emuxfs_dev_get(&ddev, ddev_index, 0))
 		exit(-1);
-	if (muxfs_dev_get(&sdev, sdev_index, 0))
+	if (emuxfs_dev_get(&sdev, sdev_index, 0))
 		exit(-1);
+
+	/*
+	 * 'sync' is the explicit recovery path (see RECOVERY.md): the
+	 * destination has just been rebuilt from the source, so the
+	 * interrupted-operation markers must be cleared before committing.
+	 * Without this a device left with 'working' set by a crash would be
+	 * refused by every later mount and could never be recovered.
+	 * 'degraded' is left untouched:
+	 * it records a hardware, integrity or sequence-exhaustion fault and is
+	 * not a transient operation marker.
+	 */
+	ddev->state.working = 0;
+	ddev->state.restoring = 0;
 	ddev->state.seq = sdev->state.seq;
-	if (muxfs_dev_state_write_fd(ddev->state_fd, &ddev->state))
+	if (emuxfs_dev_state_write_fd(ddev->state_fd, &ddev->state))
 		exit(-1);
 
-	if (muxfs_existsat(&exists, ddev->root_fd, ".muxfs/rename.tmp"))
+	if (emuxfs_existsat(&exists, ddev->root_fd, ".muxfs/rename.tmp"))
 		exit(-1);
 	if (exists) {
-		if (muxfs_removeat(ddev->root_fd, ".muxfs/rename.tmp"))
+		if (emuxfs_removeat(ddev->root_fd, ".muxfs/rename.tmp"))
 			exit(-1);
 	}
 
-	if (muxfs_final())
+	if (emuxfs_final())
 		exit(-1);
 
 	return 0;

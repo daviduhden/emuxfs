@@ -1,0 +1,329 @@
+.\" Copyright (c) 2022 Stephen D. Adams <stephen@sdadams.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd September 22, 2026
+.Dt EMUXFS 1
+.Os
+.Sh NAME
+.Nm emuxfs
+.Nd mirroring, checksumming, and self-healing filesystem layer
+.Sh SYNOPSIS
+.Nm emuxfs
+.Cm format
+.Op Fl a Ar checksum_algorithm
+.Ar directory ...
+.Nm emuxfs
+.Cm mount
+.Op Fl f
+.Ar mount_point
+.Ar directory ...
+.Nm emuxfs
+.Cm audit
+.Ar directory ...
+.Nm emuxfs
+.Cm heal
+.Ar directory ...
+.Nm emuxfs
+.Cm sync
+.Ar destination
+.Ar source ...
+.Nm emuxfs
+.Cm version
+.Sh DESCRIPTION
+.Nm
+is a mirroring, checksumming, and self-healing filesystem layer for
+.Ox .
+It mirrors a filesystem tree across a series of directories, and employs
+checksum databases to validate and restore files automatically.
+.Pp
+The Enhanced Multiplexed File System
+.Pq emuxfs
+is authored by David Uhden Collado.
+It began as a fork of the original Multiplexed File System by
+Stephen D. Adams;
+his copyright notices are retained.
+The executable is
+.Nm ,
+the manual page is
+.Pa emuxfs.1 ,
+the private on-disk directory is
+.Pa .muxfs ,
+and internal symbols use the
+.Va emuxfs_
+prefix.
+.Pp
+In addition to the file content, metadata is checksummed, including: owner,
+group, mode, (external) inode number, and for regular files the file size.
+For directories the checksummed content includes the filenames and
+corresponding checksums of the files in the directory.
+For symbolic links the checksummed content is the path output by
+.Xr readlink 2 .
+.Pp
+The on-disk layout is versioned by a
+.Va format_version
+key in
+.Pa .muxfs/muxfs.conf .
+Arrays written before the key existed have the version 1 layout and are
+accepted as such.
+An array whose format version is not supported is refused rather than
+mounted, and is never migrated automatically.
+.Sh COMMANDS
+During an
+.Cm audit ,
+.Cm heal ,
+or
+.Cm sync
+the
+.Nm
+array must not be mounted.
+.Bl -tag -width Ds
+.It Cm format Oo Fl a Ar checksum_algorithm Oc Ar directory ...
+Format the directories as part of a new
+.Nm
+array.
+The
+.Ar checksum_algorithm
+may be
+.Cm crc32 ,
+.Cm md5 ,
+or
+.Cm sha1 ,
+and defaults to
+.Cm md5 .
+The directories must be empty and non-overlapping.
+.It Cm mount Oo Fl f Oc Ar mount_point Ar directory ...
+Mount the directories as a redundant array at
+.Ar mount_point .
+If
+.Fl f
+is specified then
+.Nm
+remains in the foreground.
+.It Cm audit Ar directory ...
+If the directories are out-of-sync write a warning to the standard error and
+exit.
+Otherwise, for each
+.Ar directory ,
+read and check the checksums of all filesystem nodes, and write to the
+standard output the paths of the filesystem nodes that do not match.
+.Cm audit
+is read-only: it does not modify the array or its private metadata, so it is
+safe to use for inspection and forensics.
+It performs no explicit writes; reading the backing files can still update
+their access times, depending on the mount options of the underlying
+filesystem.
+.It Cm heal Ar directory ...
+Perform an
+.Cm audit
+and attempt to restore the filesystem nodes found to be corrupted using the
+corresponding copies in the other directories.
+If two or more devices hold internally valid but different copies of a node,
+nothing is overwritten and
+.Cm heal
+exits non-zero; resolve the ambiguity explicitly with
+.Cm sync .
+.It Cm sync Ar destination Ar source ...
+Restore the directory
+.Ar destination
+to match the state of the
+.Ar source
+directories.
+.Cm sync
+is the explicit recovery path: it reopens
+.Ar destination
+even if it is marked as having an interrupted operation, rebuilds it from
+.Ar source ,
+and clears the interrupted-operation state so the array can be mounted again.
+.It Cm version
+Display the program version and exit.
+.El
+.Sh EXIT STATUS
+.Nm
+exits with one of the following exit status values:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It 0
+success
+.It 1
+incorrect usage
+.It 255
+error
+.El
+.Sh EXAMPLES
+Create a new
+.Nm
+array from the filesystems mounted at
+.Pa /mnt/a
+and
+.Pa /mnt/b
+using the
+.Cm sha1
+checksum algorithm:
+.Bd -literal -offset indent
+# emuxfs format -a sha1 /mnt/a /mnt/b
+.Ed
+.Pp
+Mount the
+.Nm
+array consisting of directories
+.Pa /mnt/a
+and
+.Pa /mnt/b
+to the mount-point
+.Pa /mnt/mp :
+.Bd -literal -offset indent
+# emuxfs mount /mnt/mp /mnt/a /mnt/b
+.Ed
+.Pp
+Unmount the
+.Nm
+array:
+.Bd -literal -offset indent
+# umount /mnt/mp
+.Ed
+.Pp
+To perform an
+.Cm audit
+or
+.Cm heal
+operation the array must not be mounted.
+.Pp
+Audit the
+.Nm
+array:
+.Bd -literal -offset indent
+# emuxfs audit /mnt/a /mnt/b
+.Ed
+.Pp
+Heal the
+.Nm
+array:
+.Bd -literal -offset indent
+# emuxfs heal /mnt/a /mnt/b
+.Ed
+.Pp
+Re-sync corrupted
+.Pa /mnt/b
+to state of
+.Pa /mnt/a
+after loss of power:
+.Bd -literal -offset indent
+# emuxfs sync /mnt/b /mnt/a
+.Ed
+.Pp
+Create or update a backup of the array to
+.Pa /mnt/c ,
+the mount-point of a filesystem on a detachable disk:
+.Bd -literal -offset indent
+# emuxfs sync /mnt/c /mnt/a /mnt/b
+.Ed
+.Sh HISTORY
+The original muxfs (the Multiplexed File System) was written by Stephen D.
+Adams.
+The Enhanced Multiplexed File System
+.Pq emuxfs
+is derived from it.
+The private on-disk directory
+.Pa .muxfs
+and its configuration file
+.Pa muxfs.conf
+keep their historical names so that arrays created by muxfs remain usable.
+The on-disk layout is unchanged apart from the addition of the
+.Va format_version
+key.
+.Sh AUTHORS
+.An David Uhden Collado Aq Mt daviduhden@gmail.com
+.An Stephen D. Adams Aq Mt stephen@sdadams.org
+.Sh CAVEATS
+.Nm
+supports regular files, directories, and symbolic links, and does not support
+special files, device nodes, file locking, or hard-linking.
+Hard links are detected and refused rather than silently misrepresented.
+The checksummed metadata covers the node type, permissions, owner, group, the
+external inode number mapping, the content, directory entry sets and symbolic
+link targets.
+It does not cover
+.Xr timespec 3
+timestamps,
+.Xr chflags 2
+flags, or extended attributes.
+When several devices hold internally valid but different copies of a path,
+automatic repair is refused and must be resolved explicitly with
+.Cm sync .
+.Pp
+Filesystem nodes named
+.Pa .muxfs
+are reserved for use by
+.Nm .
+.Pp
+.Nm
+relies on the uniqueness of inode numbers within each directory to perform
+correctly, therefore the mounting of filesystems within array directories is
+not supported, with the exception of the
+.Pa .muxfs
+directories.
+.Pp
+To mitigate hard drive head thrashing the top-level
+.Pa .muxfs
+directories may be moved to solid state storage then mounted back to their
+original locations.
+.Pp
+.Nm
+relies on writing sequentially to multiple directories to mitigate corruption
+during unexpected of loss of power.
+After such an event the administrator must
+.Cm sync
+the array from one or more of the uncorrupted directories before mounting it.
+A device that did not complete an operation, or whose sequence number is
+exhausted, is marked as needing attention and cannot be mounted;
+.Cm sync
+clears an interrupted operation but a device marked
+.Sq degraded
+by a hardware, integrity or sequence-exhaustion fault must be reformatted.
+Due to this it is not recommended to use emuxfs with only one directory in the
+array.
+.Pp
+For privacy between users
+.Xr syslog 3
+messages are sent to the
+.Sq user
+facility.
+To receive these messages an entry must be set up in
+.Xr syslog.conf 5 .
+Ensure that the corresponding log file is not readable by other.
+The log messages include notifications of files found to be corrupted and the
+success or failure of file restoration attempts.
+.Pp
+The size of the
+.Nm
+database is proportional to the value of the largest (internal) inode number
+encountered.
+To minimize this dedicate whole filesystems to the
+.Nm
+array.
+.Sh SECURITY CONSIDERATIONS
+.Nm
+is confined with
+.Xr pledge 2
+and
+.Xr unveil 2
+to the directories named on the command line.
+After configuration the filesystem view is locked and cannot be widened.
+The checksums detect accidental corruption only; they are not
+cryptographic and do not protect against a writer who can modify a device
+directly.
+See
+.Pa SECURITY.md
+in the source distribution for the full threat model and the per-command
+promise policy.

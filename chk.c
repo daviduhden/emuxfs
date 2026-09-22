@@ -15,102 +15,103 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+/*
+ * This file belongs to emuxfs, The Enhanced Multiplexed File System (see NOTICE.md).
+ *
+ * The algorithm table is a stable, on-disk ABI: the 'name' strings are
+ * persisted in muxfs.conf and the order fixes the values of
+ * enum emuxfs_chk_alg_type.  Do not reorder or rename entries; add new
+ * algorithms only at the end, before CAT_NONE.
+ */
+
+#include <endian.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "chk.h"
 
 static void
-muxfs_crc32_init (struct muxfs_chk *_chk, struct muxfs_chk_alg *alg)
+emuxfs_crc32_init(struct emuxfs_chk *chk, struct emuxfs_chk_alg *alg)
 {
-	struct muxfs_chk_p *chk = (struct muxfs_chk_p *)_chk;
 	chk->alg = alg;
 	chk->impl.ulong = crc32_z(0L, NULL, 0);
 }
 
 static void
-muxfs_crc32_update(struct muxfs_chk *_chk, const uint8_t *data, size_t size)
+emuxfs_crc32_update(struct emuxfs_chk *chk, const uint8_t *data, size_t size)
 {
-	struct muxfs_chk_p *chk = (struct muxfs_chk_p *)_chk;
 	chk->impl.ulong = crc32_z(chk->impl.ulong, data, size);
 }
 
 static void
-muxfs_crc32_final(uint8_t *buf_out, struct muxfs_chk *_chk)
+emuxfs_crc32_final(uint8_t *buf_out, struct emuxfs_chk *chk)
 {
-	struct muxfs_chk_p *chk = (struct muxfs_chk_p *)_chk;
-	chk->u32 = htole32(chk->impl.ulong);
-	memcpy(buf_out, (uint8_t *)&chk->u32, chk->alg->chk_size);
+	uint32_t u32;
+
+	u32 = htole32((uint32_t)chk->impl.ulong);
+	memcpy(buf_out, &u32, chk->alg->chk_size);
 }
 
 static void
-muxfs_md5_init (struct muxfs_chk *_chk, struct muxfs_chk_alg *alg)
+emuxfs_md5_init(struct emuxfs_chk *chk, struct emuxfs_chk_alg *alg)
 {
-	struct muxfs_chk_p *chk = (struct muxfs_chk_p *)_chk;
 	chk->alg = alg;
 	MD5Init(&chk->impl.md5_ctx);
 }
 
 static void
-muxfs_md5_update(struct muxfs_chk *_chk, const uint8_t *data, size_t size)
+emuxfs_md5_update(struct emuxfs_chk *chk, const uint8_t *data, size_t size)
 {
-	struct muxfs_chk_p *chk = (struct muxfs_chk_p *)_chk;
 	MD5Update(&chk->impl.md5_ctx, data, size);
 }
 
 static void
-muxfs_md5_final(uint8_t *buf_out, struct muxfs_chk *_chk)
+emuxfs_md5_final(uint8_t *buf_out, struct emuxfs_chk *chk)
 {
-	struct muxfs_chk_p *chk = (struct muxfs_chk_p *)_chk;
 	MD5Final(buf_out, &chk->impl.md5_ctx);
 }
 
 static void
-muxfs_sha1_init (struct muxfs_chk *_chk, struct muxfs_chk_alg *alg)
+emuxfs_sha1_init(struct emuxfs_chk *chk, struct emuxfs_chk_alg *alg)
 {
-	struct muxfs_chk_p *chk = (struct muxfs_chk_p *)_chk;
 	chk->alg = alg;
 	SHA1Init(&chk->impl.sha1_ctx);
 }
 
 static void
-muxfs_sha1_update(struct muxfs_chk *_chk, const uint8_t *data, size_t size)
+emuxfs_sha1_update(struct emuxfs_chk *chk, const uint8_t *data, size_t size)
 {
-	struct muxfs_chk_p *chk = (struct muxfs_chk_p *)_chk;
 	SHA1Update(&chk->impl.sha1_ctx, data, size);
 }
 
 static void
-muxfs_sha1_final(uint8_t *buf_out, struct muxfs_chk *_chk)
+emuxfs_sha1_final(uint8_t *buf_out, struct emuxfs_chk *chk)
 {
-	struct muxfs_chk_p *chk = (struct muxfs_chk_p *)_chk;
 	SHA1Final(buf_out, &chk->impl.sha1_ctx);
 }
 
-MUXFS struct muxfs_chk_alg
-muxfs_chk_alg_tab[] = {
-	{ CAT_CRC32,  4, muxfs_crc32_init, muxfs_crc32_update,
-	  muxfs_crc32_final, "crc32" },
-	{ CAT_MD5  , 16, muxfs_md5_init  , muxfs_md5_update  ,
-	  muxfs_md5_final  , "md5"   },
-	{ CAT_SHA1 , 20, muxfs_sha1_init , muxfs_sha1_update ,
-	  muxfs_sha1_final , "sha1"  },
-	{ CAT_NONE ,  0, NULL            , NULL              ,
-	  NULL             , "none"  }
+static struct emuxfs_chk_alg emuxfs_chk_alg_tab[] = {
+	{ CAT_CRC32,  4, emuxfs_crc32_init, emuxfs_crc32_update,
+	  emuxfs_crc32_final, "crc32" },
+	{ CAT_MD5, 16, emuxfs_md5_init, emuxfs_md5_update,
+	  emuxfs_md5_final, "md5"   },
+	{ CAT_SHA1, 20, emuxfs_sha1_init, emuxfs_sha1_update,
+	  emuxfs_sha1_final, "sha1"  },
+	{ CAT_NONE,  0, NULL, NULL,
+	  NULL, "none"  }
 };
 
-MUXFS int
-muxfs_chk_str_to_type(enum muxfs_chk_alg_type *type, const char *name,
-                       size_t name_len)
+EMUXFS int
+emuxfs_chk_str_to_type(enum emuxfs_chk_alg_type *type, const char *name,
+    size_t name_len)
 {
 	size_t i;
-	struct muxfs_chk_alg *tab;
 
-	tab = muxfs_chk_alg_tab;
-
-	for (i = 0; tab[i].type != CAT_NONE; ++i) {
-		if (strncmp(tab[i].name, name, name_len) == 0) {
-			*type = tab[i].type;
+	for (i = 0; emuxfs_chk_alg_tab[i].type != CAT_NONE; ++i) {
+		if ((strlen(emuxfs_chk_alg_tab[i].name) == name_len) &&
+		    (strncmp(emuxfs_chk_alg_tab[i].name, name, name_len) ==
+		     0)) {
+			*type = emuxfs_chk_alg_tab[i].type;
 			return 0;
 		}
 	}
@@ -118,47 +119,41 @@ muxfs_chk_str_to_type(enum muxfs_chk_alg_type *type, const char *name,
 	return 1;
 }
 
-MUXFS const char *
-muxfs_chk_type_to_str(enum muxfs_chk_alg_type type)
+EMUXFS const char *
+emuxfs_chk_type_to_str(enum emuxfs_chk_alg_type type)
 {
 	if (type >= CAT_NONE)
 		exit(-1); /* Programming error. */
-	return muxfs_chk_alg_tab[type].name;
+	return emuxfs_chk_alg_tab[type].name;
 }
 
-MUXFS size_t
-muxfs_chk_size(enum muxfs_chk_alg_type type)
+EMUXFS size_t
+emuxfs_chk_size(enum emuxfs_chk_alg_type type)
 {
 	if (type >= CAT_NONE)
 		exit(-1); /* Programming error. */
-	return muxfs_chk_alg_tab[type].chk_size;
+	return emuxfs_chk_alg_tab[type].chk_size;
 }
 
-MUXFS void
-muxfs_chk_init(struct muxfs_chk *chk, enum muxfs_chk_alg_type type)
+EMUXFS void
+emuxfs_chk_init(struct emuxfs_chk *chk, enum emuxfs_chk_alg_type type)
 {
-	struct muxfs_chk_alg *alg;
+	struct emuxfs_chk_alg *alg;
 
 	if (type >= CAT_NONE)
 		exit(-1); /* Programming error. */
-	alg = &muxfs_chk_alg_tab[type];
+	alg = &emuxfs_chk_alg_tab[type];
 	alg->chk_init(chk, alg);
 }
 
-MUXFS void
-muxfs_chk_update(struct muxfs_chk *_chk, const uint8_t *data, size_t size)
+EMUXFS void
+emuxfs_chk_update(struct emuxfs_chk *chk, const uint8_t *data, size_t size)
 {
-	struct muxfs_chk_p *chk;
-
-	chk = (struct muxfs_chk_p *)_chk;
-	chk->alg->chk_update(_chk, data, size);
+	chk->alg->chk_update(chk, data, size);
 }
 
-MUXFS void
-muxfs_chk_final(uint8_t *buf_out, struct muxfs_chk *_chk)
+EMUXFS void
+emuxfs_chk_final(uint8_t *buf_out, struct emuxfs_chk *chk)
 {
-	struct muxfs_chk_p *chk;
-
-	chk = (struct muxfs_chk_p *)_chk;
-	chk->alg->chk_final(buf_out, _chk);
+	chk->alg->chk_final(buf_out, chk);
 }

@@ -26,134 +26,187 @@
 #include <unistd.h>
 
 #include "ds.h"
-#include "muxfs.h"
+#include "emuxfs.h"
 
-struct muxfs_restore_item {
+struct emuxfs_restore_item {
 	size_t dev_index;
 	size_t path_len;
 	char path[];
 };
 
-struct muxfs_state {
-	struct muxfs_restore_item *restore_queue, *front, *back;
-	size_t restore_queue_size;
-	uint64_t next_eno;
-	struct syslog_data log;
-	int is_restore_only;
-	dind restore_only_dind;
-	struct muxfs_wrbuf wr;
+struct emuxfs_state {
+	/*
+	 * The restore queue is a byte buffer holding a sequence of
+	 * struct emuxfs_restore_item records, each of which is followed by a
+	 * NUL-terminated path.  It is addressed by byte offsets rather than by
+	 * pointers so that reallocarray(3) cannot invalidate anything.
+	 */
+	uint8_t			*restore_queue;
+	size_t			 restore_queue_size;
+	size_t			 restore_front;
+	size_t			 restore_back;
+	uint64_t		 next_eno;
+	size_t			 ambiguities;
+	struct syslog_data	 log;
+	int			 is_restore_only;
+	dind			 restore_only_dind;
+	struct emuxfs_wrbuf	 wr;
 };
 
-static struct muxfs_state muxfs_global_state;
+static struct emuxfs_state emuxfs_global_state;
 
 static size_t
-muxfs_restore_item_next_offset(const char *path)
+emuxfs_restore_item_next_offset(const char *path)
 {
 	size_t risz, path_len;
 
 	const size_t szsz = sizeof(size_t);
 
 	path_len = strlen(path);
-	risz = sizeof(struct muxfs_restore_item) + path_len + 1;
+	risz = sizeof(struct emuxfs_restore_item) + path_len + 1;
 	return szsz * ((risz / szsz) + ((risz % szsz) ? 1 : 0));
 }
 
-MUXFS int
-muxfs_state_restore_push_back(dind dev_index, const char *path)
+/*
+ * Ensure that 'extra' bytes can be appended at restore_back, compacting or
+ * growing the buffer as needed.  Returns 0 on success, 1 on size overflow.
+ * Exits on allocation failure, matching the rest of the program.
+ */
+static int
+emuxfs_restore_queue_reserve(size_t extra)
 {
-	struct muxfs_restore_item **q, *curr, *next;
-	size_t *qsz, next_offset;
+	struct emuxfs_state *st;
+	size_t used, newsz;
+	uint8_t *q;
 
-	muxfs_warn("Corrupted: %lu:/%s\n", dev_index, path);
+	st = &emuxfs_global_state;
+	used = st->restore_back - st->restore_front;
 
-	if (muxfs_global_state.is_restore_only &&
-	    (dev_index != muxfs_global_state.restore_only_dind))
-		return 0;
-
-	q = &muxfs_global_state.restore_queue;
-	qsz = &muxfs_global_state.restore_queue_size;
-	curr = muxfs_global_state.back;
-	next_offset = muxfs_restore_item_next_offset(path);
-	next = (struct muxfs_restore_item *)(((uint8_t *)curr) + next_offset);
-
-	while (next - *q < *qsz) {
-		*qsz *= 2;
-		if ((*q = realloc(*q, *qsz)) == NULL)
-			exit(-1);
+	/*
+	 * If the live region has drifted away from the start of the buffer,
+	 * slide it back to make room before considering a reallocation.
+	 */
+	if ((st->restore_front > 0) &&
+	    (used + extra <= st->restore_queue_size)) {
+		memmove(st->restore_queue,
+		    st->restore_queue + st->restore_front, used);
+		st->restore_front = 0;
+		st->restore_back = used;
 	}
 
-	curr->dev_index = dev_index;
-	curr->path_len = strlen(path);
-	memcpy(curr->path, path, curr->path_len);
-	curr->path[curr->path_len] = '\0';
+	if (st->restore_back + extra <= st->restore_queue_size)
+		return 0;
+	if (st->restore_back > SIZE_MAX - extra)
+		return 1;
 
-	muxfs_global_state.back = next;
+	newsz = st->restore_queue_size;
+	if (newsz == 0)
+		newsz = (size_t)sysconf(_SC_PAGESIZE);
+	if (newsz == 0)
+		newsz = 4096;
+	while (newsz < st->restore_back + extra) {
+		if (newsz > (SIZE_MAX / 2))
+			return 1;
+		newsz *= 2;
+	}
+
+	q = reallocarray(st->restore_queue, newsz, 1);
+	if (q == NULL)
+		exit(-1);
+	st->restore_queue = q;
+	st->restore_queue_size = newsz;
 
 	return 0;
 }
 
-MUXFS int
-muxfs_state_restore_next_path_len(size_t *path_len_out)
+EMUXFS int
+emuxfs_state_restore_push_back(dind dev_index, const char *path)
 {
-	struct muxfs_restore_item *curr;
+	struct emuxfs_state *st;
+	struct emuxfs_restore_item *curr;
+	size_t item_offset, path_len;
 
-	if (muxfs_global_state.front == muxfs_global_state.back)
+	emuxfs_warn("Corrupted: %lu:/%s\n", dev_index, path);
+
+	if (emuxfs_global_state.is_restore_only &&
+	    (dev_index != emuxfs_global_state.restore_only_dind))
+		return 0;
+
+	st = &emuxfs_global_state;
+	path_len = strlen(path);
+	item_offset = emuxfs_restore_item_next_offset(path);
+
+	if (emuxfs_restore_queue_reserve(item_offset))
 		return 1;
 
-	curr = muxfs_global_state.front;
+	curr = (struct emuxfs_restore_item *)
+	    (st->restore_queue + st->restore_back);
+	curr->dev_index = dev_index;
+	curr->path_len = path_len;
+	memcpy(curr->path, path, path_len + 1);
+
+	st->restore_back += item_offset;
+
+	return 0;
+}
+
+EMUXFS int
+emuxfs_state_restore_next_path_len(size_t *path_len_out)
+{
+	struct emuxfs_state *st;
+	struct emuxfs_restore_item *curr;
+
+	st = &emuxfs_global_state;
+	if (st->restore_front == st->restore_back)
+		return 1;
+
+	curr = (struct emuxfs_restore_item *)
+	    (st->restore_queue + st->restore_front);
 	*path_len_out = curr->path_len;
 	return 0;
 }
 
-MUXFS int
-muxfs_state_restore_pop_front(size_t *dev_index_out, char *path_out)
+EMUXFS int
+emuxfs_state_restore_pop_front(size_t *dev_index_out, char *path_out)
 {
-	struct muxfs_restore_item *curr, *next;
-	size_t next_offset, used, offset, halfq;
-	uint8_t **u8front, **u8back, **u8queue;
+	struct emuxfs_state *st;
+	struct emuxfs_restore_item *curr;
+	size_t item_offset;
 
-	if (muxfs_global_state.front == muxfs_global_state.back)
+	st = &emuxfs_global_state;
+	if (st->restore_front == st->restore_back)
 		return 1;
 
-	curr = muxfs_global_state.front;
-	next_offset = muxfs_restore_item_next_offset(curr->path);
-	next = (struct muxfs_restore_item *)(((uint8_t *)curr) + next_offset);
+	curr = (struct emuxfs_restore_item *)
+	    (st->restore_queue + st->restore_front);
 
 	*dev_index_out = curr->dev_index;
 	memcpy(path_out, curr->path, curr->path_len);
 	path_out[curr->path_len] = '\0';
 
-	muxfs_global_state.front = next;
+	item_offset = emuxfs_restore_item_next_offset(curr->path);
+	st->restore_front += item_offset;
 
-	/* Reuse the allocated memory rather than allocating more. */
-	u8front = (uint8_t **)&muxfs_global_state.front;
-	u8back = (uint8_t **)&muxfs_global_state.back;
-	u8queue = (uint8_t **)&muxfs_global_state.restore_queue;
-	used = (*u8back) - (*u8front);
-	offset = (*u8front) - (*u8queue);
-	halfq = muxfs_global_state.restore_queue_size / 2;
-	if (used == 0)
-		(*u8front) = (*u8back) = (*u8queue);
-	else if ((used < halfq) && (offset > halfq)) {
-		memmove(*u8queue, *u8front, used);
-		(*u8front) = *u8queue;
-		(*u8back) -= offset;
-	}
+	if (st->restore_front == st->restore_back)
+		st->restore_front = st->restore_back = 0;
 
 	return 0;
 }
 
-MUXFS int
-muxfs_state_restore_queue_init(void)
+EMUXFS int
+emuxfs_state_restore_queue_init(void)
 {
-	struct muxfs_state *state;
+	struct emuxfs_state *state;
 
-	state = &muxfs_global_state;
+	state = &emuxfs_global_state;
 
-	if ((state->restore_queue = malloc(sysconf(_SC_PAGESIZE))) == NULL)
-		exit(-1);
+	state->restore_queue = NULL;
+	state->restore_queue_size = 0;
+	state->restore_front = 0;
+	state->restore_back = 0;
 
-	state->front = state->back = state->restore_queue;
+	if (emuxfs_restore_queue_reserve(1))
+		return 1;
 
 	state->is_restore_only = 0;
 	state->restore_only_dind = 0;
@@ -161,25 +214,49 @@ muxfs_state_restore_queue_init(void)
 	return 0;
 }
 
-MUXFS void
-muxfs_state_restore_queue_final(void)
+EMUXFS void
+emuxfs_state_restore_queue_final(void)
 {
-	free(muxfs_global_state.restore_queue);
+	free(emuxfs_global_state.restore_queue);
+	emuxfs_global_state.restore_queue = NULL;
+	emuxfs_global_state.restore_queue_size = 0;
+	emuxfs_global_state.restore_front = 0;
+	emuxfs_global_state.restore_back = 0;
 }
 
-MUXFS int
-muxfs_state_eno_next_init(uint64_t eno)
+EMUXFS void
+emuxfs_state_ambiguity_note(void)
 {
-	muxfs_global_state.next_eno = eno;
+	if (emuxfs_global_state.ambiguities != SIZE_MAX)
+		++emuxfs_global_state.ambiguities;
+}
+
+EMUXFS size_t
+emuxfs_state_ambiguity_count(void)
+{
+	return emuxfs_global_state.ambiguities;
+}
+
+EMUXFS int
+emuxfs_state_ambiguity_clear(void)
+{
+	emuxfs_global_state.ambiguities = 0;
 	return 0;
 }
 
-MUXFS int
-muxfs_state_eno_next_acquire(uint64_t *eno_out)
+EMUXFS int
+emuxfs_state_eno_next_init(uint64_t eno)
+{
+	emuxfs_global_state.next_eno = eno;
+	return 0;
+}
+
+EMUXFS int
+emuxfs_state_eno_next_acquire(uint64_t *eno_out)
 {
 	uint64_t *ne;
 
-	ne = &muxfs_global_state.next_eno;
+	ne = &emuxfs_global_state.next_eno;
 
 	/* Using the largest possible value for an eno as the invalid value. */
 	if (*ne == UINT64_MAX)
@@ -189,8 +266,8 @@ muxfs_state_eno_next_acquire(uint64_t *eno_out)
 	return 0;
 }
 
-MUXFS int
-muxfs_state_eno_next_return(uint64_t eno)
+EMUXFS int
+emuxfs_state_eno_next_return(uint64_t eno)
 {
 	uint64_t *ne;
 
@@ -198,7 +275,7 @@ muxfs_state_eno_next_return(uint64_t eno)
 	if (eno == UINT64_MAX)
 		exit(-1);
 
-	ne = &muxfs_global_state.next_eno;
+	ne = &emuxfs_global_state.next_eno;
 	if (*ne == 0)
 		return 1;
 	if (eno == (*ne) - 1)
@@ -206,89 +283,89 @@ muxfs_state_eno_next_return(uint64_t eno)
 	return 0;
 }
 
-MUXFS int
-muxfs_state_syslog_init(void)
+EMUXFS int
+emuxfs_state_syslog_init(void)
 {
-	muxfs_global_state.log = (struct syslog_data)SYSLOG_DATA_INIT;
-	openlog_r("muxfs", LOG_PID|LOG_NDELAY, LOG_USER,
-	    &muxfs_global_state.log);
+	emuxfs_global_state.log = (struct syslog_data)SYSLOG_DATA_INIT;
+	openlog_r("emuxfs", LOG_PID|LOG_NDELAY, LOG_USER,
+	    &emuxfs_global_state.log);
 	return 0;
 }
 
-MUXFS int
-muxfs_state_syslog_final(void)
+EMUXFS int
+emuxfs_state_syslog_final(void)
 {
-	closelog_r(&muxfs_global_state.log);
+	closelog_r(&emuxfs_global_state.log);
 	return 0;
 }
 
-MUXFS void
-muxfs_debug(const char *msg, ...)
+EMUXFS void
+emuxfs_debug(const char *msg, ...)
 {
 	va_list va_args;
 
 	va_start(va_args, msg);
-	vsyslog_r(LOG_DEBUG, &muxfs_global_state.log, msg, va_args);
+	vsyslog_r(LOG_DEBUG, &emuxfs_global_state.log, msg, va_args);
 	va_end(va_args);
 }
 
-MUXFS void
-muxfs_info(const char *msg, ...)
+EMUXFS void
+emuxfs_info(const char *msg, ...)
 {
 	va_list va_args;
 
 	va_start(va_args, msg);
-	vsyslog_r(LOG_INFO, &muxfs_global_state.log, msg, va_args);
+	vsyslog_r(LOG_INFO, &emuxfs_global_state.log, msg, va_args);
 	va_end(va_args);
 }
 
-MUXFS void
-muxfs_warn(const char *msg, ...)
+EMUXFS void
+emuxfs_warn(const char *msg, ...)
 {
 	va_list va_args;
 
 	va_start(va_args, msg);
-	vsyslog_r(LOG_WARNING, &muxfs_global_state.log, msg, va_args);
+	vsyslog_r(LOG_WARNING, &emuxfs_global_state.log, msg, va_args);
 	va_end(va_args);
 }
 
-MUXFS void
-muxfs_alert(const char *msg, ...)
+EMUXFS void
+emuxfs_alert(const char *msg, ...)
 {
 	va_list va_args;
 
 	va_start(va_args, msg);
-	vsyslog_r(LOG_ALERT, &muxfs_global_state.log, msg, va_args);
+	vsyslog_r(LOG_ALERT, &emuxfs_global_state.log, msg, va_args);
 	va_end(va_args);
 }
 
-/* Assumes that muxfs_dsinit() has already been called. */
-MUXFS int
-muxfs_init(int skip_first_mount)
+/* Assumes that emuxfs_dsinit() has already been called. */
+EMUXFS int
+emuxfs_init(int skip_first_mount)
 {
 	uint64_t next_eno, max_next_eno;
 	dind i, j, mnts;
-	struct muxfs_args *args;
+	struct emuxfs_args *args;
 
-	args = &muxfs_cmdline;
+	args = &emuxfs_cmdline;
 
-	muxfs_dev_module_init();
-	if (muxfs_state_restore_queue_init())
+	emuxfs_dev_module_init();
+	if (emuxfs_state_restore_queue_init())
 		exit(-1);
 
 	mnts = 0;
 	max_next_eno = 0;
 	for (i = 0; i < args->dev_count; ++i) {
-		if (muxfs_dev_append(&j, args->dev_paths[i]))
+		if (emuxfs_dev_append(&j, args->dev_paths[i]))
 			exit(-1);
 		if (skip_first_mount && (i == 0))
 			continue;
-		if (muxfs_dev_mount(j, 0)) {
+		if (emuxfs_dev_open(j, 0, args->readonly)) {
 			dprintf(2, "Error: Unable to mount %s.\n",
 			    args->dev_paths[i]);
 			exit(1);
 		}
-		if (muxfs_assign_peek_next_eno(&next_eno, j))
+		if (emuxfs_assign_peek_next_eno(&next_eno, j))
 			exit(-1);
 		++mnts;
 		if (next_eno > max_next_eno)
@@ -297,67 +374,82 @@ muxfs_init(int skip_first_mount)
 	if (mnts == 0)
 		exit(-1);
 
-	if (muxfs_state_eno_next_init(max_next_eno))
+	if (emuxfs_state_eno_next_init(max_next_eno))
 		exit(-1);
 
-	if (muxfs_state_wrbuf_reset())
+	if (emuxfs_state_wrbuf_reset())
 		exit(-1);
 
 	return 0;
 }
 
-MUXFS int
-muxfs_final(void)
+EMUXFS int
+emuxfs_final(void)
 {
+	static int done;
 	dind i, j, dev_count;
 
-	dev_count = muxfs_dev_count();
+	if (done)
+		return 0;
+	done = 1;
+
+	dev_count = emuxfs_dev_count();
 	for (i = dev_count; i > 0; --i) {
 		j = i - 1;
-		if (muxfs_dev_is_mounted(j)) {
-			if (muxfs_dev_unmount(j))
+		if (emuxfs_dev_is_mounted(j)) {
+			if (emuxfs_dev_unmount(j))
 				exit(-1);
 		}
 	}
-	muxfs_state_restore_queue_final();
-	if (muxfs_state_syslog_final())
+	emuxfs_state_restore_queue_final();
+	if (emuxfs_state_syslog_final())
 		exit(-1);
-	if (muxfs_dsfinal())
+	if (emuxfs_dsfinal())
 		exit(-1);
 
 	return 0;
 }
 
-MUXFS int
-muxfs_state_restore_only_set(dind dev_index)
+EMUXFS int
+emuxfs_state_restore_only_set(dind dev_index)
 {
-	muxfs_global_state.restore_only_dind = dev_index;
-	muxfs_global_state.is_restore_only = 1;
+	emuxfs_global_state.restore_only_dind = dev_index;
+	emuxfs_global_state.is_restore_only = 1;
 	return 0;
 }
 
-MUXFS int
-muxfs_state_wrbuf_is_set(void)
+EMUXFS int
+emuxfs_state_is_restore_only(void)
 {
-	return muxfs_global_state.wr.path[0] != '\0';
+	return emuxfs_global_state.is_restore_only;
 }
 
-MUXFS int
-muxfs_state_wrbuf_reset(void)
+EMUXFS int
+emuxfs_state_wrbuf_is_set(void)
 {
-	memset(&muxfs_global_state.wr, 0, sizeof(muxfs_global_state.wr));
+	return emuxfs_global_state.wr.path[0] != '\0';
+}
+
+EMUXFS int
+emuxfs_state_wrbuf_reset(void)
+{
+	/*
+	 * The write buffer holds file content supplied by users; clear it
+	 * explicitly so the compiler cannot elide the wipe.
+	 */
+	explicit_bzero(&emuxfs_global_state.wr, sizeof(emuxfs_global_state.wr));
 	return 0;
 }
 
-MUXFS int
-muxfs_state_wrbuf_set(const char *path, uid_t user, gid_t group, size_t sz,
+EMUXFS int
+emuxfs_state_wrbuf_set(const char *path, uid_t user, gid_t group, size_t sz,
     size_t off, const uint8_t *buf)
 {
-	struct muxfs_wrbuf *wrbuf;
+	struct emuxfs_wrbuf *wrbuf;
 
-	wrbuf = &muxfs_global_state.wr;
+	wrbuf = &emuxfs_global_state.wr;
 
-	if (muxfs_state_wrbuf_is_set())
+	if (emuxfs_state_wrbuf_is_set())
 		return 1;
 	if (path == NULL)
 		return 1;
@@ -365,18 +457,18 @@ muxfs_state_wrbuf_set(const char *path, uid_t user, gid_t group, size_t sz,
 		return 1;
 	if (strlen(path) >= PATH_MAX)
 		return 1;
-	if (sz > MUXFS_WRBUF_SIZE)
+	if (sz > EMUXFS_WRBUF_SIZE)
 		return 1;
 	if (buf == NULL)
 		return 1;
 
-	*wrbuf = (struct muxfs_wrbuf) {
-		.wc = {
-			.user = user,
-			.group = group,
-		},
-		.sz = sz,
-		.off = off,
+	*wrbuf = (struct emuxfs_wrbuf){
+	    .wc = {
+		.user = user,
+		.group = group,
+	    },
+	    .sz = sz,
+	    .off = off,
 	};
 	strcpy(wrbuf->path, path);
 	memcpy(wrbuf->buf, buf, sz);
@@ -384,15 +476,15 @@ muxfs_state_wrbuf_set(const char *path, uid_t user, gid_t group, size_t sz,
 	return 0;
 }
 
-MUXFS int
-muxfs_state_wrbuf_append(size_t *wrsz_out, const char *path, uid_t user,
+EMUXFS int
+emuxfs_state_wrbuf_append(size_t *wrsz_out, const char *path, uid_t user,
     gid_t group, size_t sz, size_t off, const uint8_t *buf)
 {
-	struct muxfs_wrbuf *wrbuf;
+	struct emuxfs_wrbuf *wrbuf;
 
-	wrbuf = &muxfs_global_state.wr;
+	wrbuf = &emuxfs_global_state.wr;
 
-	if (!muxfs_state_wrbuf_is_set())
+	if (!emuxfs_state_wrbuf_is_set())
 		return 1;
 	if (path == NULL)
 		return 1;
@@ -413,8 +505,8 @@ muxfs_state_wrbuf_append(size_t *wrsz_out, const char *path, uid_t user,
 	if (wrsz_out == NULL)
 		return 1;
 
-	if ((wrbuf->sz + sz) > MUXFS_WRBUF_SIZE)
-		sz = (MUXFS_WRBUF_SIZE - wrbuf->sz);
+	if ((wrbuf->sz + sz) > EMUXFS_WRBUF_SIZE)
+		sz = (EMUXFS_WRBUF_SIZE - wrbuf->sz);
 	memcpy(&wrbuf->buf[wrbuf->sz], buf, sz);
 	wrbuf->sz += sz;
 	*wrsz_out = sz;
@@ -422,11 +514,11 @@ muxfs_state_wrbuf_append(size_t *wrsz_out, const char *path, uid_t user,
 	return 0;
 }
 
-MUXFS int
-muxfs_state_wrbuf_get(const struct muxfs_wrbuf **wrbuf_out)
+EMUXFS int
+emuxfs_state_wrbuf_get(const struct emuxfs_wrbuf **wrbuf_out)
 {
-	if (!muxfs_state_wrbuf_is_set())
+	if (!emuxfs_state_wrbuf_is_set())
 		return 1;
-	*wrbuf_out = &muxfs_global_state.wr;
+	*wrbuf_out = &emuxfs_global_state.wr;
 	return 0;
 }

@@ -26,51 +26,51 @@
 #include <unistd.h>
 #include <uuid.h>
 
+#include "chk.h"
 #include "ds.h"
-#include "muxfs.h"
+#include "emuxfs.h"
+#include "sandbox.h"
 
-#include "gen.h"
-
-static const char *sepdotmuxfs = "/.muxfs";
-static const char *sepmuxfsdotconf = "/muxfs.conf";
+static const char *sepdotemuxfs = "/.muxfs";
+static const char *sepemuxfsdotconf = "/muxfs.conf";
 static const char *sepstatedotdb = "/state.db";
 static const char *sepmetadotdb = "/meta.db";
 static const char *sepassigndotdb = "/assign.db";
 static const char *seplfile = "/lfile";
 
 static void
-muxfs_format_usage(void)
+emuxfs_format_usage(void)
 {
-	fprintf(stderr, "usage: muxfs format [-a checksum_algorithm] "
+	fprintf(stderr, "usage: emuxfs format [-a checksum_algorithm] "
 	    "directory ...\n");
 }
 
 /* Returns 0 on success, 2 if dev_root is not empty, 1 otherwise. */
-MUXFS int
-muxfs_dev_format(const char *dev_root, enum muxfs_chk_alg_type alg,
+EMUXFS int
+emuxfs_dev_format(const char *dev_root, enum emuxfs_chk_alg_type alg,
     size_t chksz, size_t metasz, time_t now, const uint8_t *array_uuid)
 {
 	int rc;
-	struct muxfs_dev_conf conf;
+	struct emuxfs_dev_conf conf;
 	int empty;
 	char path_buf[PATH_MAX];
 	uuid_t uuid;
 	uint32_t uuid_status;
 	int fd;
-	struct muxfs_dev_state dstate;
+	struct emuxfs_dev_state dstate;
 	struct stat st;
 	ino_t ino;
-	struct muxfs_desc desc;
-	struct muxfs_chk chk;
-	struct muxfs_meta meta;
-	struct muxfs_assign assign;
+	struct emuxfs_desc desc;
+	struct emuxfs_chk chk;
+	struct emuxfs_meta meta;
+	struct emuxfs_assign assign;
 
 	static const uint64_t eno = 0;
 
 	rc = 1;
 
 	empty = 0;
-	if (muxfs_dir_is_empty(&empty, dev_root))
+	if (emuxfs_dir_is_empty(&empty, dev_root))
 		goto out;
 	if (!empty) {
 		rc = 2;
@@ -82,35 +82,37 @@ muxfs_dev_format(const char *dev_root, enum muxfs_chk_alg_type alg,
 	if (chmod(dev_root, 0755))
 		goto out;
 
-	if (strlen(dev_root) + strlen(sepdotmuxfs) >= PATH_MAX)
+	if (strlen(dev_root) + strlen(sepdotemuxfs) >= PATH_MAX)
 		goto out;
 	memset(path_buf, 0, PATH_MAX);
 	strcat(path_buf, dev_root);
-	strcat(path_buf, sepdotmuxfs);
+	strcat(path_buf, sepdotemuxfs);
 	if (mkdir(path_buf, 0700))
 		goto out;
+	if (emuxfs_fsync_parent(AT_FDCWD, path_buf))
+		goto out;
 
-	conf = (struct muxfs_dev_conf) {
-		.version = muxfs_program_version,
-		.chk_alg_type = alg,
-		.seq_zero_time = now,
+	conf = (struct emuxfs_dev_conf){
+	    .version = emuxfs_program_version,
+	    .chk_alg_type = alg,
+	    .seq_zero_time = now,
 	};
-	memcpy(conf.array_uuid, array_uuid, MUXFS_UUID_SIZE);
+	memcpy(conf.array_uuid, array_uuid, EMUXFS_UUID_SIZE);
 	uuid_create(&uuid, &uuid_status);
 	if (uuid_status != uuid_s_ok)
 		goto out;
 	uuid_enc_le(conf.dev_uuid, &uuid);
 
-	if (strlen(dev_root) + strlen(sepdotmuxfs) +
-	    strlen(sepmuxfsdotconf) >= PATH_MAX)
+	if (strlen(dev_root) + strlen(sepdotemuxfs) +
+	    strlen(sepemuxfsdotconf) >= PATH_MAX)
 		goto out;
 	memset(path_buf, 0, PATH_MAX);
 	strcat(path_buf, dev_root);
-	strcat(path_buf, sepdotmuxfs);
-	strcat(path_buf, sepmuxfsdotconf);
+	strcat(path_buf, sepdotemuxfs);
+	strcat(path_buf, sepemuxfsdotconf);
 	if ((fd = open(path_buf, O_RDWR|O_CREAT|O_EXCL, 0700)) == -1)
 		goto out;
-	if (muxfs_conf_write(&conf, fd)) {
+	if (emuxfs_conf_write(&conf, fd)) {
 		if (close(fd))
 			exit(-1);
 		goto out;
@@ -118,55 +120,65 @@ muxfs_dev_format(const char *dev_root, enum muxfs_chk_alg_type alg,
 	if (close(fd))
 		exit(-1);
 
-	dstate = (struct muxfs_dev_state) {
-		.seq = 0,
-		.mounted = 0,
-		.working = 0,
-		.restoring = 0,
-		.degraded = 0,
+	dstate = (struct emuxfs_dev_state){
+	    .seq = 0,
+	    .mounted = 0,
+	    .working = 0,
+	    .restoring = 0,
+	    .degraded = 0,
 	};
-	if (strlen(dev_root) + strlen(sepdotmuxfs) +
+	if (strlen(dev_root) + strlen(sepdotemuxfs) +
 	    strlen(sepstatedotdb) >= PATH_MAX)
 		goto out;
 	memset(path_buf, 0, PATH_MAX);
 	strcat(path_buf, dev_root);
-	strcat(path_buf, sepdotmuxfs);
+	strcat(path_buf, sepdotemuxfs);
 	strcat(path_buf, sepstatedotdb);
 	if ((fd = open(path_buf, O_RDWR|O_CREAT|O_EXCL, 0700)) == -1)
 		goto out;
-	if (muxfs_dev_state_write_fd(fd, &dstate)) {
+	if (emuxfs_dev_state_write_fd(fd, &dstate)) {
+		if (close(fd))
+			exit(-1);
+		goto out;
+	}
+	if (fsync(fd)) {
 		if (close(fd))
 			exit(-1);
 		goto out;
 	}
 	if (close(fd))
 		exit(-1);
-		
+
 	if (stat(dev_root, &st))
 		goto out;
 	ino = st.st_ino;
-	if (muxfs_desc_init_from_stat(&desc, &st, eno))
+	if (emuxfs_desc_init_from_stat(&desc, &st, eno))
 		goto out;
-	muxfs_chk_init(&chk, alg);
-	muxfs_chk_final(desc.content_checksum, &chk);
-	meta = (struct muxfs_meta) {
-		.header = (struct muxfs_meta_header) {
-			.flags = MF_ASSIGNED,
-			.eno = eno,
-		},
+	emuxfs_chk_init(&chk, alg);
+	emuxfs_chk_final(desc.content_checksum, &chk);
+	meta = (struct emuxfs_meta){
+	    .header = (struct emuxfs_meta_header){
+		.flags = MF_ASSIGNED,
+		.eno = eno,
+	    },
 	};
 	memcpy(&meta.checksums[chksz], desc.content_checksum, chksz);
-	muxfs_desc_chk_meta(&meta.checksums[0], &desc, alg);
-	if (strlen(dev_root) + strlen(sepdotmuxfs) +
+	emuxfs_desc_chk_meta(&meta.checksums[0], &desc, alg);
+	if (strlen(dev_root) + strlen(sepdotemuxfs) +
 	    strlen(sepmetadotdb) >= PATH_MAX)
 		goto out;
 	memset(path_buf, 0, PATH_MAX);
 	strcat(path_buf, dev_root);
-	strcat(path_buf, sepdotmuxfs);
+	strcat(path_buf, sepdotemuxfs);
 	strcat(path_buf, sepmetadotdb);
 	if ((fd = open(path_buf, O_RDWR|O_CREAT|O_EXCL, 0700)) == -1)
 		goto out;
-	if (muxfs_meta_write_fd(fd, &meta, ino, metasz)) {
+	if (emuxfs_meta_write_fd(fd, &meta, ino, metasz)) {
+		if (close(fd))
+			exit(-1);
+		goto out;
+	}
+	if (fsync(fd)) {
 		if (close(fd))
 			exit(-1);
 		goto out;
@@ -174,20 +186,25 @@ muxfs_dev_format(const char *dev_root, enum muxfs_chk_alg_type alg,
 	if (close(fd))
 		exit(-1);
 
-	assign = (struct muxfs_assign) {
-		.flags = AF_ASSIGNED,
-		.ino = ino,
+	assign = (struct emuxfs_assign){
+	    .flags = AF_ASSIGNED,
+	    .ino = ino,
 	};
-	if (strlen(dev_root) + strlen(sepdotmuxfs) +
+	if (strlen(dev_root) + strlen(sepdotemuxfs) +
 	    strlen(sepassigndotdb) >= PATH_MAX)
 		goto out;
 	memset(path_buf, 0, PATH_MAX);
 	strcat(path_buf, dev_root);
-	strcat(path_buf, sepdotmuxfs);
+	strcat(path_buf, sepdotemuxfs);
 	strcat(path_buf, sepassigndotdb);
 	if ((fd = open(path_buf, O_RDWR|O_CREAT|O_EXCL, 0700)) == -1)
 		goto out;
-	if (muxfs_assign_write_fd(fd, &assign, eno)) {
+	if (emuxfs_assign_write_fd(fd, &assign, eno)) {
+		if (close(fd))
+			exit(-1);
+		goto out;
+	}
+	if (fsync(fd)) {
 		if (close(fd))
 			exit(-1);
 		goto out;
@@ -195,14 +212,16 @@ muxfs_dev_format(const char *dev_root, enum muxfs_chk_alg_type alg,
 	if (close(fd))
 		exit(-1);
 
-	if (strlen(dev_root) + strlen(sepdotmuxfs) +
+	if (strlen(dev_root) + strlen(sepdotemuxfs) +
 	    strlen(seplfile) >= PATH_MAX)
 		goto out;
 	memset(path_buf, 0, PATH_MAX);
 	strcat(path_buf, dev_root);
-	strcat(path_buf, sepdotmuxfs);
+	strcat(path_buf, sepdotemuxfs);
 	strcat(path_buf, seplfile);
 	if (mkdir(path_buf, 0700))
+		goto out;
+	if (emuxfs_fsync_parent(AT_FDCWD, path_buf))
 		goto out;
 
 	rc = 0;
@@ -210,25 +229,27 @@ out:
 	return rc;
 }
 
-MUXFS int
-muxfs_format_main(int argc, char *argv[])
+EMUXFS int
+emuxfs_format_main(int argc, char *argv[])
 {
 	int rc, c, subrc;
-	enum muxfs_chk_alg_type alg;
-	char dev_roots[MUXFS_DEV_COUNT_MAX][PATH_MAX];
+	enum emuxfs_chk_alg_type alg;
+	char dev_roots[EMUXFS_DEV_COUNT_MAX][PATH_MAX];
 	size_t dev_root_count, len, i;
 	time_t now;
 	uuid_t uuid;
 	uint32_t uuid_status;
-	uint8_t array_uuid_buf[MUXFS_UUID_SIZE];
+	uint8_t array_uuid_buf[EMUXFS_UUID_SIZE];
 	size_t chksz, metasz;
 
-	if (muxfs_dsinit())
-		exit(-1);
+	/*
+	 * emuxfs_dsinit() has already been called by main().  Calling it again
+	 * would reinitialize (and leak) the dynamic stack.
+	 */
 
 	rc = 1;
 	alg = CAT_MD5;
-	memset(dev_roots, 0, MUXFS_DEV_COUNT_MAX * PATH_MAX);
+	memset(dev_roots, 0, EMUXFS_DEV_COUNT_MAX * PATH_MAX);
 	dev_root_count = 0;
 
 	/* Shift one argument to account for the sub-command. */
@@ -238,12 +259,12 @@ muxfs_format_main(int argc, char *argv[])
 	while ((c = getopt(argc, argv, "a:")) != -1) {
 		switch (c) {
 		case 'a':
-			if (muxfs_chk_str_to_type(&alg, optarg,
+			if (emuxfs_chk_str_to_type(&alg, optarg,
 			    strlen(optarg)))
 				goto out;
 			break;
 		default:
-			muxfs_format_usage();
+			emuxfs_format_usage();
 			exit(1);
 		}
 	}
@@ -251,28 +272,46 @@ muxfs_format_main(int argc, char *argv[])
 	argv += optind;
 	while (argc > 0) {
 		len = strlen(argv[0]);
-		if (len >= PATH_MAX)
+		if (len == 0 || len >= PATH_MAX)
+			goto out;
+		if (dev_root_count == EMUXFS_DEV_COUNT_MAX)
 			goto out;
 		memcpy(dev_roots[dev_root_count++], argv[0], len);
 		--argc;
 		++argv;
 	}
+	if (dev_root_count == 0)
+		goto out;
+
+	/*
+	 * Confine the process to the directories being formatted and drop
+	 * unnecessary system call privileges before touching the disk.
+	 */
+	for (i = 0; i < dev_root_count; ++i) {
+		if (emuxfs_sandbox_unveil_path(dev_roots[i]))
+			goto out;
+	}
+	if (emuxfs_sandbox_unveil_lock())
+		goto out;
+	if (emuxfs_sandbox_pledge(EMUXFS_PLEDGE_FORMAT))
+		goto out;
 
 	now = time(NULL);
 	uuid_create(&uuid, &uuid_status);
 	if (uuid_status != uuid_s_ok)
 		goto out;
 	uuid_enc_le(array_uuid_buf, &uuid);
-	chksz = muxfs_chk_size(alg);
-	if (muxfs_meta_size_raw(&metasz, alg))
+	chksz = emuxfs_chk_size(alg);
+	if (emuxfs_meta_size_raw(&metasz, alg))
 		goto out;
 
 	for (i = 0; i < dev_root_count; ++i) {
-		subrc = muxfs_dev_format(dev_roots[i], alg, chksz, metasz, now,
+		subrc = emuxfs_dev_format(dev_roots[i], alg, chksz, metasz, now,
 		    array_uuid_buf);
-		if (rc == 2) {
+		if (subrc == 2) {
 			fprintf(stderr, "Directory \"%s\" is not empty.\n",
 			    dev_roots[i]);
+			goto out;
 		}
 		if (subrc != 0)
 			goto out;
@@ -280,7 +319,7 @@ muxfs_format_main(int argc, char *argv[])
 
 	rc = 0;
 out:
-	if (muxfs_dsfinal())
+	if (emuxfs_dsfinal())
 		exit(-1);
 	return rc;
 }

@@ -1,5 +1,6 @@
-# Copy this file to test.conf, fill in the variables, and remove the exit line.
-exit 1
+# Copy this file to test.conf and fill in the variables below.
+# test.pl parses this file in Perl; it is not sourced by a shell.
+# The paths must be absolute, dedicated scratch directories.
 
 # The test suite will create and destroy the 'dev' array and the mount-point
 # itself so specify below unused filesystem paths with existing parent

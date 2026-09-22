@@ -17,7 +17,7 @@
 
 /*
  * The Dynamic Stack
- * 
+ *
  * This allocator uses a stack of allocations with runtime-defined size.
  * Allocations are ordered by the time of allocation.  When an older allocation
  * is popped, it is freed and invalidates any newer allocations up to that
@@ -33,16 +33,18 @@
  *
  * An allocation may 'grow', increasing its allocated size by a number of
  * bytes, provided that it is the most recently 'pushed' allocation.  Calling
- * muxfs_dsgrow() on any other pointer is undefined.
+ * emuxfs_dsgrow() on any other pointer is undefined.
  */
 
 #ifndef _DS_H_
 #define _DS_H_
 
-MUXFS int muxfs_dsinit(void);
-MUXFS int muxfs_dsfinal(void);
-MUXFS int muxfs_dspush(void **, size_t);
-MUXFS int muxfs_dspop(void *);
-MUXFS int muxfs_dsgrow(void **, size_t);
+#include <stddef.h>
+
+EMUXFS int emuxfs_dsinit(void);
+EMUXFS int emuxfs_dsfinal(void);
+EMUXFS int emuxfs_dspush(void **, size_t);
+EMUXFS int emuxfs_dspop(void *);
+EMUXFS int emuxfs_dsgrow(void **, size_t);
 
 #endif /* _DS_H_ */

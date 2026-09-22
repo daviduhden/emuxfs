@@ -1,4 +1,4 @@
-/* ds_malloc.c */
+/* fuzz_conf.c */
 /*
  * Copyright (c) 2022 Stephen D. Adams <stephen@sdadams.org>
  *
@@ -16,55 +16,46 @@
  */
 
 /*
- * This is a fallback implementation of the dynamic stack that simply delegates
- * to malloc(3), free(3), and realloc(3).
+ * This file is part of emuxfs, The Enhanced Multiplexed File System (see NOTICE.md).
+ *
+ * Optional libFuzzer entry point for the muxfs.conf parser.  It is not built
+ * by the normal build and is not run by CI; see TESTING.md.  Build with:
+ *
+ *   make fuzz-conf
+ *   ./tests/fuzz/fuzz_conf
  */
 
+#include <stdint.h>
 #include <stdlib.h>
+#include <unistd.h>
 
-#include "ds.h"
+#include "emuxfs.h"
 
-EMUXFS int
-emuxfs_dsinit(void)
+int
+LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
-	return 0;
-}
+	struct emuxfs_dev_conf conf;
+	char path[] = "/tmp/emuxfs-fuzz-XXXXXX";
+	int fd;
 
-EMUXFS int
-emuxfs_dsfinal(void)
-{
-	return 0;
-}
+	if (size == 0)
+		return 0;
 
-EMUXFS int
-emuxfs_dspush(void **p_out, size_t s)
-{
-	void *p;
+	if ((fd = mkstemp(path)) == -1)
+		return 0;
+	if (write(fd, data, size) != (ssize_t)size) {
+		close(fd);
+		unlink(path);
+		return 0;
+	}
+	if (lseek(fd, 0, SEEK_SET) == -1) {
+		close(fd);
+		unlink(path);
+		return 0;
+	}
+	(void)emuxfs_conf_parse(&conf, fd);
+	close(fd);
+	unlink(path);
 
-	p = malloc(s);
-	if (p == NULL)
-		exit(-1);
-
-	*p_out = p;
-	return 0;
-}
-
-EMUXFS int
-emuxfs_dspop(void *p)
-{
-	free(p);
-	return 0;
-}
-
-EMUXFS int
-emuxfs_dsgrow(void **p_inout, size_t s)
-{
-	void *p;
-
-	p = realloc(*p_inout, s);
-	if (p == NULL)
-		exit(-1);
-
-	*p_inout = p;
 	return 0;
 }

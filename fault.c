@@ -1,4 +1,4 @@
-/* unity.c */
+/* fault.c */
 /*
  * Copyright (c) 2022 Stephen D. Adams <stephen@sdadams.org>
  *
@@ -15,22 +15,33 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "chk.c"
-#include "conf.c"
-#include "desc.c"
-#include "dev.c"
-#if MUXFS_DS_MALLOC == 1
-#include "ds_malloc.c"
+/*
+ * This file is part of emuxfs, The Enhanced Multiplexed File System (see NOTICE.md).
+ * See fault.h and TESTING.md.
+ */
+
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "fault.h"
+
+void
+emuxfs_fault_point(const char *name)
+{
+#ifdef EMUXFS_FAULT_INJECTION
+	const char *point, *action;
+
+	point = getenv(EMUXFS_FAULT_ENV_POINT);
+	if ((point == NULL) || (strcmp(point, name) != 0))
+		return;
+
+	action = getenv(EMUXFS_FAULT_ENV_ACTION);
+	if ((action == NULL) || (strcmp(action, "exit") == 0))
+		_exit(EMUXFS_FAULT_EXIT_STATUS);
+	if (strcmp(action, "abort") == 0)
+		abort();
 #else
-#include "ds.c"
+	(void)name;
 #endif
-#include "format.c"
-#include "lfile.c"
-#include "ops.c"
-#include "state.c"
-#include "util.c"
-#include "version.c"
-#include "mount.c"
-#include "scan.c"
-#include "sync.c"
-#include "muxfs.c"
+}

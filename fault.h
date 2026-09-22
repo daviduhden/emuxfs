@@ -1,4 +1,4 @@
-/* ops.h */
+/* fault.h */
 /*
  * Copyright (c) 2022 Stephen D. Adams <stephen@sdadams.org>
  *
@@ -16,19 +16,25 @@
  */
 
 /*
- * This file belongs to emuxfs, The Enhanced Multiplexed File System (see NOTICE.md).
+ * This file is part of emuxfs, The Enhanced Multiplexed File System (see NOTICE.md).
  *
- * emuxfs uses the FUSE implementation shipped with OpenBSD (libfuse in the
- * base system), which provides the FUSE 2.6 high-level API.  This header is
- * the single point at which emuxfs depends on FUSE; see COMPATIBILITY.md for
- * why the native implementation is used instead of libfuse3.
+ * Optional, compile-time-gated fault injection for crash-consistency tests.
+ * It is inert unless EMUXFS_FAULT_INJECTION is defined, and is never enabled
+ * by the normal build.  Call sites are unconditional; the disabled form is an
+ * empty function so no #ifdef clutter is needed at each boundary.
  */
 
-#ifndef _OPS_H_
-#define _OPS_H_
+#ifndef _FAULT_H_
+#define _FAULT_H_
 
-#include <fuse.h>
+#define EMUXFS_FAULT_ENV_POINT	"EMUXFS_FAULT_POINT"
+#define EMUXFS_FAULT_ENV_ACTION	"EMUXFS_FAULT_ACTION"
+#define EMUXFS_FAULT_EXIT_STATUS	70
 
-extern const struct fuse_operations emuxfs_fuse_ops;
+/*
+ * If the environment names 'name' as the active fault point, terminate the
+ * process at that point (simulating a crash) or abort.  Otherwise return.
+ */
+void emuxfs_fault_point(const char *);
 
-#endif /* _OPS_H_ */
+#endif /* _FAULT_H_ */
