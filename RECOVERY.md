@@ -128,10 +128,13 @@ treated as merely dirty.
 
 `sync` is the explicit recovery path.  It reopens the destination with force —
 accepting both a dirty device and a structurally impossible record, with a
-warning — rebuilds it from the source, and then commits a fresh, valid
-`state.db` with `working = 0` and `restoring = 0`.  A device left interrupted,
-or left with a torn/invalid record, therefore becomes mountable again.  `sync`
-does not clear `degraded`; that requires `format` (or replacing the directory).
+warning — and also reopens the sources with force, because a crash leaves
+every device that was open marked `mounted`.  It rebuilds the destination
+from the source, and then commits a fresh, valid `state.db` with
+`working = 0` and `restoring = 0`.  A device left interrupted, or left with a
+torn/invalid record, therefore becomes mountable again.  A `degraded` source
+is still refused.  `sync` does not clear `degraded` on the destination; that
+requires `format` (or replacing the directory).
 
 `audit` is **read-only**: it opens the devices read-only, does not set
 `mounted`, and does not modify `state.db` or any other persistent byte.

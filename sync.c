@@ -54,7 +54,7 @@ emuxfs_sync_main(int argc, char *argv[])
 	if (emuxfs_sandbox_pledge(EMUXFS_PLEDGE_SYNC))
 		exit(1);
 
-	if (emuxfs_init(1))
+	if (emuxfs_init(1, 1))
 		exit(-1);
 
 	if (emuxfs_dev_count() < 2) {

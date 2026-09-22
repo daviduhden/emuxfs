@@ -219,7 +219,7 @@ emuxfs_scan_main(enum emuxfs_scan_mode scan_mode, int argc, char *argv[])
 	emuxfs_cmdline.readonly = (scan_mode == EMUXFS_SCAN_AUDIT);
 
 	EMUXFS_TRACE("scan_main: before init\n");
-	if (emuxfs_init(0))
+	if (emuxfs_init(0, 0))
 		exit(-1);
 	EMUXFS_TRACE("scan_main: after init, dev_count=%lu\n",
 	    (unsigned long)emuxfs_dev_count());

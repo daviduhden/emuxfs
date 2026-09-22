@@ -171,7 +171,7 @@ sub mount_array {
     my $mlog = "$sandbox/mount-fg.log";
     # Run in the foreground (as a background shell job) so the daemon's
     # standard error, including the trace output, is captured.
-    system("$EMUXFS mount -f $mp $dev_a $dev_b >'$mlog' 2>&1 &");
+    system("EMUXFS_TRACE=1 $EMUXFS mount -f $mp $dev_a $dev_b >'$mlog' 2>&1 &");
     $mounted = 1;
 
     # Wait until the daemon has entered its event loop.
@@ -207,9 +207,6 @@ sub unmount_array {
 }
 
 # ---------------------------------------------------------------------------
-
-# Enable the always-compiled debug traces for every emuxfs invocation.
-$ENV{EMUXFS_TRACE} = 1;
 
 make_path( $dev_a, $dev_b, $dev_c, $mp, $work );
 

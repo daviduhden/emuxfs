@@ -106,7 +106,7 @@ emuxfs_mount_main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (emuxfs_init(0))
+	if (emuxfs_init(0, 0))
 		exit(-1);
 
 	switch (emuxfs_dev_seq_check()) {

@@ -307,7 +307,7 @@ struct emuxfs_wrbuf {
 	size_t off;
 	uint8_t buf[EMUXFS_WRBUF_SIZE];
 };
-EMUXFS int  emuxfs_init(int);
+EMUXFS int  emuxfs_init(int, int);
 EMUXFS int  emuxfs_final(void);
 EMUXFS int  emuxfs_state_syslog_init(void);
 EMUXFS int  emuxfs_state_syslog_final(void);
