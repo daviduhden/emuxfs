@@ -174,10 +174,12 @@ sub mount_array {
     $mounted = 1;
     print "diag: after mount dev_a mounted=" . state_mounted($dev_a) . "\n";
 
-    # Wait until the daemon has recorded the mount in state.db before any
-    # operation touches the mount point.
+    # The daemon records 'mounted' in emuxfs_init() before fuse_setup() mounts
+    # the filesystem and starts serving requests, so wait until a FUSE
+    # operation on the mount point actually succeeds (it returns ENXIO,
+    # "Device not configured", until the daemon is serving).
     for ( my $i = 0 ; $i < 500 ; $i++ ) {
-        last if state_mounted($dev_a) == 1;
+        last if stat($mp);
         select( undef, undef, undef, 0.02 );
     }
     return 1;

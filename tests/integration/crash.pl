@@ -188,8 +188,11 @@ must_run( "format", $EMUXFS, "format", "-a", "md5", $dev_a, $dev_b )
 print "== populate\n";
 must_run( "mount", $EMUXFS, "mount", $mp, $dev_a, $dev_b ) or exit 1;
 $mounted = 1;
-for ( my $i = 0 ; $i < 100 && !-e $mp ; $i++ ) {
-    select( undef, undef, undef, 0.01 );
+# Wait until the daemon is actually serving FUSE requests (the mount point
+# returns ENXIO until then).
+for ( my $i = 0 ; $i < 500 ; $i++ ) {
+    last if stat($mp);
+    select( undef, undef, undef, 0.02 );
 }
 put( "$mp/r", "original\n" ) or fail("write r");
 must_run( "mkdir d", "mkdir", "$mp/d" );
