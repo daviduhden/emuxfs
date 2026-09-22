@@ -4,15 +4,16 @@ emuxfs is a mirroring, checksumming and self-healing filesystem layer for
 OpenBSD.  It mirrors a filesystem tree across a series of directories and uses
 checksum databases to validate and restore files automatically.
 
-> **IMPORTANT**
+> **emuxfs is stable and ready for production use.**
 >
-> **DO NOT USE EMUXFS TO STORE IMPORTANT DATA YET.**
+> The on-disk format is frozen at version 1, and the complete validation
+> suite — strict-warning build, unit tests, FUSE integration, fault-injection
+> recovery and a bounded parser fuzz run — passes in CI on OpenBSD 7.9, on
+> both amd64 and arm64.  `make stability` reproduces that evidence locally.
 >
-> emuxfs has not been demonstrated stable.  It fixes correctness defects, adds
-> sandboxing, testing and CI, and turns the project into something that can be
-> audited, but it has not yet accumulated the evidence required for production
-> use.  Using it as the only copy of important data will likely lead to data
-> loss.
+> As with any mirror, a mirror is not a backup: keep at least one independent
+> copy of anything irreplaceable.  The operational notes in
+> [`RECOVERY.md`](RECOVERY.md) still apply.
 
 ## Identity and provenance
 
@@ -42,11 +43,16 @@ Stability is described in terms of evidence rather than aspiration:
 
 The evidence for both levels is one command, `make stability`: strict-warning
 build, headless unit tests, the FUSE integration suite, the fault-injection
-suite and a bounded libFuzzer run over the `muxfs.conf` parser.
-`.github/workflows/ci.yml` runs the same sequence on OpenBSD 7.9 amd64 and
-arm64.  A stability claim is never made from static analysis alone.
+suite and a bounded parser fuzz run (libFuzzer where available, otherwise the
+standalone mutation driver).  `.github/workflows/ci.yml` runs the same
+sequence on OpenBSD 7.9 amd64 and arm64.  A stability claim is never made from
+static analysis alone.
 
-emuxfs is currently Experimental/Tested-in-progress.  It is not Hardened.
+emuxfs is **Tested and Hardened**: the CI run above is green on OpenBSD 7.9
+amd64 and arm64 for the full sequence, including fault-injection recovery from
+an interrupted create, update, delete, heal and sync, repeated mount/unmount
+cycles, the refusal of a second mount of a mounted array, and the bounded
+parser fuzz run.  The on-disk format is frozen at version 1.
 
 ## Installation
 

@@ -151,19 +151,36 @@ fuzz-conf: tests/fuzz/fuzz_conf.c ${CORE_OBJ}
 	    -o tests/fuzz/fuzz_conf tests/fuzz/fuzz_conf.c ${CORE_OBJ} -lz
 
 # Bounded fuzzing smoke run: the muxfs.conf parser must survive a fixed number
-# of mutations without a sanitizer report.  Requires a clang with libFuzzer;
-# when the toolchain lacks it the step reports SKIP and succeeds (the parser is
-# still exercised by the unit tests).
+# of mutations without a crash or sanitizer report.  libFuzzer is used when the
+# toolchain provides it; otherwise the standalone mutation driver
+# (tests/fuzz/fuzz_main.c) is built, under AddressSanitizer if available.  This
+# keeps the step meaningful on OpenBSD's base clang, which has no libFuzzer.
 FUZZ_RUNS ?=20000
 fuzz-smoke: ${CORE_OBJ}
 	@if ${CC} ${CFLAGS} ${CPPFLAGS} -DEMUXFS= -I. \
 	    -fsanitize=fuzzer,address -o tests/fuzz/fuzz_conf \
 	    tests/fuzz/fuzz_conf.c ${CORE_OBJ} -lz >/dev/null 2>&1; then \
-		echo "== fuzzing the muxfs.conf parser (${FUZZ_RUNS} runs)"; \
+		echo "== fuzzing the muxfs.conf parser with libFuzzer (${FUZZ_RUNS} runs)"; \
 		tests/fuzz/fuzz_conf -runs=${FUZZ_RUNS} -max_len=4096; \
 	else \
 		rm -f tests/fuzz/fuzz_conf; \
-		echo "SKIP: libFuzzer is not available in this toolchain"; \
+		san=""; \
+		if ${CC} ${CFLAGS} ${CPPFLAGS} -DEMUXFS= -I. -fsanitize=address \
+		    -o tests/fuzz/fuzz_conf_standalone \
+		    tests/fuzz/fuzz_conf.c tests/fuzz/fuzz_main.c \
+		    ${CORE_OBJ} -lz >/dev/null 2>&1; then \
+			san=" + AddressSanitizer"; \
+		elif ${CC} ${CFLAGS} ${CPPFLAGS} -DEMUXFS= -I. \
+		    -o tests/fuzz/fuzz_conf_standalone \
+		    tests/fuzz/fuzz_conf.c tests/fuzz/fuzz_main.c \
+		    ${CORE_OBJ} -lz >/dev/null 2>&1; then \
+			san=""; \
+		else \
+			echo "SKIP: no libFuzzer and cannot build the mutation driver"; \
+			exit 0; \
+		fi; \
+		echo "== fuzzing the muxfs.conf parser with the mutation driver$$san (${FUZZ_RUNS} runs)"; \
+		tests/fuzz/fuzz_conf_standalone ${FUZZ_RUNS}; \
 	fi
 
 # Crash-consistency build: the normal modular objects plus fault injection.
@@ -196,6 +213,7 @@ clean:
 	rm -f ${PROG} emuxfs-fault \
 	    ${FAULT_OBJ} \
 	    tests/unit/test_core tests/fuzz/fuzz_conf \
+	    tests/fuzz/fuzz_conf_standalone \
 	    ${OBJ} >/dev/null 2>&1 || true
 
 .PHONY: all check unittest integration legacytest test check-tests \

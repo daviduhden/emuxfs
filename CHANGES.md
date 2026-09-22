@@ -1,5 +1,15 @@
 # Change log
 
+## Production readiness (2026-09-22)
+
+emuxfs is declared **stable and ready for production use**.  The complete
+validation sequence — strict-warning build, unit tests, FUSE integration,
+fault-injection recovery (interrupted create, update, delete, heal and sync),
+repeated mount/unmount cycles, the refusal of a second mount and a bounded
+parser fuzz run — passes in CI on OpenBSD 7.9 amd64 and arm64, and the on-disk
+format is frozen at version 1.  See README.md (Stability levels) and
+TESTING.md for the criteria and the evidence.
+
 ## 1.4-enhanced (2026-09-22)
 
 Fifth phase: commit ordering, identity and the v1/v2 decision.

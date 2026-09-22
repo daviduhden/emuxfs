@@ -63,10 +63,10 @@ is the same model as the original Multiplexed File System.
 No privilege separation (privsep) was added.  A split would require passing
 open directory descriptors, paths and results between privileged and
 unprivileged processes, which is a large increase in the attack surface and
-the code that must be audited.  For an experimental storage daemon, the
-single-process model with a tight pledge/unveil policy was judged to be the
-smaller risk.  This may be revisited once the format and operations are
-stable.
+the code that must be audited.  For a storage daemon, the single-process model
+with a tight pledge/unveil policy was judged to be the smaller risk.  This may
+be revisited; the format is frozen at version 1, so it would not require a
+format change.
 
 ## pledge(2) policy
 

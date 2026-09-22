@@ -154,18 +154,20 @@ ON_DISK_FORMAT.md and is unchanged from the original apart from
 ## Fuzzing
 
 ```
-make fuzz-conf            # build the fuzzer
+make fuzz-conf            # build the libFuzzer entry point
 ./tests/fuzz/fuzz_conf    # run it interactively
 make fuzz-smoke           # bounded run, part of 'make stability'
 ```
 
 `tests/fuzz/fuzz_conf.c` is a libFuzzer entry point for the `muxfs.conf`
-parser.  The build target uses `-fsanitize=fuzzer,address`; for full
-instrumentation rebuild the tree with those sanitizer flags in `CFLAGS`.
-`make fuzz-smoke` runs a bounded session (`FUZZ_RUNS`, 20000 by default) and
-is part of `make stability` and of CI.  If the toolchain has no libFuzzer the
-step reports `SKIP` and succeeds; the parsers are still covered by the unit
-tests.  Fuzzing is never enabled by the default build.
+parser.  `make fuzz-smoke` runs a bounded session (`FUZZ_RUNS`, 20000 by
+default) and is part of `make stability` and of CI.  When the toolchain has
+libFuzzer the entry point is run directly under `-fsanitize=fuzzer,address`.
+OpenBSD's base clang has no libFuzzer, so there the bounded run uses the
+standalone mutation driver `tests/fuzz/fuzz_main.c` (half documented-seed
+mutations, half random bytes), built with AddressSanitizer when available and
+without it otherwise.  The step only reports `SKIP` if neither can be built.
+Fuzzing is never enabled by the default build.
 
 ## One-command validation
 
