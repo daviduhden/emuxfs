@@ -209,7 +209,10 @@ sub corrupt {
 
 sub recover_and_check {
     my ($tag) = @_;
-    must_run( "recovery heal $tag",        $EMUXFS, "heal",  $dev_a, $dev_b );
+    # The interrupted heal left dev_a with restoring=1, so heal itself refuses
+    # to open it (fail closed).  The explicit recovery for an interrupted
+    # device is sync, which force-opens the destination and rebuilds it.
+    must_run( "recovery sync $tag",        $EMUXFS, "sync",  $dev_a, $dev_b );
     must_run( "audit after recovery $tag", $EMUXFS, "audit", $dev_a, $dev_b );
     fail("r did not converge ($tag)") if compare( "$dev_a/r", "$dev_b/r" ) != 0;
     fail("n did not converge ($tag)")
