@@ -496,6 +496,8 @@ emuxfs_op_create(struct emuxfs_op_create_args *args)
 		emuxfs_working_pop(i, now);
 		continue;
 fail:
+		EMUXFS_TRACE("op_create: fail dev=%lu type=%d path=%s\n",
+		    (unsigned long)i, (int)args->type, args->path);
 		emuxfs_degraded_set(i);
 		emuxfs_working_pop(i, now);
 		continue;
@@ -749,6 +751,8 @@ emuxfs_op_delete(const char *path, enum emuxfs_op_delete_type type)
 		emuxfs_working_pop(i, now);
 		continue;
 fail:
+		EMUXFS_TRACE("op_delete: fail dev=%lu type=%d path=%s\n",
+		    (unsigned long)i, (int)type, path);
 		emuxfs_degraded_set(i);
 		emuxfs_working_pop(i, now);
 		continue;
@@ -2026,6 +2030,8 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 		emuxfs_working_pop(i, now);
 		continue;
 fail:
+		EMUXFS_TRACE("op_update: fail dev=%lu type=%d path=%s\n",
+		    (unsigned long)i, (int)args->type, args->path);
 		emuxfs_degraded_set(i);
 		emuxfs_working_pop(i, now);
 		continue;
@@ -2172,6 +2178,8 @@ emuxfs_rename(const char *from, const char *to)
 		emuxfs_working_pop(i, now);
 		continue;
 fail:
+		EMUXFS_TRACE("rename: fail dev=%lu from=%s to=%s\n",
+		    (unsigned long)i, from, to);
 		emuxfs_degraded_set(i);
 		emuxfs_working_pop(i, now);
 		continue;
