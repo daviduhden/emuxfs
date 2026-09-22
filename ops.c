@@ -1107,7 +1107,7 @@ emuxfs_op_read(struct emuxfs_op_read_args *args)
 
 		emuxfs_restore_now();
 		if (rdsz > -1)
-			return rdsz;
+			return (int)rdsz;
 		return 0;
 fail:
 		if (emuxfs_state_restore_push_back(i, args->path))
@@ -1853,8 +1853,8 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 			emuxfs_eids_reset();
 			if (subrc)
 				subrc = EMUXFS_EFS;
-			wr_desc.mode = (prewr_desc.mode & S_IFMT) |
-			    ((~S_IFMT) & args->mode);
+			wr_desc.mode = (prewr_desc.mode & (uint64_t)S_IFMT) |
+			    ((~(uint64_t)S_IFMT) & args->mode);
 			break;
 		case EMUXFS_UT_CHOWN:
 			emuxfs_eids_set();
@@ -1869,7 +1869,7 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 			if (args->gid != (gid_t)-1)
 				wr_desc.group = args->gid;
 			/* Possibly not POSIX compliant. */
-			wr_desc.mode &= (~(S_ISUID|S_ISGID));
+			wr_desc.mode &= (~(uint64_t)(S_ISUID|S_ISGID));
 			break;
 		case EMUXFS_UT_UTIMENS:
 			emuxfs_eids_set();
@@ -2270,7 +2270,7 @@ emuxfs_wrbuf_flush(void)
 	args.path = wr->path;
 	args.buf = (const char *)wr->buf;
 	args.bufsz = wr->sz;
-	args.offset = wr->off;
+	args.offset = (off_t)wr->off;
 	args.wc = &wr->wc;
 
 	subrc = emuxfs_op_update(&args);
@@ -2291,10 +2291,10 @@ emuxfs_buffered_write_begin(const char *path, const char *buf, size_t bufsz,
 	if (rc != 0)
 		return rc; /* Negated errno, as returned by the FUSE layer. */
 
-	if (emuxfs_state_wrbuf_set(path, fc->uid, fc->gid, bufsz, offset,
-	    (const uint8_t *)buf))
+	if (emuxfs_state_wrbuf_set(path, fc->uid, fc->gid, bufsz,
+	    (size_t)offset, (const uint8_t *)buf))
 		exit(-1);
-	return bufsz;
+	return (int)bufsz;
 }
 
 static int
@@ -2315,16 +2315,16 @@ emuxfs_buffered_write(const char *path, const char *buf, size_t bufsz,
 	}
 
 	if (!emuxfs_state_wrbuf_append(&wrsz, path, fc->uid, fc->gid,
-	    bufsz, offset, (const uint8_t *)buf)) {
+	    bufsz, (size_t)offset, (const uint8_t *)buf)) {
 		if (wrsz < bufsz) {
 			offset += wrsz;
 			bufsz -= wrsz;
 			emuxfs_wrbuf_flush();
 			if (emuxfs_state_wrbuf_set(path, fc->uid, fc->gid,
-			    bufsz, offset, (const uint8_t *)buf))
+			    bufsz, (size_t)offset, (const uint8_t *)buf))
 				exit(-1);
 		}
-		return bufsz;
+		return (int)bufsz;
 	}
 
 	emuxfs_wrbuf_flush();
