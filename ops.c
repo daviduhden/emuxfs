@@ -795,7 +795,7 @@ emuxfs_getattr_inner(struct stat *st_out, struct stat *st, uint64_t eno,
 	(void)err;
 
 	st->st_ino = eno;
-	sz = st->st_size;
+	sz = (size_t)st->st_size;
 	st->st_blocks = (sz / EMUXFS_BLOCK_SIZE) +
 	    ((sz % EMUXFS_BLOCK_SIZE) ? 1 : 0);
 	st->st_blksize = EMUXFS_BLOCK_SIZE;
@@ -815,7 +815,7 @@ emuxfs_read_inner(int root_fd, struct emuxfs_op_read_args *args,
 	uint8_t buf[EMUXFS_BLOCK_SIZE];
 	struct emuxfs_chk content_chk;
 	uint8_t content_sum[EMUXFS_CHKSZ_MAX];
-	ssize_t rdsz;
+	size_t rdsz;
 	struct emuxfs_range r;
 	size_t i_offset, out_offset, out_size, buf_offset;
 	uint64_t i;
@@ -833,15 +833,15 @@ emuxfs_read_inner(int root_fd, struct emuxfs_op_read_args *args,
 		goto out;
 	}
 
-	fsz = st->st_size;
-	if (args->offset >= fsz) {
+	fsz = (size_t)st->st_size;
+	if ((size_t)args->offset >= fsz) {
 		*rdsz_out = 0;
 		rc = 0;
 		goto out2;
 	}
 
 	if (fsz <= EMUXFS_BLOCK_SIZE) {
-		if (read(fd, buf, fsz) != fsz) {
+		if (read(fd, buf, fsz) != (ssize_t)fsz) {
 			rc = EMUXFS_EFS;
 			goto out2;
 		}
@@ -852,18 +852,18 @@ emuxfs_read_inner(int root_fd, struct emuxfs_op_read_args *args,
 			rc = EMUXFS_ECHK;
 			goto out2;
 		}
-		rdsz = fsz - args->offset;
+		rdsz = fsz - (size_t)args->offset;
 		if (rdsz > args->size)
 			rdsz = args->size;
 		memcpy(args->buf_out, &buf[args->offset], rdsz);
 
-		*rdsz_out = rdsz;
+		*rdsz_out = (ssize_t)rdsz;
 		rc = 0;
 		goto out2;
 	}
 
-	r.byte_begin = args->offset;
-	r.byte_end = args->offset + args->size;
+	r.byte_begin = (size_t)args->offset;
+	r.byte_end = (size_t)args->offset + args->size;
 	if (r.byte_end > fsz)
 		r.byte_end = fsz;
 	emuxfs_range_compute(&r, chksz);
@@ -872,7 +872,7 @@ emuxfs_read_inner(int root_fd, struct emuxfs_op_read_args *args,
 	if (emuxfs_lfile_open(&lfd, lfile_fd, st->st_ino, O_RDONLY))
 		goto out2;
 	if ((lfile = mmap(NULL, r.lfilesz, PROT_READ, MAP_SHARED, lfd,
-	    r.lfileoff)) == MAP_FAILED)
+	    (off_t)r.lfileoff)) == MAP_FAILED)
 		goto out3;
 
 	for (i = r.blk_index_begin; i < r.blk_index_end; ++i) {
@@ -880,7 +880,7 @@ emuxfs_read_inner(int root_fd, struct emuxfs_op_read_args *args,
 		rdsz = EMUXFS_BLOCK_SIZE;
 		if (i_offset + rdsz > fsz)
 			rdsz = fsz - i_offset;
-		if (pread(fd, buf, rdsz, i_offset) != rdsz) {
+		if (pread(fd, buf, rdsz, (off_t)i_offset) != (ssize_t)rdsz) {
 			rc = EMUXFS_EFS;
 			goto out4;
 		}
@@ -902,7 +902,7 @@ emuxfs_read_inner(int root_fd, struct emuxfs_op_read_args *args,
 		out_offset += out_size;
 	}
 
-	*rdsz_out = out_offset;
+	*rdsz_out = (ssize_t)out_offset;
 	rc = 0;
 out4:
 	if (r.lfilesz == 0)
@@ -941,16 +941,17 @@ emuxfs_readlink_inner(int root_fd, struct emuxfs_op_read_args *args,
 
 	lnk_desc = *desc;
 	memset(lnk_desc.content_checksum, 0, EMUXFS_CHKSZ_MAX);
-	emuxfs_desc_chk_provided_content(&lnk_desc, (uint8_t *)lnkbuf, lnksz,
-	    alg);
+	emuxfs_desc_chk_provided_content(&lnk_desc, (uint8_t *)lnkbuf,
+	    (size_t)lnksz, alg);
 	emuxfs_desc_chk_meta(lnk_meta_sum, &lnk_desc, alg);
 	if (bcmp(lnk_meta_sum, &meta->checksums[0], chksz) != 0)
 		return EMUXFS_ECHK;
 
 	if (args->size == 0)
 		return EMUXFS_EFS;
-	rdsz = (lnksz < (args->size - 1)) ? lnksz : (args->size - 1);
-	memcpy(args->buf_out, lnkbuf, rdsz);
+	rdsz = ((size_t)lnksz < (args->size - 1)) ? lnksz :
+	    (ssize_t)(args->size - 1);
+	memcpy(args->buf_out, lnkbuf, (size_t)rdsz);
 	args->buf_out[rdsz] = '\0';
 
 	return 0;
@@ -967,9 +968,13 @@ emuxfs_readdir_inner(dind dev_index, int root_fd,
 	uint8_t content_sum[EMUXFS_CHKSZ_MAX];
 	struct emuxfs_dir dir;
 	struct dirent *dirent;
-	int i;
+	size_t i;
 	const char *dname;
 	size_t dnamelen;
+
+	(void)alg;
+	(void)st;
+	(void)desc;
 
 	rc = EMUXFS_EINT;
 
@@ -1230,6 +1235,7 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 
 	struct emuxfs_range r;
 	size_t rdsz, i_offset, off, beginsz, padsz;
+	size_t newoff;
 	uint64_t i;
 	int lfd;
 	uint8_t *lfile;
@@ -1251,21 +1257,30 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 		rc = EMUXFS_EFS;
 		goto out;
 	}
+	if (args->offset < 0) {
+		rc = EMUXFS_EFS;
+		goto out;
+	}
+	newoff = (size_t)args->offset;
 
-	larger_sz = smaller_sz = prewr_sz = st->st_size;
-	if (args->offset > larger_sz)
-		larger_sz = args->offset;
-	if (args->offset < smaller_sz)
-		smaller_sz = args->offset;
+	if (st->st_size < 0) {
+		rc = EMUXFS_EFS;
+		goto out;
+	}
+	larger_sz = smaller_sz = prewr_sz = (size_t)st->st_size;
+	if (newoff > larger_sz)
+		larger_sz = newoff;
+	if (newoff < smaller_sz)
+		smaller_sz = newoff;
 
-	if (args->offset == prewr_sz) {
+	if (newoff == prewr_sz) {
 		rc = 0;
 		goto out;
 	}
 
 	if (prewr_sz <= blksz) {
 		memset(content_buf, 0, blksz);
-		if (pread(fd, content_buf, prewr_sz, 0) != prewr_sz) {
+		if (pread(fd, content_buf, prewr_sz, 0) != (ssize_t)prewr_sz) {
 			rc = EMUXFS_EFS;
 			goto out;
 		}
@@ -1278,8 +1293,8 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 			goto out;
 		}
 	} else {
-		if (args->offset <= prewr_sz) {
-			r.byte_begin = args->offset;
+		if (newoff <= prewr_sz) {
+			r.byte_begin = newoff;
 			r.byte_end = prewr_sz;
 		} else {
 			r.byte_begin = r.byte_end = prewr_sz;
@@ -1291,7 +1306,7 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 		if (emuxfs_lfile_open(&lfd, lfile_fd, st->st_ino, O_RDONLY))
 			goto out;
 		if ((lfile = mmap(NULL, r.lfilesz, PROT_READ, MAP_SHARED, lfd,
-		    r.lfileoff)) == MAP_FAILED)
+		    (off_t)r.lfileoff)) == MAP_FAILED)
 			goto out;
 
 		for (i = r.blk_index_begin; i < r.blk_index_end; ++i) {
@@ -1299,7 +1314,7 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 			rdsz = blksz;
 			if (i_offset + rdsz > prewr_sz)
 				rdsz = prewr_sz - i_offset;
-			if (pread(fd, content_buf, rdsz, i_offset) != rdsz) {
+			if (pread(fd, content_buf, rdsz, (off_t)i_offset) != (ssize_t)rdsz) {
 				rc = EMUXFS_EFS;
 				goto out;
 			}
@@ -1324,44 +1339,44 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 	}
 
 	szcase = (prewr_sz > blksz) ? 1 : 0;
-	szcase += (args->offset > blksz) ? 2 : 0;
+	szcase += (newoff > blksz) ? 2 : 0;
 	switch (szcase) {
 	case 1:
 		if (emuxfs_lfile_delete(lfile_fd, st->st_ino))
 			goto out;
 		memset(content_buf, 0, blksz);
-		if (pread(fd, content_buf, args->offset, 0) != args->offset) {
+		if (pread(fd, content_buf, newoff, 0) != (ssize_t)newoff) {
 			rc = EMUXFS_EFS;
 			goto out;
 		}
 		/* FALLTHROUGH */
 	case 0:
 		emuxfs_chk_init(&wr_content_chk, alg);
-		emuxfs_chk_update(&wr_content_chk, content_buf, args->offset);
+		emuxfs_chk_update(&wr_content_chk, content_buf, newoff);
 		emuxfs_chk_final(wr_desc->content_checksum, &wr_content_chk);
 		memcpy(&wr_meta->checksums[chksz], wr_desc->content_checksum,
 		    chksz);
 		break;
 	case 2:
 		if (emuxfs_lfile_create(lfile_fd, chksz, st->st_ino,
-		    args->offset))
+		    newoff))
 			goto out;
 		r.byte_begin = 0;
-		r.byte_end = args->offset;
+		r.byte_end = newoff;
 		emuxfs_range_compute(&r, chksz);
 
 		if (emuxfs_lfile_open(&lfd, lfile_fd, st->st_ino, O_WRONLY))
 			goto out;
 		if ((lfile = mmap(NULL, r.lfilesz, PROT_WRITE, MAP_SHARED, lfd,
-		    r.lfileoff)) == MAP_FAILED)
+		    (off_t)r.lfileoff)) == MAP_FAILED)
 			goto out;
 
 		for (i = r.blk_index_begin; i < r.blk_index_end; ++i) {
 			i_offset = i * blksz;
 			rdsz = blksz;
-			if (i_offset + rdsz > args->offset)
-				rdsz = args->offset - i_offset;
-			if (pread(fd, content_buf, rdsz, i_offset) != rdsz) {
+			if (i_offset + rdsz > newoff)
+				rdsz = newoff - i_offset;
+			if (pread(fd, content_buf, rdsz, (off_t)i_offset) != (ssize_t)rdsz) {
 				rc = EMUXFS_EFS;
 				goto out;
 			}
@@ -1379,16 +1394,16 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 		lfd = -1;
 
 		if (emuxfs_lfile_ancestors_recompute(wr_desc->content_checksum,
-		    lfile_fd, alg, st->st_ino, args->offset, r.blk_index_begin,
+		    lfile_fd, alg, st->st_ino, newoff, r.blk_index_begin,
 		    r.blk_index_end))
 			goto out;
 		break;
 	case 3:
 		if (emuxfs_lfile_resize(lfile_fd, chksz, st->st_ino,
-		    prewr_sz, args->offset))
+		    prewr_sz, newoff))
 			goto out;
-		if (args->offset < prewr_sz) {
-			r.byte_begin = r.byte_end = args->offset;
+		if (newoff < prewr_sz) {
+			r.byte_begin = r.byte_end = newoff;
 			if (r.byte_begin > 0)
 				--r.byte_begin;
 			emuxfs_range_compute(&r, chksz);
@@ -1397,12 +1412,12 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 			    O_WRONLY))
 				goto out;
 			if ((lfile = mmap(NULL, r.lfilesz, PROT_WRITE,
-			    MAP_SHARED, lfd, r.lfileoff)) == MAP_FAILED)
+			    MAP_SHARED, lfd, (off_t)r.lfileoff)) == MAP_FAILED)
 				goto out;
 
-			rdsz = args->offset - r.blk_begin;
-			if (pread(fd, content_buf, rdsz, r.blk_begin) !=
-			    rdsz) {
+			rdsz = newoff - r.blk_begin;
+			if (pread(fd, content_buf, rdsz, (off_t)r.blk_begin) !=
+			    (ssize_t)rdsz) {
 				rc = EMUXFS_EFS;
 				goto out;
 			}
@@ -1421,18 +1436,18 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 
 			if (emuxfs_lfile_ancestors_recompute(wr_desc
 			    ->content_checksum, lfile_fd, alg, st->st_ino,
-			    args->offset, r.blk_index_begin, r.blk_index_end))
+			    newoff, r.blk_index_begin, r.blk_index_end))
 				goto out;
 			break;
 		}
 		r.byte_begin = prewr_sz;
-		r.byte_end = args->offset;
+		r.byte_end = newoff;
 		emuxfs_range_compute(&r, chksz);
 
 		if (emuxfs_lfile_open(&lfd, lfile_fd, st->st_ino, O_WRONLY))
 			goto out;
 		if ((lfile = mmap(NULL, r.lfilesz, PROT_WRITE, MAP_SHARED, lfd,
-		    r.lfileoff)) == MAP_FAILED)
+		    (off_t)r.lfileoff)) == MAP_FAILED)
 			goto out;
 
 		for (i = r.blk_index_begin; i < r.blk_index_end; ++i) {
@@ -1442,15 +1457,15 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 				beginsz = prewr_sz - i_offset;
 				if (beginsz > blksz)
 					beginsz = blksz;
-				if (pread(fd, content_buf, beginsz, i_offset) !=
-				    beginsz) {
+				if (pread(fd, content_buf, beginsz, (off_t)i_offset) !=
+				    (ssize_t)beginsz) {
 					rc = EMUXFS_EFS;
 					goto out;
 				}
 				off += beginsz;
 			}
 			if (off < blksz) {
-				padsz = args->offset - (i_offset + off);
+				padsz = newoff - (i_offset + off);
 				if (off + padsz > blksz)
 					padsz = blksz - off;
 				memset(&content_buf[off], 0, padsz);
@@ -1471,7 +1486,7 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 		lfd = -1;
 
 		if (emuxfs_lfile_ancestors_recompute(wr_desc->content_checksum,
-		    lfile_fd, alg, st->st_ino, args->offset, r.blk_index_begin,
+		    lfile_fd, alg, st->st_ino, newoff, r.blk_index_begin,
 		    r.blk_index_end))
 			goto out;
 		break;
@@ -1479,12 +1494,12 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 		exit(-1); /* Unreachable. */
 	}
 
-	if (ftruncate(fd, args->offset)) {
+	if (ftruncate(fd, (off_t)newoff)) {
 		rc = EMUXFS_EFS;
 		goto out;
 	}
 
-	wr_desc->size = args->offset;
+	wr_desc->size = newoff;
 
 	rc = 0;
 out:
@@ -1513,6 +1528,7 @@ emuxfs_write_inner(int root_fd, struct emuxfs_op_update_args *args,
 
 	struct emuxfs_range r;
 	size_t rdsz, i_offset, wroff, off, beginsz, padsz, wrsz, endsz;
+	size_t newoff;
 	uint64_t i;
 	int lfd;
 	uint8_t *lfile;
@@ -1536,9 +1552,18 @@ emuxfs_write_inner(int root_fd, struct emuxfs_op_update_args *args,
 		rc = EMUXFS_EFS;
 		goto out;
 	}
+	if (args->offset < 0) {
+		rc = EMUXFS_EFS;
+		goto out;
+	}
+	newoff = (size_t)args->offset;
 
-	largest_sz = prewr_sz = st->st_size;
-	wrub = (args->offset + args->bufsz);
+	if (st->st_size < 0) {
+		rc = EMUXFS_EFS;
+		goto out;
+	}
+	largest_sz = prewr_sz = (size_t)st->st_size;
+	wrub = (newoff + args->bufsz);
 	if (wrub > largest_sz)
 		largest_sz = wrub;
 
@@ -1552,7 +1577,7 @@ emuxfs_write_inner(int root_fd, struct emuxfs_op_update_args *args,
 		 */
 		memset(content_buf, 0, blksz);
 
-		if (read(fd, content_buf, prewr_sz) != prewr_sz) {
+		if (read(fd, content_buf, prewr_sz) != (ssize_t)prewr_sz) {
 			rc = EMUXFS_EFS;
 			goto out;
 		}
@@ -1564,9 +1589,9 @@ emuxfs_write_inner(int root_fd, struct emuxfs_op_update_args *args,
 			rc = EMUXFS_ECHK;
 			goto out;
 		}
-	} else if (args->offset < prewr_sz) {
-		r.byte_begin = args->offset;
-		r.byte_end = args->offset + args->bufsz;
+	} else if (newoff < prewr_sz) {
+		r.byte_begin = newoff;
+		r.byte_end = newoff + args->bufsz;
 		if (r.byte_end > prewr_sz)
 			r.byte_end = prewr_sz;
 		emuxfs_range_compute(&r, chksz);
@@ -1574,7 +1599,7 @@ emuxfs_write_inner(int root_fd, struct emuxfs_op_update_args *args,
 		if (emuxfs_lfile_open(&lfd, lfile_fd, st->st_ino, O_RDONLY))
 			goto out;
 		if ((lfile = mmap(NULL, r.lfilesz, PROT_READ, MAP_SHARED, lfd,
-		    r.lfileoff)) == MAP_FAILED)
+		    (off_t)r.lfileoff)) == MAP_FAILED)
 			goto out;
 
 		for (i = r.blk_index_begin; i < r.blk_index_end; ++i) {
@@ -1582,7 +1607,7 @@ emuxfs_write_inner(int root_fd, struct emuxfs_op_update_args *args,
 			rdsz = blksz;
 			if (i_offset + rdsz > prewr_sz)
 				rdsz = prewr_sz - i_offset;
-			if (pread(fd, content_buf, rdsz, i_offset) != rdsz) {
+			if (pread(fd, content_buf, rdsz, (off_t)i_offset) != (ssize_t)rdsz) {
 				rc = EMUXFS_EFS;
 				goto out;
 			}
@@ -1612,9 +1637,9 @@ emuxfs_write_inner(int root_fd, struct emuxfs_op_update_args *args,
 	}
 
 	if (largest_sz <= blksz) {
-		memcpy(&content_buf[args->offset], args->buf, args->bufsz);
-		if (pwrite(fd, args->buf, args->bufsz, args->offset) !=
-		    args->bufsz) {
+		memcpy(&content_buf[newoff], args->buf, args->bufsz);
+		if (pwrite(fd, args->buf, args->bufsz, (off_t)newoff) !=
+		    (ssize_t)args->bufsz) {
 			rc = EMUXFS_EFS;
 			goto out;
 		}
@@ -1631,16 +1656,16 @@ emuxfs_write_inner(int root_fd, struct emuxfs_op_update_args *args,
 				goto out;
 		}
 
-		r.byte_begin = args->offset;
+		r.byte_begin = newoff;
 		if (prewr_sz < r.byte_begin)
 			r.byte_begin = prewr_sz;
-		r.byte_end = args->offset + args->bufsz;
+		r.byte_end = newoff + args->bufsz;
 		emuxfs_range_compute(&r, chksz);
 
 		if (emuxfs_lfile_open(&lfd, lfile_fd, st->st_ino, O_WRONLY))
 			goto out;
 		if ((lfile = mmap(NULL, r.lfilesz, PROT_WRITE, MAP_SHARED, lfd,
-		    r.lfileoff)) == MAP_FAILED)
+		    (off_t)r.lfileoff)) == MAP_FAILED)
 			goto out;
 
 		wroff = 0;
@@ -1648,21 +1673,21 @@ emuxfs_write_inner(int root_fd, struct emuxfs_op_update_args *args,
 		for (i = r.blk_index_begin; i < r.blk_index_end; ++i) {
 			i_offset = i * blksz;
 			off = 0;
-			if (i_offset < args->offset) {
+			if (i_offset < newoff) {
 				if (i_offset < prewr_sz) {
 					beginsz = prewr_sz - i_offset;
 					if (beginsz > blksz)
 						beginsz = blksz;
 					if (pread(fd, content_buf, beginsz,
-					    i_offset) != beginsz) {
+					    (off_t)i_offset) != (ssize_t)beginsz) {
 						rc = EMUXFS_EFS;
 						goto out;
 					}
 					off += beginsz;
 				}
 				if ((off < blksz) && (prewr_sz <
-				    args->offset)) {
-					padsz = args->offset - (i_offset + off);
+				    newoff)) {
+					padsz = newoff - (i_offset + off);
 					if (off + padsz > blksz)
 						padsz = blksz - off;
 					memset(&content_buf[off], 0, padsz);
@@ -1683,14 +1708,14 @@ emuxfs_write_inner(int root_fd, struct emuxfs_op_update_args *args,
 				if (off + endsz > blksz)
 					endsz = blksz - off;
 				if (pread(fd, &content_buf[off], endsz,
-				    i_offset + off) != endsz) {
+				    (off_t)(i_offset + off)) != (ssize_t)endsz) {
 					rc = EMUXFS_EFS;
 					goto out;
 				}
 				off += endsz;
 			}
 
-			if (pwrite(fd, content_buf, off, i_offset) != off) {
+			if (pwrite(fd, content_buf, off, (off_t)i_offset) != (ssize_t)off) {
 				rc = EMUXFS_EFS;
 				goto out;
 			}
@@ -1839,9 +1864,9 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 			emuxfs_eids_reset();
 			if (subrc)
 				subrc = EMUXFS_EFS;
-			if (args->uid != -1)
+			if (args->uid != (uid_t)-1)
 				wr_desc.owner = args->uid;
-			if (args->gid != -1)
+			if (args->gid != (gid_t)-1)
 				wr_desc.group = args->gid;
 			/* Possibly not POSIX compliant. */
 			wr_desc.mode &= (~(S_ISUID|S_ISGID));
@@ -1903,13 +1928,13 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 
 		switch (args->type) {
 		case EMUXFS_UT_TRUNCATE:
-			mod_end = args->offset;
-			if (args->offset <= prewr_st.st_size) {
-				mod_begin = args->offset;
+			mod_end = (size_t)args->offset;
+			if ((size_t)args->offset <= (size_t)prewr_st.st_size) {
+				mod_begin = (size_t)args->offset;
 				if (mod_begin > 1)
 					--mod_begin;
 			} else
-				mod_begin = prewr_st.st_size;
+				mod_begin = (size_t)prewr_st.st_size;
 			mod_size = mod_end;
 			if (mod_size > EMUXFS_BLOCK_SIZE) {
 				if (emuxfs_lfile_readback(NULL, i, args->path,
@@ -1924,13 +1949,13 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 			}
 			break;
 		case EMUXFS_UT_WRITE:
-			mod_begin = args->offset;
-			if (mod_begin > prewr_st.st_size)
-				mod_begin = prewr_st.st_size;
-			mod_end = args->offset + args->bufsz;
+			mod_begin = (size_t)args->offset;
+			if (mod_begin > (size_t)prewr_st.st_size)
+				mod_begin = (size_t)prewr_st.st_size;
+			mod_end = (size_t)args->offset + args->bufsz;
 			mod_size = mod_end;
-			if (mod_size < prewr_st.st_size)
-				mod_size = prewr_st.st_size;
+			if (mod_size < (size_t)prewr_st.st_size)
+				mod_size = (size_t)prewr_st.st_size;
 			if (mod_size > EMUXFS_BLOCK_SIZE) {
 				if (emuxfs_lfile_readback(NULL, i, args->path,
 				    mod_begin, mod_end,
@@ -1967,7 +1992,7 @@ early:
 	}
 	if (has_write) {
 		if (args->type == EMUXFS_UT_WRITE)
-			return args->bufsz;
+			return (int)args->bufsz;
 		return 0;
 	}
 	return -EIO;
@@ -2249,7 +2274,7 @@ emuxfs_wrbuf_flush(void)
 	args.wc = &wr->wc;
 
 	subrc = emuxfs_op_update(&args);
-	if (subrc != wr->sz)
+	if (subrc < 0 || (size_t)subrc != wr->sz)
 		exit(-1);
 
 	if (emuxfs_state_wrbuf_reset())

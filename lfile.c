@@ -115,7 +115,7 @@ emuxfs_lfile_open(int *fd_out, int lfile_fd, ino_t ino, int flags)
 {
 	int rc;
 	char path_buf[PATH_MAX];
-	size_t path_len;
+	int path_len;
 	int fd;
 
 	rc = 1;
@@ -166,7 +166,7 @@ emuxfs_lfile_create(int lfile_fd, size_t chksz, ino_t ino, size_t filesz)
 	if ((fd = openat(lfile_fd, path_buf, O_RDWR|O_CREAT|O_EXCL, 0700)) ==
 	    -1)
 		goto out;
-	if (ftruncate(fd, lfilesz))
+	if (ftruncate(fd, (off_t)lfilesz))
 		goto out2;
 
 	rc = 0;
@@ -205,7 +205,7 @@ emuxfs_lfile_grow(int lfile_fd, size_t chksz, ino_t ino, size_t old_filesz,
 
 	if (emuxfs_lfile_open(&fd, lfile_fd, ino, O_RDWR))
 		goto out;
-	if (ftruncate(fd, new_lfilesz2))
+	if (ftruncate(fd, (off_t)new_lfilesz2))
 		goto out2;
 	if ((lfile = mmap(NULL, new_lfilesz, PROT_READ|PROT_WRITE, MAP_SHARED,
 	    fd, 0)) == MAP_FAILED)
@@ -281,7 +281,7 @@ emuxfs_lfile_shrink(int lfile_fd, size_t chksz, ino_t ino, size_t old_filesz,
 		exit(-1);
 	lfile = MAP_FAILED;
 
-	if (ftruncate(fd, new_lfilesz2))
+	if (ftruncate(fd, (off_t)new_lfilesz2))
 		goto out2;
 
 	rc = 0;
@@ -329,7 +329,7 @@ emuxfs_lfile_delete(int lfile_fd, ino_t ino)
 {
 	int rc;
 	char path_buf[PATH_MAX];
-	size_t path_len;
+	int path_len;
 
 	rc = 1;
 
@@ -353,7 +353,7 @@ EMUXFS int
 emuxfs_lfile_exists(int *exists_out, int lfile_fd, ino_t ino)
 {
 	char path_buf[PATH_MAX];
-	size_t path_len;
+	int path_len;
 
 	path_len = snprintf(NULL, 0, "%llu", ino);
 	if (path_len < 0)
@@ -479,7 +479,9 @@ emuxfs_lfile_readback(uint8_t *root_sum, dind dev_index, const char *path,
 	if (fstatat(dev->root_fd, path, &st, AT_SYMLINK_NOFOLLOW))
 		goto out;
 	ino = st.st_ino;
-	filesz = st.st_size;
+	if (st.st_size < 0)
+		goto out;
+	filesz = (size_t)st.st_size;
 	if (begin >= filesz)
 		goto out;
 	if (end > filesz)
@@ -513,7 +515,7 @@ emuxfs_lfile_readback(uint8_t *root_sum, dind dev_index, const char *path,
 				exit(-1); /* Programming error. */
 			rdsz = filesz - i_offset;
 		}
-		if (pread(fd, buf, rdsz, i_offset) != rdsz)
+		if (pread(fd, buf, rdsz, (off_t)i_offset) != (ssize_t)rdsz)
 			goto out;
 		emuxfs_chk_init(&chk, alg);
 		emuxfs_chk_update(&chk, buf, rdsz);

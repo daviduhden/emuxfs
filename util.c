@@ -371,7 +371,7 @@ emuxfs_path_trailing_seps_strip(char *path, size_t path_len)
 	sep = strrchr(path, '/');
 	if (sep == NULL)
 		return;
-	while ((sep - path) == path_len) {
+	while ((size_t)(sep - path) == path_len) {
 		*sep = '\0';
 		--path_len;
 		if (path_len == 0)
@@ -457,7 +457,7 @@ emuxfs_path_sanitize(const char **path_inout)
 		if ((*p != '/') && (*p != '\0'))
 			continue;
 
-		len = p - comp;
+		len = (size_t)(p - comp);
 		if (len == 0)
 			return 1; /* Empty component ("//"). */
 		if ((len == 1) && (comp[0] == '.'))
@@ -598,7 +598,7 @@ emuxfs_pushdir(struct emuxfs_dir *dir_out, int fd, const char *path)
 	if (!S_ISDIR(st.st_mode))
 		return 1;
 
-	blksz = st.st_blksize;
+	blksz = (size_t)st.st_blksize;
 	if (emuxfs_dspush((void **)&dirbuf, blksz))
 		exit(-1);
 
@@ -1027,7 +1027,9 @@ emuxfs_restore_reg(dind ddev_index, dind sdev_index, const char *path,
 	alg = sdev->conf.chk_alg_type;
 	chksz = emuxfs_chk_size(alg);
 	eno = expected->header.eno;
-	content_sz = sst->st_size;
+	if (sst->st_size < 0)
+		goto out;
+	content_sz = (size_t)sst->st_size;
 
 	if (emuxfs_readback(sdev_index, path, 0, expected))
 		goto out;
@@ -1102,7 +1104,7 @@ emuxfs_restore_reg(dind ddev_index, dind sdev_index, const char *path,
 			goto out;
 		if (fstat(slfd, &slfile_st))
 			goto out;
-		if (emuxfs_copy_reg(dlfd, slfd, slfile_st.st_size))
+		if (emuxfs_copy_reg(dlfd, slfd, (size_t)slfile_st.st_size))
 			goto out;
 	}
 	if (emuxfs_meta_write(expected, ddev_index, dino))
@@ -1152,7 +1154,7 @@ emuxfs_restore_symlink(dind ddev_index, dind sdev_index, const char *path,
 	size_t			 chksz;
 	uint64_t		 eno;
 	char			 content_buf[PATH_MAX];
-	size_t			 content_sz;
+	ssize_t			 content_sz;
 	struct emuxfs_chk	 chk;
 	uint8_t			 sum[EMUXFS_CHKSZ_MAX];
 	struct stat		 dst;
@@ -1177,7 +1179,7 @@ emuxfs_restore_symlink(dind ddev_index, dind sdev_index, const char *path,
 	if (content_sz >= PATH_MAX)
 		goto out;
 	emuxfs_chk_init(&chk, alg);
-	emuxfs_chk_update(&chk, (uint8_t *)content_buf, content_sz);
+	emuxfs_chk_update(&chk, (uint8_t *)content_buf, (size_t)content_sz);
 	emuxfs_chk_final(sum, &chk);
 	if (bcmp(sum, &expected->checksums[chksz], chksz) != 0) {
 		if (emuxfs_state_restore_push_back(sdev_index, path))

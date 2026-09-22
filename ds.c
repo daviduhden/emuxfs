@@ -96,7 +96,7 @@ emuxfs_ds_free_head(struct ds *n)
 	SLIST_REMOVE_HEAD(&emuxfs_ds_head, ent);
 	--emuxfs_ds_entcount;
 	emuxfs_ds_total_pagecount -= n->pagecount;
-	emuxfs_ds_total_allocated -= (n->allocend - n->begin);
+	emuxfs_ds_total_allocated -= (size_t)(n->allocend - n->begin);
 	free(n);
 }
 
@@ -110,7 +110,7 @@ emuxfs_dspop(void *p)
 		if ((p < (void *)n->begin) || (p >= (void *)n->end))
 			emuxfs_ds_free_head(n);
 		else {
-			emuxfs_ds_total_allocated -= (n->allocend -
+			emuxfs_ds_total_allocated -= (size_t)(n->allocend -
 			    (uint8_t *)p);
 			n->allocend = p;
 			if ((emuxfs_ds_total_allocated == 0) &&
@@ -142,7 +142,7 @@ emuxfs_dsgrow(void **p_inout, size_t sz)
 		return 1;
 
 	if (n->allocend + sz >= n->end) {
-		ssz = n->allocend - sp;
+		ssz = (size_t)(n->allocend - sp);
 		dsz = ssz + sz;
 		if (emuxfs_dspush((void **)&dp, dsz))
 			return 1;
@@ -186,9 +186,14 @@ emuxfs_ds_add_pages(size_t pagecount)
 EMUXFS int
 emuxfs_dsinit(void)
 {
+	long pagesz;
+
 	emuxfs_ds_offset = emuxfs_align_up(sizeof(struct ds),
 	    emuxfs_ds_memalign);
-	emuxfs_ds_pagesz = sysconf(_SC_PAGESIZE);
+	pagesz = sysconf(_SC_PAGESIZE);
+	if (pagesz < 1)
+		return 1;
+	emuxfs_ds_pagesz = (size_t)pagesz;
 	if (emuxfs_ds_offset >= emuxfs_ds_pagesz)
 		return 1;
 	emuxfs_ds_entcount = 0;

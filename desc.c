@@ -120,7 +120,8 @@ emuxfs_desc_chk_symlink_content(struct emuxfs_desc *desc, dind dev_index,
 	if ((lnksz = readlinkat(fd, path, lnkbuf, PATH_MAX - 1)) == -1)
 		return 1;
 
-	emuxfs_desc_chk_provided_content(desc, (uint8_t *)lnkbuf, lnksz, alg);
+	emuxfs_desc_chk_provided_content(desc, (uint8_t *)lnkbuf, (size_t)lnksz,
+	    alg);
 	return 0;
 }
 
@@ -163,7 +164,7 @@ emuxfs_desc_chk_meta(uint8_t *sum_out, const struct emuxfs_desc *desc,
     enum emuxfs_chk_alg_type alg_type)
 {
 	struct emuxfs_chk chk;
-	ssize_t chksz;
+	size_t chksz;
 	uint64_t u64h, u64le;
 
 	chksz = emuxfs_chk_size(alg_type);
