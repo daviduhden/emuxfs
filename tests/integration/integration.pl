@@ -188,6 +188,8 @@ sub mount_array {
     }
     if ( !$ready ) {
         print "diag: mount never served a request: $!\n";
+        my $log = slurp("$dev_a/.muxfs/mount.log");
+        print "diag: mount.log: " . ( defined($log) ? $log : "(none)" ) . "\n";
         system("ps -ax");
         return 0;
     }

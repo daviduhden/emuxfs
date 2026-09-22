@@ -30,13 +30,37 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "ds.h"
 #include "emuxfs.h"
 #include "ops.h"
 #include "sandbox.h"
+
+/* TEMPORARY diagnostics: append a line to <dev0>/.muxfs/mount.log. */
+static void
+emuxfs_mount_dbg(const char *fmt, ...)
+{
+	char path[PATH_MAX];
+	va_list ap;
+	int fd;
+
+	if (emuxfs_cmdline.dev_count == 0)
+		return;
+	if (snprintf(path, sizeof(path), "%s/.muxfs/mount.log",
+	    emuxfs_cmdline.dev_paths[0]) >= (int)sizeof(path))
+		return;
+	fd = open(path, O_WRONLY|O_CREAT|O_APPEND, 0600);
+	if (fd == -1)
+		return;
+	va_start(ap, fmt);
+	vdprintf(fd, fmt, ap);
+	va_end(ap);
+	close(fd);
+}
 
 static void
 emuxfs_mount_usage(void)
@@ -127,6 +151,8 @@ emuxfs_mount_main(int argc, char *argv[])
 	mp = NULL;
 	fuse = fuse_setup(n, fuse_argv, &emuxfs_fuse_ops,
 	    sizeof(emuxfs_fuse_ops), &mp, NULL, NULL);
+	emuxfs_mount_dbg("pid %d: fuse_setup returned %p\n", getpid(),
+	    (void *)fuse);
 	if (fuse == NULL) {
 		fprintf(stderr, "Error: Unable to mount %s.\n",
 		    emuxfs_cmdline.mp_path);
@@ -140,22 +166,27 @@ emuxfs_mount_main(int argc, char *argv[])
 	 * privileged syscalls need to remain available.
 	 */
 	if (emuxfs_sandbox_unveil_mirrors(&emuxfs_cmdline)) {
+		emuxfs_mount_dbg("pid %d: unveil mirrors failed\n", getpid());
 		fprintf(stderr, "Error: Unable to restrict filesystem "
 		    "visibility.\n");
 		emuxfs_mount_teardown(fuse, mp);
 		exit(1);
 	}
 	if (emuxfs_sandbox_unveil_lock()) {
+		emuxfs_mount_dbg("pid %d: unveil lock failed\n", getpid());
 		emuxfs_mount_teardown(fuse, mp);
 		exit(1);
 	}
 	if (emuxfs_sandbox_pledge(EMUXFS_PLEDGE_MOUNT)) {
+		emuxfs_mount_dbg("pid %d: pledge failed\n", getpid());
 		fprintf(stderr, "Error: Unable to restrict system calls.\n");
 		emuxfs_mount_teardown(fuse, mp);
 		exit(1);
 	}
 
+	emuxfs_mount_dbg("pid %d: entering fuse_loop\n", getpid());
 	rc = fuse_loop(fuse);
+	emuxfs_mount_dbg("pid %d: fuse_loop returned %d\n", getpid(), rc);
 	emuxfs_mount_teardown(fuse, mp);
 
 	return (rc == -1) ? 1 : 0;
