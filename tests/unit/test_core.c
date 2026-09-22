@@ -190,7 +190,7 @@ test_meta_size_and_align(void)
 		CHECK(0);
 		return;
 	}
-	CHECK(msz == 32); /* header(16) + 2 * 4 checksums, rounded to 8. */
+	CHECK(msz == 24); /* header(16) + 2 * 4 checksums = 24. */
 	if (emuxfs_meta_size_raw(&msz, CAT_MD5)) {
 		CHECK(0);
 		return;
@@ -259,7 +259,11 @@ test_conf_roundtrip(void)
 	out.chk_alg_type = CAT_SHA1;
 	for (i = 0; i < EMUXFS_UUID_SIZE; ++i) {
 		out.array_uuid[i] = (uint8_t)i;
-		out.dev_uuid[i] = (uint8_t)(0xf0 | i);
+		/*
+		 * uuid_from_string(3) rejects UUIDs whose variant bits are
+		 * not 0xx, 10x or 110, so byte 8 must be a valid variant.
+		 */
+		out.dev_uuid[i] = (uint8_t)(0x10 | i);
 	}
 	out.seq_zero_time = (time_t)1234567890;
 
@@ -477,7 +481,8 @@ test_dev_format_mount(void)
 	char root[PATH_MAX];
 	uint8_t uuid[EMUXFS_UUID_SIZE];
 	size_t chksz, metasz;
-	dind i, next;
+	dind i;
+	uint64_t next;
 	time_t now;
 	int exists;
 	ino_t root_ino;
@@ -963,19 +968,21 @@ main(int argc, char *argv[])
 
 	sandbox_create();
 
-	test_checksums();
-	test_meta_size_and_align();
-	test_desc_meta();
-	test_conf_roundtrip();
-	test_conf_legacy_and_errors();
-	test_path_sanitize();
-	test_serialisation_endianness();
-	test_restore_queue();
-	test_dev_format_mount();
-	test_state_validation();
-	test_assign_crosscheck();
-	test_hardlink_predicate();
-	test_recovery_ambiguity();
+#define RUN(fn) do { fprintf(stderr, "[%s]\n", #fn); fn(); } while (0)
+	RUN(test_checksums);
+	RUN(test_meta_size_and_align);
+	RUN(test_desc_meta);
+	RUN(test_conf_roundtrip);
+	RUN(test_conf_legacy_and_errors);
+	RUN(test_path_sanitize);
+	RUN(test_serialisation_endianness);
+	RUN(test_restore_queue);
+	RUN(test_dev_format_mount);
+	RUN(test_state_validation);
+	RUN(test_assign_crosscheck);
+	RUN(test_hardlink_predicate);
+	RUN(test_recovery_ambiguity);
+#undef RUN
 
 	sandbox_destroy();
 
