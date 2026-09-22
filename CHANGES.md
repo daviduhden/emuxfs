@@ -37,6 +37,17 @@ Fifth phase: commit ordering, identity and the v1/v2 decision.
   recovery marker, the difference between readback (consistency) and
   durability, the v1 integrity guarantee, logical object identity, inode/eno
   limits, and a proposed format version 2 (not implemented).
+* **One-command validation.**  `make stability` runs the strict-warning build,
+  the unit tests, the FUSE integration suite, the fault-injection suite and a
+  bounded libFuzzer run over the `muxfs.conf` parser; CI runs the same
+  sequence on OpenBSD 7.9 amd64 and arm64.
+* **FUSE-time crash recovery is now automated.**  The crash suite interrupts a
+  create, an update and a delete at `*/after_meta`, recovers with `sync`, and
+  requires `audit` to be clean and the uncommitted operation to be rolled back.
+  Previously those points were only available for manual investigation.
+* The FUSE integration suite now also performs five repeated mount/unmount
+  cycles, and the fuzzer runs for a bounded number of iterations in CI
+  (skipped, not failed, when the toolchain has no libFuzzer).
 
 ## 1.3-enhanced (2026-09-22)
 

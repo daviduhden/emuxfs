@@ -81,6 +81,9 @@ jobs:
             EMUXFS="$PWD/emuxfs" EMUXFS_FAULT="$PWD/emuxfs-fault" \
                 perl tests/integration/crash.pl
 
+            echo "== Bounded parser fuzzing =="
+            make fuzz-smoke
+
             echo "== Install =="
             make install
             test -x /usr/local/sbin/emuxfs
@@ -170,6 +173,9 @@ jobs:
             make faultbuild
             EMUXFS="$PWD/emuxfs" EMUXFS_FAULT="$PWD/emuxfs-fault" \
                 perl tests/integration/crash.pl
+
+            echo "== Bounded parser fuzzing =="
+            make fuzz-smoke
 
             echo "== Install =="
             make install

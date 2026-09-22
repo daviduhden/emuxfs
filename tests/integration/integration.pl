@@ -18,6 +18,7 @@ use File::Compare qw(compare);
 use File::Copy    qw(copy);
 use File::Path    qw(make_path remove_tree);
 use File::Temp    qw(tempdir);
+use POSIX         qw(WNOHANG);
 
 my $EMUXFS = $ENV{EMUXFS} // ( getcwd() . "/emuxfs" );
 
@@ -170,6 +171,10 @@ sub state_mounted {
 sub mount_array {
     my $mlog = "$sandbox/mount-fg.log";
 
+    # Remove any previous log so readiness below cannot be satisfied by a
+    # stale "entering fuse_loop" line from an earlier mount.
+    unlink($mlog);
+
     # Run in the foreground (as a background shell job) so the daemon's
     # standard error, including the trace output, is captured.
     system("EMUXFS_TRACE=1 $EMUXFS mount -f $mp $dev_a $dev_b >'$mlog' 2>&1 &");
@@ -227,6 +232,41 @@ close($rfh);
 fail("read-back content") unless ( slurp("$mp/reg")    // "" ) eq "foo\n";
 fail("mirror a content")  unless ( slurp("$dev_a/reg") // "" ) eq "foo\n";
 fail("mirror b content")  unless ( slurp("$dev_b/reg") // "" ) eq "foo\n";
+
+# A second daemon must never mount an array that is already mounted: the
+# 'mounted' flag in state.db is the single-writer guard.
+print "== a second mount of the same array is refused\n";
+{
+    my $mp2 = "$sandbox/mp2";
+    must_run( "mkdir mp2", "mkdir", $mp2 );
+    my $pid = fork();
+    if ( !defined $pid ) {
+        fail("fork: $!");
+    }
+    elsif ( $pid == 0 ) {
+        open( STDOUT, ">", "$sandbox/mp2.log" );
+        open( STDERR, ">&STDOUT" );
+        exec( $EMUXFS, "mount", "-f", $mp2, $dev_a, $dev_b );
+        exit 127;
+    }
+    else {
+
+        # Wait for the refusal; if it instead mounted, that is the failure.
+        my $reaped = 0;
+        for ( my $i = 0 ; $i < 250 ; $i++ ) {
+            if ( waitpid( $pid, WNOHANG ) == $pid ) { $reaped = 1; last; }
+            select( undef, undef, undef, 0.02 );
+        }
+        if ( !$reaped ) {
+            fail("a second mount of a mounted array was not refused");
+            kill( "TERM", $pid );
+            waitpid( $pid, 0 );
+            system("umount -f $mp2 >/dev/null 2>&1");
+        }
+    }
+    fail("first mount damaged by the refused second mount")
+      unless ( slurp("$mp/reg") // "" ) eq "foo\n";
+}
 
 open( my $tfh, ">", "$mp/reg" ) or fail("truncate reg: $!");
 close($tfh);
@@ -322,6 +362,16 @@ print $pfh "post-remount\n";
 close($pfh);
 fail("post mirrored") unless -f "$dev_b/post";
 unmount_array();
+
+# Repeated mount/unmount cycles must preserve the tree and leave every device
+# clean: this exercises open/close, state.db transitions and the teardown path.
+print "== repeated mount / unmount cycles\n";
+for ( my $i = 0 ; $i < 5 ; $i++ ) {
+    mount_array() or exit 1;
+    fail("cycle $i content") unless ( slurp("$mp/healme") // "" ) eq "good\n";
+    fail("cycle $i post")    unless ( slurp("$mp/post") // "" ) eq "post-remount\n";
+    unmount_array();
+}
 
 print "== audit is read-only on persistent state\n";
 {

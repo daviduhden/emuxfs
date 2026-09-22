@@ -143,11 +143,28 @@ legacytest: ${PROG}
 test: unittest
 check-tests: test integration
 
-# Optional libFuzzer target.  Not built by 'all' and not run by CI.
+# Optional libFuzzer target.  Not built by 'all'; 'fuzz-smoke' runs a bounded
+# session of it as part of the stability target.
 fuzz-conf: tests/fuzz/fuzz_conf.c ${CORE_OBJ}
 	${CC} ${CFLAGS} ${CPPFLAGS} -DEMUXFS= -I. \
 	    -fsanitize=fuzzer,address \
 	    -o tests/fuzz/fuzz_conf tests/fuzz/fuzz_conf.c ${CORE_OBJ} -lz
+
+# Bounded fuzzing smoke run: the muxfs.conf parser must survive a fixed number
+# of mutations without a sanitizer report.  Requires a clang with libFuzzer;
+# when the toolchain lacks it the step reports SKIP and succeeds (the parser is
+# still exercised by the unit tests).
+FUZZ_RUNS ?=20000
+fuzz-smoke: ${CORE_OBJ}
+	@if ${CC} ${CFLAGS} ${CPPFLAGS} -DEMUXFS= -I. \
+	    -fsanitize=fuzzer,address -o tests/fuzz/fuzz_conf \
+	    tests/fuzz/fuzz_conf.c ${CORE_OBJ} -lz >/dev/null 2>&1; then \
+		echo "== fuzzing the muxfs.conf parser (${FUZZ_RUNS} runs)"; \
+		tests/fuzz/fuzz_conf -runs=${FUZZ_RUNS} -max_len=4096; \
+	else \
+		rm -f tests/fuzz/fuzz_conf; \
+		echo "SKIP: libFuzzer is not available in this toolchain"; \
+	fi
 
 # Crash-consistency build: the normal modular objects plus fault injection.
 faultbuild: emuxfs-fault
@@ -157,6 +174,18 @@ emuxfs-fault: ${FAULT_OBJ}
 faulttest: ${PROG} emuxfs-fault
 	EMUXFS="$(pwd)/emuxfs" EMUXFS_FAULT="$(pwd)/emuxfs-fault" \
 	    perl tests/integration/crash.pl
+
+# Complete pre-release validation.  CI runs the same sequence on OpenBSD 7.9
+# amd64 and arm64; this target is the local equivalent.  The FUSE suites
+# require root and /dev/fuse0 and skip themselves when unavailable; fuzzing
+# needs a clang with libFuzzer.  Nothing else may be claimed as "stable"
+# until this passes.
+stability: check
+	${MAKE} unittest
+	./tests/unit/test_core
+	${MAKE} integration
+	${MAKE} faulttest
+	${MAKE} fuzz-smoke
 
 install: ${PROG}
 	install -o root -g bin -m 0755 ${PROG} ${DESTDIR}${BINDIR}/${PROG}
@@ -170,4 +199,4 @@ clean:
 	    ${OBJ} >/dev/null 2>&1 || true
 
 .PHONY: all check unittest integration legacytest test check-tests \
-	fuzz-conf faultbuild faulttest install clean
+	fuzz-conf fuzz-smoke faultbuild faulttest stability install clean

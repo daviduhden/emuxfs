@@ -8,9 +8,10 @@
 #                 'make faultbuild'), which terminates at a named boundary
 #                 when EMUXFS_FAULT_POINT names it.
 #
-# The fault points exercised here (restore/before, restore/after) run inside
-# the heal/sync process itself, so they are deterministic.  FUSE-time points
-# (create/*, update/*, delete/*) are available for manual investigation.
+# The fault points exercised here run in two places: inside the heal/sync
+# process itself (restore/before, restore/after) and inside FUSE callbacks
+# (create/after_meta, update/after_meta, delete/after_meta).  In both cases the
+# interrupted device is recovered with sync and the result is audited.
 #
 # Everything happens inside a private temporary sandbox.  See TESTING.md.
 
@@ -177,6 +178,79 @@ sub run_fault {
     return $st >> 8;
 }
 
+# Write or create a file, ignoring errors: the operation under test is
+# expected to fail when the daemon is terminated part-way through it.
+sub try_put {
+    my ( $path, $content ) = @_;
+    open( my $fh, ">", $path ) or return;
+    print $fh $content;
+    close($fh);
+}
+
+# Mount the array in the foreground as a background shell job so that a fault
+# point inside a FUSE callback terminates that daemon.  With $point undef the
+# normal binary is used.
+sub fuse_mount_bg {
+    my ( $a, $b, $point, $log ) = @_;
+    my $bin = defined($point) ? $EMUXFS_FAULT : $EMUXFS;
+    my $env = defined($point) ? "EMUXFS_FAULT_POINT='$point' " : "";
+
+    # Remove any previous log so readiness below cannot be satisfied by a
+    # stale "entering fuse_loop" line from an earlier mount.
+    unlink($log);
+    system("EMUXFS_TRACE=1 $env$bin mount -f $mp $a $b >'$log' 2>&1 &");
+    $mounted = 1;
+
+    # Wait until the daemon has entered its event loop.
+    for ( my $i = 0 ; $i < 500 ; $i++ ) {
+        my $l = slurp($log);
+        last if defined($l) && $l =~ /entering fuse_loop/;
+        select( undef, undef, undef, 0.02 );
+    }
+}
+
+# Unmount the foreground job.  After a fault the daemon has already exited and
+# the kernel detaches the filesystem, so both forms are attempted and the
+# failure of the second is expected and ignored.
+sub fuse_umount {
+    system("umount $mp >/dev/null 2>&1");
+    system("umount -f $mp >/dev/null 2>&1");
+    $mounted = 0;
+}
+
+# Format a fresh pair, populate f=v0 through a normal mount, then interrupt an
+# operation on dev a at $point and recover the array with sync.  $trigger
+# performs the interrupted operation and $verify checks the rolled-back tree.
+sub fuse_fault_recover {
+    my ( $point, $trigger, $verify, $tag ) = @_;
+    my $a   = "$sandbox/ff_${tag}_a";
+    my $b   = "$sandbox/ff_${tag}_b";
+    my $log = "$sandbox/ff_${tag}.log";
+
+    remove_tree( $a, $b );
+    make_path( $a, $b );
+    return
+      unless must_run( "format ($tag)", $EMUXFS, "format", "-a", "md5",
+        $a, $b );
+
+    fuse_mount_bg( $a, $b, undef, $log );
+    put( "$mp/f", "v0\n" ) or fail("populate f ($tag)");
+    fuse_umount();
+    wait_state_clean($a) or fail("$a not clean before fault ($tag)");
+    wait_state_clean($b) or fail("$b not clean before fault ($tag)");
+
+    fuse_mount_bg( $a, $b, $point, $log );
+    $trigger->();
+    select( undef, undef, undef, 1.0 );    # let the daemon die and detach
+    fuse_umount();
+
+    must_run( "sync ($tag)",  $EMUXFS, "sync",  $a, $b );
+    must_run( "audit ($tag)", $EMUXFS, "audit", $a, $b );
+    $verify->( $a, $b );
+    assert_clean( $a, $tag );
+    assert_clean( $b, $tag );
+}
+
 # ---------------------------------------------------------------------------
 
 make_path( $dev_a, $dev_b, $dev_c, $mp );
@@ -276,6 +350,54 @@ print "== sync clears a planted interrupted-operation marker\n";
 }
 must_run( "sync after planted marker", $EMUXFS, "sync", $dev_c, $dev_a );
 assert_clean( $dev_c, "after planted marker" );
+
+# ---------------------------------------------------------------------------
+# Faults inside FUSE callbacks.  An interrupted create/update/delete leaves the
+# first device with working=1 and a partially committed record; the explicit
+# recovery is sync, which rebuilds that device from the intact mirror and thus
+# rolls the uncommitted operation back.
+
+print "== fault at create/after_meta (FUSE)\n";
+fuse_fault_recover(
+    "create/after_meta",
+    sub { try_put( "$mp/new", "x\n" ); },
+    sub {
+        my ( $a, $b ) = @_;
+        fail("create not rolled back") if -e "$a/new" || -e "$b/new";
+        fail("f changed by failed create")
+          unless ( slurp("$a/f") // "" ) eq "v0\n";
+        fail("array did not converge after create fault")
+          if compare( "$a/f", "$b/f" ) != 0;
+    },
+    "create"
+);
+
+print "== fault at update/after_meta (FUSE)\n";
+fuse_fault_recover(
+    "update/after_meta",
+    sub { try_put( "$mp/f", "v1\n" ); },
+    sub {
+        my ( $a, $b ) = @_;
+        fail("update not rolled back")
+          unless ( slurp("$a/f") // "" ) eq "v0\n";
+        fail("array did not converge after update fault")
+          if compare( "$a/f", "$b/f" ) != 0;
+    },
+    "update"
+);
+
+print "== fault at delete/after_meta (FUSE)\n";
+fuse_fault_recover(
+    "delete/after_meta",
+    sub { unlink("$mp/f"); },
+    sub {
+        my ( $a, $b ) = @_;
+        fail("delete not rolled back") unless -f "$a/f";
+        fail("array did not converge after delete fault")
+          if compare( "$a/f", "$b/f" ) != 0;
+    },
+    "delete"
+);
 
 if ( $failures != 0 ) {
     print STDERR "$failures crash test(s) failed\n";

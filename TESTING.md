@@ -77,7 +77,8 @@ corruption, a deleted node and a corrupt symlink, `audit`, `heal`, `sync` to
 a replacement device, the refusal of hard links (both through the filesystem
 and as a direct modification detected by `audit`), the read-only property of
 `audit` (`muxfs.conf`, `state.db`, `meta.db` and `assign.db` are
-byte-identical before and after), and `version`.
+byte-identical before and after), five repeated mount/unmount cycles, and
+`version`.
 
 A second Perl suite, `test.pl`, is the end-to-end suite ported from the
 original shell tests.  Unlike the integration suite it uses the dedicated
@@ -122,8 +123,15 @@ and `restore/after`, and then checks that an uninterrupted run converges, that
 clean (`working = restoring = degraded = mounted = 0`).  It also plants a
 `working = 1` record — the state a power loss leaves after an interrupted
 operation — and requires `sync` to clear it, which is the documented
-post-power-loss recovery path.  The FUSE-time points are available for manual
-investigation (mount, run an operation with the variable set, then recover).
+post-power-loss recovery path.
+
+The FUSE-time points are automated too: the suite mounts the fault build,
+performs a create, an update and a delete that are each interrupted at
+`*/after_meta`, and requires `sync` to rebuild the interrupted device from the
+intact mirror and `audit` to be clean.  Because the interrupted operation had
+not committed, reverting it is the correct outcome: the created file is gone,
+the updated file has its old content, and the deleted file is back.
+
 Fault injection is compiled out of normal builds.  The fault points model a
 process crash (`_exit`), not torn sectors, controller caches or storage
 reordering; the suite is a crash-recovery suite, not a power-loss proof.
@@ -141,17 +149,34 @@ limitation is recorded here.  The on-disk layout itself is documented in
 ON_DISK_FORMAT.md and is unchanged from the original apart from
 `format_version` in `muxfs.conf`.
 
-## Fuzzing (optional, not run by CI)
+## Fuzzing
 
 ```
-make fuzz-conf
-./tests/fuzz/fuzz_conf
+make fuzz-conf            # build the fuzzer
+./tests/fuzz/fuzz_conf    # run it interactively
+make fuzz-smoke           # bounded run, part of 'make stability'
 ```
 
 `tests/fuzz/fuzz_conf.c` is a libFuzzer entry point for the `muxfs.conf`
 parser.  The build target uses `-fsanitize=fuzzer,address`; for full
 instrumentation rebuild the tree with those sanitizer flags in `CFLAGS`.
-Fuzzing is never enabled by the default build.
+`make fuzz-smoke` runs a bounded session (`FUZZ_RUNS`, 20000 by default) and
+is part of `make stability` and of CI.  If the toolchain has no libFuzzer the
+step reports `SKIP` and succeeds; the parsers are still covered by the unit
+tests.  Fuzzing is never enabled by the default build.
+
+## One-command validation
+
+```
+make stability
+```
+
+`make stability` is the local equivalent of the CI sequence: strict-warning
+build (`make check`), unit tests, the FUSE integration suite, the
+fault-injection suite and the bounded fuzz run.  The FUSE steps require root
+and `/dev/fuse0` and skip themselves when either is missing.  This is the
+evidence that the stability levels in README.md refer to; nothing should be
+described as Tested or Hardened on the strength of static analysis alone.
 
 ## Continuous integration
 
@@ -160,17 +185,18 @@ OpenBSD virtual machine through `vmactions/openbsd-vm@v1`.  The target is
 **OpenBSD 7.9**, on two architectures: **amd64** and **arm64**
 (`arch: aarch64`).  Both run the same full sequence: build (clang, C17),
 strict warnings (`make check`, `-Werror`), unit tests, FUSE integration tests,
-fault-injection tests, install, manual page (`mandoc -T lint`), and a final
-clean rebuild.  The FUSE integration step is skipped
-(not failed) where `/dev/fuse0` is unavailable.  No external FUSE package is
-needed because the FUSE implementation is part of the OpenBSD base system.
+fault-injection tests, bounded parser fuzzing, install, manual page
+(`mandoc -T lint`), linkage, and a final clean rebuild.  The FUSE integration
+step is skipped (not failed) where `/dev/fuse0` is unavailable.  No external
+FUSE package is needed because the FUSE implementation is part of the OpenBSD
+base system.
 
 Only the OpenBSD 7.9 vmactions image is used; 8.0 is not prepared.
 
-## Local static analysis only
+## Verification workflow
 
-This repository's changes were developed under a no-compilation constraint:
-no `make`, compiler, mount, `fsck`, sanitizer or fuzzer was run while making
-them.  The first real verification is the CI run.  Reviewers should expect
-the first CI run to be the point at which compiler diagnostics are first
-seen.
+Changes are developed and reviewed statically first, then verified by the CI
+run above: the compiler, the unit tests, the FUSE suites and the fault suite
+are the point at which behaviour is first observed.  A green run on both
+architectures is the minimum bar for merging; a claim of stability additionally
+requires `make stability` to pass locally.

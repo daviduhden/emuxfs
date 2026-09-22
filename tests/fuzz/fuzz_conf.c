@@ -19,7 +19,8 @@
  * This file is part of emuxfs, The Enhanced Multiplexed File System (see NOTICE.md).
  *
  * Optional libFuzzer entry point for the muxfs.conf parser.  It is not built
- * by the normal build and is not run by CI; see TESTING.md.  Build with:
+ * by the normal build; 'make fuzz-smoke' runs a bounded session as part of
+ * 'make stability' and CI.  Build and run interactively with:
  *
  *   make fuzz-conf
  *   ./tests/fuzz/fuzz_conf

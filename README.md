@@ -33,9 +33,18 @@ Stability is described in terms of evidence rather than aspiration:
 
 * **Experimental**: builds, but no automated evidence of correct behaviour.
 * **Tested**: builds cleanly and passes the unit, integration and FUSE suites
-  in CI on a real OpenBSD VM, with no known correctness defects.
-* **Hardened**: additionally, the sandbox (pledge/unveil) and fault-injection
-  suites pass and the on-disk format is frozen.
+  in CI on a real OpenBSD VM (amd64 and arm64), with no known correctness
+  defects.
+* **Hardened**: additionally, the sandbox (pledge/unveil) suite, the
+  fault-injection suite (recovery from an interrupted create, update, delete,
+  heal and sync), repeated mount/unmount cycles and a bounded parser fuzz run
+  pass, and the on-disk format is frozen.
+
+The evidence for both levels is one command, `make stability`: strict-warning
+build, headless unit tests, the FUSE integration suite, the fault-injection
+suite and a bounded libFuzzer run over the `muxfs.conf` parser.
+`.github/workflows/ci.yml` runs the same sequence on OpenBSD 7.9 amd64 and
+arm64.  A stability claim is never made from static analysis alone.
 
 emuxfs is currently Experimental/Tested-in-progress.  It is not Hardened.
 
