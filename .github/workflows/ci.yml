@@ -106,9 +106,6 @@ jobs:
 
   openbsd-79-arm64:
     name: OpenBSD 7.9 (arm64)
-    # Temporarily disabled to iterate on the amd64 job faster; re-enable once
-    # amd64 is green.
-    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 180
     permissions:
