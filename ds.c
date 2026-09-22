@@ -138,8 +138,12 @@ emuxfs_dsgrow(void **p_inout, size_t sz)
 	sz = emuxfs_align_up(sz, emuxfs_ds_memalign);
 
 	n = SLIST_FIRST(&emuxfs_ds_head);
-	if ((n->begin < sp) || (sp >= n->allocend))
+	if ((n->begin < sp) || (sp >= n->allocend)) {
+		dprintf(2, "DBG dsgrow: sp=%p begin=%p allocend=%p end=%p\n",
+		    (void *)sp, (void *)n->begin, (void *)n->allocend,
+		    (void *)n->end);
 		return 1;
+	}
 
 	if (n->allocend + sz >= n->end) {
 		ssz = (size_t)(n->allocend - sp);

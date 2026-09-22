@@ -611,10 +611,12 @@ emuxfs_pushdir(struct emuxfs_dir *dir_out, int fd, const char *path)
 	ent_count = 0;
 	while ((rdsz = getdents(dirfd, &dirbuf[rdend], blksz)) > 0) {
 		for (i = 0; i < rdsz; i += dirent->d_reclen) {
-			dirent = (struct dirent *)&dirbuf[i];
+			dirent = (struct dirent *)&dirbuf[rdend + i];
 			++ent_count;
 		}
 		rdend += i;
+		dprintf(2, "DBG pushdir: path=%s dirbuf=%p\n", path,
+		    (void *)dirbuf);
 		if (emuxfs_dsgrow((void **)&dirbuf, blksz)) {
 			dprintf(2, "DBG pushdir: dsgrow failed\n");
 			exit(-1);
