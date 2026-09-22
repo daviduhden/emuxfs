@@ -70,8 +70,10 @@ emuxfs_dir_patch_sums(uint8_t *as_is_out, uint8_t *with_patch_out,
 	struct emuxfs_meta submeta;
 	struct emuxfs_chk as_is_content_chk, with_patch_content_chk;
 	int patched;
+	const char *pstage;
 
 	rc = 1;
+	pstage = "start";
 
 	chksz = emuxfs_chk_size(alg);
 	fnamelen = strlen(patch->fname);
@@ -108,11 +110,15 @@ emuxfs_dir_patch_sums(uint8_t *as_is_out, uint8_t *with_patch_out,
 			continue;
 		if ((dnamelen == 6) && (strncmp(".muxfs", dname, 6) == 0))
 			continue;
-		if (fstatat(dirfd, dname, &subst, AT_SYMLINK_NOFOLLOW))
+		if (fstatat(dirfd, dname, &subst, AT_SYMLINK_NOFOLLOW)) {
+			pstage = "fstatat";
 			goto out;
+		}
 		subino = subst.st_ino;
-		if (emuxfs_meta_read(&submeta, dev_index, subino))
+		if (emuxfs_meta_read(&submeta, dev_index, subino)) {
+			pstage = "meta_read";
 			goto out;
+		}
 		emuxfs_chk_update(&as_is_content_chk, (uint8_t *)dname,
 		    dnamelen);
 		emuxfs_chk_update(&as_is_content_chk, &submeta.checksums[0],
@@ -122,8 +128,10 @@ emuxfs_dir_patch_sums(uint8_t *as_is_out, uint8_t *with_patch_out,
 			match = ((dnamelen == fnamelen) &&
 			    (strncmp(patch->fname, dname, fnamelen) == 0));
 			if (patch->type == EMUXFS_MINUS) {
-				if (!match)
+				if (!match) {
+					pstage = "minus_nomatch";
 					goto out;
+				}
 				++entind2;
 				continue;
 			}
@@ -133,14 +141,18 @@ emuxfs_dir_patch_sums(uint8_t *as_is_out, uint8_t *with_patch_out,
 			    chksz);
 			switch (patch->type) {
 			case EMUXFS_SUBSTITUTE:
-				if (!match)
+				if (!match) {
+					pstage = "subst_nomatch";
 					goto out;
+				}
 				++entind2;
 				continue;
 				break;
 			case EMUXFS_PLUS:
-				if (match)
+				if (match) {
+					pstage = "plus_match";
 					goto out;
+				}
 				break;
 			default:
 				exit(-1); /* Programming error. */
@@ -153,8 +165,10 @@ emuxfs_dir_patch_sums(uint8_t *as_is_out, uint8_t *with_patch_out,
 		++entind2;
 	}
 	if (!patched) {
-		if (patch->type != EMUXFS_PLUS)
+		if (patch->type != EMUXFS_PLUS) {
+			pstage = "unpatched";
 			goto out;
+		}
 		emuxfs_chk_update(&with_patch_content_chk,
 		    (uint8_t *)patch->fname, fnamelen);
 		emuxfs_chk_update(&with_patch_content_chk, patch->sum, chksz);
@@ -164,6 +178,9 @@ emuxfs_dir_patch_sums(uint8_t *as_is_out, uint8_t *with_patch_out,
 
 	rc = 0;
 out:
+	if (rc != 0)
+		EMUXFS_TRACE("dir_patch_sums: fail type=%d fname=%s stage=%s\n",
+		    (int)patch->type, patch->fname, pstage);
 	return rc;
 }
 
@@ -184,8 +201,10 @@ emuxfs_dir_meta_recompute(struct emuxfs_cud *pcud_out, dind dev_index,
 	uint64_t		 eno;
 	struct emuxfs_meta	 db_pre_meta, pre_meta, post_meta;
 	struct emuxfs_dir_patch	 patch;
+	const char		*dstage;
 
 	rc = 1;
+	dstage = "start";
 
 	if (emuxfs_dev_get(&dev, dev_index, 0))
 		goto out;
@@ -193,21 +212,28 @@ emuxfs_dir_meta_recompute(struct emuxfs_cud *pcud_out, dind dev_index,
 	alg = dev->conf.chk_alg_type;
 	chksz = emuxfs_chk_size(alg);
 
+	dstage = "pushdir";
 	if (emuxfs_pushdir(&dir, root_fd, ccud_in->path))
 		goto out;
 
+	dstage = "openat";
 	if ((dirfd = openat(root_fd, ccud_in->path, O_RDONLY|O_NOFOLLOW)) == -1)
 		goto out2;
+	dstage = "fstat";
 	if (fstat(dirfd, &st))
 		goto out3;
+	dstage = "notdir";
 	if (!S_ISDIR(st.st_mode))
 		goto out3;
 	ino = st.st_ino;
+	dstage = "db_meta_read";
 	if (emuxfs_meta_read(&db_pre_meta, dev_index, ino))
 		goto out3;
 	eno = db_pre_meta.header.eno;
+	dstage = "pre_desc";
 	if (emuxfs_desc_init_from_stat(&pre_desc, &st, eno))
 		goto out3;
+	dstage = "post_desc";
 	if (emuxfs_desc_init_from_stat(&post_desc, &st, eno))
 		goto out3;
 
@@ -231,6 +257,7 @@ emuxfs_dir_meta_recompute(struct emuxfs_cud *pcud_out, dind dev_index,
 	patch.fname = ccud_in->fname;
 	patch.sum = &ccud_in->pre_meta.checksums[0];
 
+	dstage = "patch_sums";
 	if (emuxfs_dir_patch_sums(post_desc.content_checksum,
 	    pre_desc.content_checksum, alg, dev_index, dirfd, &dir,
 	    &patch))
@@ -259,12 +286,14 @@ emuxfs_dir_meta_recompute(struct emuxfs_cud *pcud_out, dind dev_index,
 		goto out3;
 	}
 
+	dstage = "meta_write";
 	if (emuxfs_meta_write(&post_meta, dev_index, ino))
 		goto out3;
 
 	if (fsync(dev->meta_fd))
 		exit(-1);
 
+	dstage = "readback";
 	if (emuxfs_readback(dev_index, ccud_in->path, 0, &post_meta))
 		goto out3;
 
@@ -278,6 +307,9 @@ out2:
 	if (emuxfs_popdir(&dir))
 		exit(-1);
 out:
+	if (rc != 0)
+		EMUXFS_TRACE("dir_meta_recompute: fail path=%s stage=%s\n",
+		    ccud_in->path, dstage);
 	return rc;
 }
 
