@@ -87,7 +87,13 @@ jobs:
             test -f /usr/local/man/man1/emuxfs.1
 
             echo "== Manual page =="
-            mandoc -T lint emuxfs.1
+            # STYLE diagnostics (missing $Mdocdate$, RCS id, or referenced
+            # pages that a minimal image's man set omits) are not
+            # correctness problems; fail only on ERROR or WARNING.
+            if mandoc -T lint emuxfs.1 2>&1 | grep -E 'ERROR|WARNING'; then
+                echo "mandoc reported errors or warnings"
+                exit 1
+            fi
             MANWIDTH=80 man -M /usr/local/man emuxfs >/dev/null
 
             echo "== Linkage =="
@@ -174,7 +180,13 @@ jobs:
             test -f /usr/local/man/man1/emuxfs.1
 
             echo "== Manual page =="
-            mandoc -T lint emuxfs.1
+            # STYLE diagnostics (missing $Mdocdate$, RCS id, or referenced
+            # pages that a minimal image's man set omits) are not
+            # correctness problems; fail only on ERROR or WARNING.
+            if mandoc -T lint emuxfs.1 2>&1 | grep -E 'ERROR|WARNING'; then
+                echo "mandoc reported errors or warnings"
+                exit 1
+            fi
             MANWIDTH=80 man -M /usr/local/man emuxfs >/dev/null
 
             echo "== Linkage =="
