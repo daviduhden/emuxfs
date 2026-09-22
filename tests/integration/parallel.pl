@@ -280,7 +280,16 @@ for my $st ( values %status ) {
 }
 fail("$bad worker(s) failed") if $bad;
 
-print "== unmount and verify\n";
+# The mount point is empty again after unmount, so check it first.
+print "== verify through the mount\n";
+for my $id ( 0 .. $WORKERS - 1 ) {
+    my $tag = sprintf( "w%02d", $id );
+    my $got = slurp("$mp/final_$tag");
+    fail("final_$tag missing or wrong on the mount")
+      unless defined($got) && $got eq "$tag:done\n";
+}
+
+print "== unmount and verify the mirrors\n";
 must_run( "umount", "umount", $mp );
 $mounted = 0;
 wait_state_clean($dev_a) or fail("dev_a not clean after umount");
@@ -290,7 +299,7 @@ must_run( "audit", $EMUXFS, "audit", $dev_a, $dev_b );
 
 for my $id ( 0 .. $WORKERS - 1 ) {
     my $tag = sprintf( "w%02d", $id );
-    for my $dev ( $dev_a, $dev_b, $mp ) {
+    for my $dev ( $dev_a, $dev_b ) {
         my $got = slurp("$dev/final_$tag");
         fail("final_$tag missing or wrong on $dev")
           unless defined($got) && $got eq "$tag:done\n";
