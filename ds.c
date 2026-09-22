@@ -118,7 +118,8 @@ emuxfs_dspop(void *p)
 			     emuxfs_ds_max_pagecount)) {
 				emuxfs_ds_free_head(n);
 				if (emuxfs_ds_add_pages(
-				    emuxfs_ds_max_pagecount))
+				    emuxfs_ds_max_pagecount -
+				    emuxfs_ds_total_pagecount))
 					return 1;
 			}
 			return 0;
@@ -182,7 +183,7 @@ emuxfs_ds_add_pages(size_t pagecount)
 	++emuxfs_ds_entcount;
 	emuxfs_ds_total_pagecount += pagecount;
 	if (emuxfs_ds_total_pagecount > emuxfs_ds_max_pagecount)
-		emuxfs_ds_total_pagecount = emuxfs_ds_max_pagecount;
+		emuxfs_ds_max_pagecount = emuxfs_ds_total_pagecount;
 
 	return 0;
 }
