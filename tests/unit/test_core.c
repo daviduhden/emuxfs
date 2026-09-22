@@ -43,6 +43,7 @@
 #include <unistd.h>
 
 #include "chk.h"
+#include "ds.h"
 #include "emuxfs.h"
 
 static int failures;
@@ -972,6 +973,13 @@ main(int argc, char *argv[])
 
 	if (emuxfs_state_syslog_init())
 		return 2;
+	/*
+	 * The dynamic stack backs emuxfs_pushdir() and friends; the production
+	 * main() initializes it, and this test must do the same before any
+	 * test that walks a directory (for example emuxfs_dev_format()).
+	 */
+	if (emuxfs_dsinit())
+		return 2;
 
 	sandbox_create();
 
@@ -992,6 +1000,9 @@ main(int argc, char *argv[])
 #undef RUN
 
 	sandbox_destroy();
+
+	if (emuxfs_dsfinal())
+		return 2;
 
 	if (failures != 0) {
 		fprintf(stderr, "%d unit test(s) failed\n", failures);
