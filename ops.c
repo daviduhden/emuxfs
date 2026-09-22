@@ -1349,7 +1349,8 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 			rdsz = blksz;
 			if (i_offset + rdsz > prewr_sz)
 				rdsz = prewr_sz - i_offset;
-			if (pread(fd, content_buf, rdsz, (off_t)i_offset) != (ssize_t)rdsz) {
+			if (pread(fd, content_buf, rdsz, (off_t)i_offset) !=
+			    (ssize_t)rdsz) {
 				rc = EMUXFS_EFS;
 				goto out;
 			}
@@ -1411,7 +1412,8 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 			rdsz = blksz;
 			if (i_offset + rdsz > newoff)
 				rdsz = newoff - i_offset;
-			if (pread(fd, content_buf, rdsz, (off_t)i_offset) != (ssize_t)rdsz) {
+			if (pread(fd, content_buf, rdsz, (off_t)i_offset) !=
+			    (ssize_t)rdsz) {
 				rc = EMUXFS_EFS;
 				goto out;
 			}
@@ -1492,8 +1494,8 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 				beginsz = prewr_sz - i_offset;
 				if (beginsz > blksz)
 					beginsz = blksz;
-				if (pread(fd, content_buf, beginsz, (off_t)i_offset) !=
-				    (ssize_t)beginsz) {
+				if (pread(fd, content_buf, beginsz,
+				    (off_t)i_offset) != (ssize_t)beginsz) {
 					rc = EMUXFS_EFS;
 					goto out;
 				}
@@ -1643,7 +1645,8 @@ emuxfs_write_inner(int root_fd, struct emuxfs_op_update_args *args,
 			rdsz = blksz;
 			if (i_offset + rdsz > prewr_sz)
 				rdsz = prewr_sz - i_offset;
-			if (pread(fd, content_buf, rdsz, (off_t)i_offset) != (ssize_t)rdsz) {
+			if (pread(fd, content_buf, rdsz, (off_t)i_offset) !=
+			    (ssize_t)rdsz) {
 				rc = EMUXFS_EFS;
 				goto out;
 			}
@@ -1715,7 +1718,8 @@ emuxfs_write_inner(int root_fd, struct emuxfs_op_update_args *args,
 					if (beginsz > blksz)
 						beginsz = blksz;
 					if (pread(fd, content_buf, beginsz,
-					    (off_t)i_offset) != (ssize_t)beginsz) {
+					    (off_t)i_offset) !=
+					    (ssize_t)beginsz) {
 						rc = EMUXFS_EFS;
 						goto out;
 					}
@@ -1744,14 +1748,16 @@ emuxfs_write_inner(int root_fd, struct emuxfs_op_update_args *args,
 				if (off + endsz > blksz)
 					endsz = blksz - off;
 				if (pread(fd, &content_buf[off], endsz,
-				    (off_t)(i_offset + off)) != (ssize_t)endsz) {
+				    (off_t)(i_offset + off)) !=
+				    (ssize_t)endsz) {
 					rc = EMUXFS_EFS;
 					goto out;
 				}
 				off += endsz;
 			}
 
-			if (pwrite(fd, content_buf, off, (off_t)i_offset) != (ssize_t)off) {
+			if (pwrite(fd, content_buf, off, (off_t)i_offset) !=
+			    (ssize_t)off) {
 				rc = EMUXFS_EFS;
 				goto out;
 			}

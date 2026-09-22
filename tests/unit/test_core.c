@@ -138,10 +138,10 @@ test_checksums(void)
 	static const uint8_t digits[] = "123456789";
 	static const uint8_t crc32_expect[] = { 0x26, 0x39, 0xf4, 0xcb }; /* 0xcbf43926, little-endian */
 	static const uint8_t md5_expect[] = { 0x90, 0x01, 0x50, 0x98, 0x3c, 0xd2, 0x4f, 0xb0,
-	  0xd6, 0x96, 0x3f, 0x7d, 0x28, 0xe1, 0x7f, 0x72 };
+		0xd6, 0x96, 0x3f, 0x7d, 0x28, 0xe1, 0x7f, 0x72 };
 	static const uint8_t sha1_expect[] = { 0xa9, 0x99, 0x3e, 0x36, 0x47, 0x06, 0x81, 0x6a,
-	  0xba, 0x3e, 0x25, 0x71, 0x78, 0x50, 0xc2, 0x6c,
-	  0x9c, 0xd0, 0xd8, 0x9d };
+		0xba, 0x3e, 0x25, 0x71, 0x78, 0x50, 0xc2, 0x6c,
+		0x9c, 0xd0, 0xd8, 0x9d };
 	struct emuxfs_chk chk;
 	uint8_t got[EMUXFS_CHKSZ_MAX];
 	enum emuxfs_chk_alg_type type;
@@ -620,8 +620,8 @@ emuxfs_test_fabricate(dind idx, const char *name, const char *content)
 
 	if (emuxfs_dev_get(&dev, idx, 0))
 		return 1;
-	if (snprintf(pbuf, sizeof(pbuf), "%s/%s", dev->root_path, name)
-	    >= (int)sizeof(pbuf))
+	if (snprintf(pbuf, sizeof(pbuf), "%s/%s", dev->root_path, name) >=
+	    (int)sizeof(pbuf))
 		return 1;
 
 	if ((fd = open(pbuf, O_RDWR|O_CREAT|O_TRUNC, 0600)) == -1)
@@ -653,9 +653,9 @@ emuxfs_test_fabricate(dind idx, const char *name, const char *content)
 	if (emuxfs_meta_write(&meta, idx, st.st_ino))
 		return 1;
 
-	assign = (struct emuxfs_assign) {
-		.flags = AF_ASSIGNED,
-		.ino = st.st_ino,
+	assign = (struct emuxfs_assign){
+	    .flags = AF_ASSIGNED,
+	    .ino = st.st_ino,
 	};
 	if (emuxfs_assign_write(&assign, idx, eno))
 		return 1;

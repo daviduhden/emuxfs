@@ -13,13 +13,13 @@
 #
 # GNU make extensions are not used; this file targets OpenBSD make(1).
 
-CC =		clang
-DEBUGGER =	lldb
-CSTD =		-std=c17
+CC = clang
+DEBUGGER = lldb
+CSTD = -std=c17
 
-CFLAGS ?=	-O2 -pipe
-WARNINGS ?=	-Wall -Wextra -Wpedantic
-CFLAGS +=	${CSTD} ${WARNINGS}
+CFLAGS ?= -O2 -pipe
+WARNINGS ?= -Wall -Wextra -Wpedantic
+CFLAGS += ${CSTD} ${WARNINGS}
 
 # emuxfs uses the FUSE implementation shipped with OpenBSD (libfuse in the
 # base system, FUSE 2.6 high-level API).  There is no external FUSE
@@ -29,28 +29,28 @@ CFLAGS +=	${CSTD} ${WARNINGS}
 # fuse_common.h, fuse_opt.h, fuse_lowlevel.h) and the library as
 # /usr/lib/libfuse.a, so the include directory must be named explicitly.  The
 # same directory is what the base system's fuse.pc advertises.
-CPPFLAGS +=	-I/usr/include/fuse
-LDLIBS +=	-lfuse -lz
+CPPFLAGS += -I/usr/include/fuse
+LDLIBS += -lfuse -lz
 
 # Full strict set (openutils "check" policy).
 CHECK_WARNINGS = -Wall -Wextra -Wpedantic -Wshadow -Wformat=2 -Wundef \
 	-Wstrict-prototypes -Wmissing-prototypes \
 	-Wconversion -Wsign-conversion
 
-PREFIX ?=	/usr/local
-BINDIR ?=	${PREFIX}/sbin
-MANDIR ?=	${PREFIX}/man
+PREFIX ?= /usr/local
+BINDIR ?= ${PREFIX}/sbin
+MANDIR ?= ${PREFIX}/man
 
-EMUXFS_DS_MALLOC ?=0
+EMUXFS_DS_MALLOC ?= 0
 .if ${EMUXFS_DS_MALLOC} == 1
-DS =		ds_malloc
+DS = ds_malloc
 .else
-DS =		ds
+DS = ds
 .endif
 
-PROG =		emuxfs
+PROG = emuxfs
 
-OBJ =	chk.o \
+OBJ = chk.o \
 	conf.o \
 	desc.o \
 	dev.o \
@@ -70,7 +70,7 @@ OBJ =	chk.o \
 
 # Everything except the FUSE frontend and the program entry point; used by the
 # headless unit tests so that integrity logic can be exercised without FUSE.
-CORE_OBJ =	chk.o \
+CORE_OBJ = chk.o \
 	conf.o \
 	desc.o \
 	dev.o \
@@ -87,7 +87,7 @@ CORE_OBJ =	chk.o \
 
 # Same objects built with fault injection enabled.  This is the normal
 # modular build plus -DEMUXFS_FAULT_INJECTION, not a unity build.
-FAULT_OBJ =	chk.fault.o \
+FAULT_OBJ = chk.fault.o \
 	conf.fault.o \
 	desc.fault.o \
 	dev.fault.o \

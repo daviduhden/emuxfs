@@ -102,7 +102,8 @@ emuxfs_mount_main(int argc, char *argv[])
 		exit(1);
 	}
 	if (emuxfs_mount_absolutize(&emuxfs_cmdline)) {
-		fprintf(stderr, "Error: Unable to resolve array directories.\n");
+		fprintf(stderr,
+		    "Error: Unable to resolve array directories.\n");
 		exit(1);
 	}
 

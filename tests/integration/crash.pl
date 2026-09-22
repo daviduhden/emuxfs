@@ -145,8 +145,8 @@ sub wait_state_clean {
 # seq, mounted, working, restoring, degraded.  Returns undef on a malformed
 # file so a test can report it explicitly.
 sub state_fields {
-    my ($dev)  = @_;
-    my $data   = slurp("$dev/.muxfs/state.db");
+    my ($dev) = @_;
+    my $data = slurp("$dev/.muxfs/state.db");
     return undef
       unless defined($data) && length($data) == 5 * 8;
     return [ unpack( "Q<5", $data ) ];
@@ -160,10 +160,10 @@ sub assert_clean {
         return;
     }
     my ( $seq, $mounted, $working, $restoring, $degraded ) = @$st;
-    fail("working=$working not cleared on $dev ($tag)")   if $working   != 0;
+    fail("working=$working not cleared on $dev ($tag)")     if $working != 0;
     fail("restoring=$restoring not cleared on $dev ($tag)") if $restoring != 0;
-    fail("degraded=$degraded on $dev ($tag)")             if $degraded  != 0;
-    fail("mounted=$mounted on $dev ($tag)")               if $mounted   != 0;
+    fail("degraded=$degraded on $dev ($tag)")               if $degraded != 0;
+    fail("mounted=$mounted on $dev ($tag)")                 if $mounted != 0;
 }
 
 # Run a command with a fault point armed, then disarm it.  Returns the exit
@@ -188,6 +188,7 @@ must_run( "format", $EMUXFS, "format", "-a", "md5", $dev_a, $dev_b )
 print "== populate\n";
 must_run( "mount", $EMUXFS, "mount", $mp, $dev_a, $dev_b ) or exit 1;
 $mounted = 1;
+
 # Wait until the daemon is actually serving FUSE requests (the mount point
 # returns ENXIO until then).
 for ( my $i = 0 ; $i < 500 ; $i++ ) {
@@ -212,6 +213,7 @@ sub corrupt {
 
 sub recover_and_check {
     my ($tag) = @_;
+
     # The interrupted heal left dev_a with restoring=1, so heal itself refuses
     # to open it (fail closed).  The explicit recovery for an interrupted
     # device is sync, which force-opens the destination and rebuilds it.

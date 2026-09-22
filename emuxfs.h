@@ -317,13 +317,13 @@ EMUXFS int  emuxfs_state_syslog_final(void);
  * example stdio.h and syslog.h) declare printf-like functions.
  */
 EMUXFS void emuxfs_debug(const char *, ...)
-    __attribute__((__format__ (printf, 1, 2)));
+	__attribute__((__format__(printf, 1, 2)));
 EMUXFS void emuxfs_info(const char *, ...)
-    __attribute__((__format__ (printf, 1, 2)));
+	__attribute__((__format__(printf, 1, 2)));
 EMUXFS void emuxfs_warn(const char *, ...)
-    __attribute__((__format__ (printf, 1, 2)));
+	__attribute__((__format__(printf, 1, 2)));
 EMUXFS void emuxfs_alert(const char *, ...)
-    __attribute__((__format__ (printf, 1, 2)));
+	__attribute__((__format__(printf, 1, 2)));
 
 /*
  * Debug tracing.  It is always compiled in and is inert unless enabled at run
@@ -333,7 +333,7 @@ EMUXFS void emuxfs_alert(const char *, ...)
  * file:line prefix identifies the call site.
  */
 EMUXFS void emuxfs_trace(const char *, int, const char *, ...)
-    __attribute__((__format__ (printf, 3, 4)));
+	__attribute__((__format__(printf, 3, 4)));
 #define EMUXFS_TRACE(...)	emuxfs_trace(__FILE__, __LINE__, __VA_ARGS__)
 
 EMUXFS int  emuxfs_state_restore_queue_init(void);

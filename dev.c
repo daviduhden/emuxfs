@@ -321,7 +321,8 @@ emuxfs_dev_open(dind dev_index, int force, int readonly)
 	    (O_RDONLY|O_NOFOLLOW|O_CLOEXEC) :
 	    (O_RDWR|O_NOFOLLOW|O_CLOEXEC);
 
-	if ((state_fd = openat(root_fd, EMUXFS_PATH_STATE_DB, file_flags)) == -1)
+	if ((state_fd = openat(root_fd, EMUXFS_PATH_STATE_DB, file_flags)) ==
+	    -1)
 		goto fail;
 	rc = emuxfs_dev_state_read(&dev->state, state_fd);
 	if (rc == 2) {

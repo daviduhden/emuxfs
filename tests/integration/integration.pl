@@ -169,6 +169,7 @@ sub state_mounted {
 
 sub mount_array {
     my $mlog = "$sandbox/mount-fg.log";
+
     # Run in the foreground (as a background shell job) so the daemon's
     # standard error, including the trace output, is captured.
     system("EMUXFS_TRACE=1 $EMUXFS mount -f $mp $dev_a $dev_b >'$mlog' 2>&1 &");
@@ -326,27 +327,28 @@ print "== audit is read-only on persistent state\n";
 {
     my @files = qw(muxfs.conf state.db meta.db assign.db);
     my %before;
-    for my $d ($dev_a, $dev_b) {
+    for my $d ( $dev_a, $dev_b ) {
         my $db = slurp("$d/.muxfs/state.db");
-        my @f = defined($db) && length($db) == 40 ? unpack("Q<5", $db) : ();
+        my @f  = defined($db) && length($db) == 40 ? unpack( "Q<5", $db ) : ();
         print "diag: pre-audit $d seq=$f[0] mounted=$f[1] working=$f[2] "
-            . "restoring=$f[3] degraded=$f[4]\n";
+          . "restoring=$f[3] degraded=$f[4]\n";
     }
-    my ($aout, $ast) = capture("/bin/sh", "-c",
-        "$EMUXFS audit $dev_a $dev_b 2>&1");
-    print "diag: audit out: @$aout (status " . ($ast >> 8) . ")\n";
-    for my $d ($dev_a, $dev_b) {
+    my ( $aout, $ast ) =
+      capture( "/bin/sh", "-c", "$EMUXFS audit $dev_a $dev_b 2>&1" );
+    print "diag: audit out: @$aout (status " . ( $ast >> 8 ) . ")\n";
+    for my $d ( $dev_a, $dev_b ) {
         for my $f (@files) {
             $before{"$d/$f"} = slurp("$d/.muxfs/$f");
         }
     }
-    must_run("audit (clean)", $EMUXFS, "audit", $dev_a, $dev_b);
-    for my $d ($dev_a, $dev_b) {
+    must_run( "audit (clean)", $EMUXFS, "audit", $dev_a, $dev_b );
+    for my $d ( $dev_a, $dev_b ) {
         for my $f (@files) {
             my $after = slurp("$d/.muxfs/$f");
             fail("audit modified $f on $d")
-                unless defined($before{"$d/$f"}) && defined($after) &&
-                $before{"$d/$f"} eq $after;
+              unless defined( $before{"$d/$f"} )
+              && defined($after)
+              && $before{"$d/$f"} eq $after;
         }
     }
 }
@@ -368,12 +370,12 @@ else {
 print "== heal repairs corruption\n";
 must_run( "heal", $EMUXFS, "heal", $dev_a, $dev_b );
 {
-    for my $d ($dev_a, $dev_b) {
+    for my $d ( $dev_a, $dev_b ) {
         my $db = slurp("$d/.muxfs/state.db");
-        if (defined($db) && length($db) == 40) {
-            my @f = unpack("Q<5", $db);
+        if ( defined($db) && length($db) == 40 ) {
+            my @f = unpack( "Q<5", $db );
             print "diag: $d seq=$f[0] mounted=$f[1] working=$f[2] "
-                . "restoring=$f[3] degraded=$f[4]\n";
+              . "restoring=$f[3] degraded=$f[4]\n";
         }
         else {
             print "diag: $d state.db unreadable\n";
@@ -390,6 +392,7 @@ fail("sync c != b") if compare( "$dev_c/post", "$dev_b/post" ) != 0;
 
 print "== hard links are refused\n";
 mount_array() or exit 1;
+
 # Creating a hard link through the filesystem must fail: emuxfs cannot
 # represent two names for one inode.
 if ( system( "ln", "$mp/post", "$mp/hard" ) == 0 ) {
@@ -401,7 +404,7 @@ unmount_array();
 # A hard link introduced directly into a mirror must be detected by audit.
 must_run( "make direct hard link", "ln", "$dev_a/post", "$dev_a/post-hard" );
 {
-    my ($out, $st) = capture( $EMUXFS, "audit", $dev_a, $dev_b );
+    my ( $out, $st ) = capture( $EMUXFS, "audit", $dev_a, $dev_b );
     fail("audit accepted a hard-linked device") if $st == 0;
 }
 system( "rm", "-f", "$dev_a/post-hard" );
