@@ -28,6 +28,7 @@ struct emuxfs_version emuxfs_program_version = {
 EMUXFS void
 emuxfs_version_print(void)
 {
+	EMUXFS_TRACE("enter");
 	static const char *flavors[] = {
 		"current",
 		"release",

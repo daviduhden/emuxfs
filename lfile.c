@@ -33,6 +33,7 @@
 EMUXFS void
 emuxfs_range_compute(struct emuxfs_range *range_inout, size_t chksz)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_range r;
 
 	r.byte_begin = range_inout->byte_begin;
@@ -52,6 +53,7 @@ static int
 emuxfs_lfile_abs_range(uint64_t *index_out, uint64_t *count_out,
     uint64_t file_blk_count, uint64_t level)
 {
+	EMUXFS_TRACE("enter");
 	uint64_t n, n2, l, i;
 
 	if (file_blk_count == 0)
@@ -82,6 +84,7 @@ emuxfs_lfile_abs_range(uint64_t *index_out, uint64_t *count_out,
 static uint64_t
 emuxfs_lfile_root_level(uint64_t file_blk_count)
 {
+	EMUXFS_TRACE("enter");
 	uint64_t n, l;
 
 	if (file_blk_count == 0)
@@ -100,11 +103,13 @@ emuxfs_lfile_root_level(uint64_t file_blk_count)
 static uint64_t
 emuxfs_lfile_root_abs_index(uint64_t file_blk_count)
 {
+	EMUXFS_TRACE("enter");
 	uint64_t level, index;
 
 	level = emuxfs_lfile_root_level(file_blk_count);
 
 	if (emuxfs_lfile_abs_range(&index, NULL, file_blk_count, level))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1); /* Programming error. */
 
 	return index;
@@ -113,6 +118,7 @@ emuxfs_lfile_root_abs_index(uint64_t file_blk_count)
 EMUXFS int
 emuxfs_lfile_open(int *fd_out, int lfile_fd, ino_t ino, int flags)
 {
+	EMUXFS_TRACE("enter");
 	int rc;
 	char path_buf[PATH_MAX];
 	int path_len;
@@ -140,6 +146,7 @@ out:
 EMUXFS int
 emuxfs_lfile_create(int lfile_fd, size_t chksz, ino_t ino, size_t filesz)
 {
+	EMUXFS_TRACE("enter");
 	int rc;
 	uint64_t blk_count, blk_count2;
 	size_t lfilesz;
@@ -172,6 +179,7 @@ emuxfs_lfile_create(int lfile_fd, size_t chksz, ino_t ino, size_t filesz)
 	rc = 0;
 out2:
 	if (close(fd))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 out:
 	return rc;
@@ -181,6 +189,7 @@ static int
 emuxfs_lfile_grow(int lfile_fd, size_t chksz, ino_t ino, size_t old_filesz,
     size_t new_filesz)
 {
+	EMUXFS_TRACE("enter");
 	int rc;
 	uint64_t old_blk_count, new_blk_count, new_blk_count2;
 	size_t new_lfilesz, new_lfilesz2;
@@ -214,9 +223,11 @@ emuxfs_lfile_grow(int lfile_fd, size_t chksz, ino_t ino, size_t old_filesz,
 	for (l = old_root_level; l > 0; --l) {
 		if (emuxfs_lfile_abs_range(&old_index, &old_count,
 		    old_blk_count, l))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1); /* Programming error. */
 		if (emuxfs_lfile_abs_range(&new_index, &new_count,
 		    new_blk_count, l))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1); /* Programming error. */
 		memmove(&lfile[new_index * chksz], &lfile[old_index * chksz],
 		    old_count * chksz);
@@ -225,9 +236,11 @@ emuxfs_lfile_grow(int lfile_fd, size_t chksz, ino_t ino, size_t old_filesz,
 	rc = 0;
 /*out3:*/
 	if (munmap(lfile, new_lfilesz))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 out2:
 	if (close(fd))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 out:
 	return rc;
@@ -237,6 +250,7 @@ static int
 emuxfs_lfile_shrink(int lfile_fd, size_t chksz, ino_t ino, size_t old_filesz,
     size_t new_filesz)
 {
+	EMUXFS_TRACE("enter");
 	int rc;
 	uint64_t old_blk_count, new_blk_count, new_blk_count2;
 	size_t old_lfilesz, new_lfilesz2;
@@ -269,15 +283,18 @@ emuxfs_lfile_shrink(int lfile_fd, size_t chksz, ino_t ino, size_t old_filesz,
 	for (l = 1; l <= new_root_level; ++l) {
 		if (emuxfs_lfile_abs_range(&old_index, &old_count,
 		    old_blk_count, l))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1); /* Programming error. */
 		if (emuxfs_lfile_abs_range(&new_index, &new_count,
 		    new_blk_count, l))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1); /* Programming error. */
 		memmove(&lfile[new_index * chksz], &lfile[old_index * chksz],
 		    new_count * chksz);
 	}
 
 	if (munmap(lfile, old_lfilesz))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	lfile = MAP_FAILED;
 
@@ -288,10 +305,12 @@ emuxfs_lfile_shrink(int lfile_fd, size_t chksz, ino_t ino, size_t old_filesz,
 /*out3:*/
 	if (lfile != MAP_FAILED) {
 		if (munmap(lfile, old_lfilesz))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 	}
 out2:
 	if (close(fd))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 out:
 	return rc;
@@ -301,6 +320,7 @@ EMUXFS int
 emuxfs_lfile_resize(int lfile_fd, size_t chksz, ino_t ino, size_t old_filesz,
     size_t new_filesz)
 {
+	EMUXFS_TRACE("enter");
 	size_t n, o, n2, o2;
 
 	n = (new_filesz / EMUXFS_BLOCK_SIZE) +
@@ -321,12 +341,14 @@ emuxfs_lfile_resize(int lfile_fd, size_t chksz, ino_t ino, size_t old_filesz,
 		return emuxfs_lfile_shrink(lfile_fd, chksz, ino, old_filesz,
 		    new_filesz);
 	}
+	EMUXFS_TRACE("exit(-1)");
 	exit(-1); /* Unreachable. */
 }
 
 EMUXFS int
 emuxfs_lfile_delete(int lfile_fd, ino_t ino)
 {
+	EMUXFS_TRACE("enter");
 	int rc;
 	char path_buf[PATH_MAX];
 	int path_len;
@@ -352,6 +374,7 @@ out:
 EMUXFS int
 emuxfs_lfile_exists(int *exists_out, int lfile_fd, ino_t ino)
 {
+	EMUXFS_TRACE("enter");
 	char path_buf[PATH_MAX];
 	int path_len;
 
@@ -371,6 +394,7 @@ emuxfs_lfile_ancestors_recompute(uint8_t *root_sum, int lfile_fd,
     enum emuxfs_chk_alg_type alg, ino_t ino, size_t filesz, uint64_t ibegin,
     uint64_t iend)
 {
+	EMUXFS_TRACE("enter");
 	int rc, fd;
 	size_t chksz, lfilesz;
 	uint64_t blk_count, root_level, l, li, ln, pli, pln, pi, i, j;
@@ -385,6 +409,7 @@ emuxfs_lfile_ancestors_recompute(uint8_t *root_sum, int lfile_fd,
 	chksz = emuxfs_chk_size(alg);
 
 	if (iend < 1)
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1); /* Programming error. */
 
 	blk_count = (filesz / EMUXFS_BLOCK_SIZE) +
@@ -403,12 +428,16 @@ emuxfs_lfile_ancestors_recompute(uint8_t *root_sum, int lfile_fd,
 		ibegin -= (ibegin % EMUXFS_LEVEL_FACTOR);
 
 		if (emuxfs_lfile_abs_range(&li, &ln, blk_count, l))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1); /* Programming error. */
 		if (emuxfs_lfile_abs_range(&pli, &pln, blk_count, l + 1))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1); /* Programming error. */
 		if (ibegin >= ln)
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1); /* Programming error. */
 		if (iend > ln)
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1); /* Programming error. */
 
 		for (i = ibegin; i < iend; i += EMUXFS_LEVEL_FACTOR) {
@@ -434,13 +463,17 @@ emuxfs_lfile_ancestors_recompute(uint8_t *root_sum, int lfile_fd,
 out:
 	if (lfile != MAP_FAILED) {
 		if (lfilesz == 0)
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1); /* Programming error. */
 		if (munmap(lfile, lfilesz))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 	} else if (lfilesz != 0)
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1); /* Programming error. */
 	if (fd != -1) {
 		if (close(fd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 	}
 	return rc;
@@ -450,6 +483,7 @@ EMUXFS int
 emuxfs_lfile_readback(uint8_t *root_sum, dind dev_index, const char *path,
     size_t begin, size_t end, const uint8_t *expected)
 {
+	EMUXFS_TRACE("enter");
 	int rc;
 	struct emuxfs_dev *dev;
 	enum emuxfs_chk_alg_type alg;
@@ -496,6 +530,7 @@ emuxfs_lfile_readback(uint8_t *root_sum, dind dev_index, const char *path,
 	iend = emuxfs_align_up(end, EMUXFS_BLOCK_SIZE) / EMUXFS_BLOCK_SIZE;
 
 	if ((ibegin + 1) > iend)
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1); /* Programming error. */
 	ibegin -= (ibegin % EMUXFS_LEVEL_FACTOR);
 
@@ -512,6 +547,7 @@ emuxfs_lfile_readback(uint8_t *root_sum, dind dev_index, const char *path,
 		rdsz = EMUXFS_BLOCK_SIZE;
 		if (i_offset + rdsz > filesz) {
 			if ((i + 1) != iend)
+				EMUXFS_TRACE("exit(-1)");
 				exit(-1); /* Programming error. */
 			rdsz = filesz - i_offset;
 		}
@@ -528,12 +564,16 @@ emuxfs_lfile_readback(uint8_t *root_sum, dind dev_index, const char *path,
 		ibegin -= (ibegin % EMUXFS_LEVEL_FACTOR);
 
 		if (emuxfs_lfile_abs_range(&li, &ln, blk_count, l))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1); /* Programming error. */
 		if (emuxfs_lfile_abs_range(&pli, &pln, blk_count, l + 1))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1); /* Programming error. */
 		if (ibegin >= ln)
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1); /* Programming error. */
 		if (iend > ln)
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1); /* Programming error. */
 
 		for (i = ibegin; i < iend; i += EMUXFS_LEVEL_FACTOR) {
@@ -563,17 +603,22 @@ emuxfs_lfile_readback(uint8_t *root_sum, dind dev_index, const char *path,
 out:
 	if (lfile != MAP_FAILED) {
 		if (lfilesz == 0)
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1); /* Programming error. */
 		if (munmap(lfile, lfilesz))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 	} else if (lfilesz != 0)
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1); /* Programming error. */
 	if (lfd != -1) {
 		if (close(lfd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 	}
 	if (fd != -1) {
 		if (close(fd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 	}
 	return rc;

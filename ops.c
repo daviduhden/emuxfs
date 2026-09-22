@@ -38,36 +38,46 @@ static void emuxfs_wrbuf_flush(void);
 static void
 emuxfs_eids_set(void)
 {
+	EMUXFS_TRACE("enter");
 	struct fuse_context *fc;
 
 	fc = fuse_get_context();
 	if (setegid(fc->gid))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	if (seteuid(fc->uid))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 }
 
 static void
 emuxfs_eids_wrctx_set(const struct emuxfs_wrctx *wc)
 {
+	EMUXFS_TRACE("enter");
 	if (setegid(wc->group))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	if (seteuid(wc->user))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 }
 
 static void
 emuxfs_eids_reset(void)
 {
+	EMUXFS_TRACE("enter");
 	if (seteuid(getuid()))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	if (setegid(getgid()))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 }
 
 static int
 emuxfs_statfs(const char *path, struct statvfs *stvfs)
 {
+	EMUXFS_TRACE("enter");
 	dind dev_count, i;
 	struct emuxfs_dev *dev;
 	int fd, err, subrc;
@@ -98,10 +108,12 @@ emuxfs_statfs(const char *path, struct statvfs *stvfs)
 		emuxfs_eids_reset();
 		if (subrc) {
 			if (close(fd))
+				EMUXFS_TRACE("exit(-1)");
 				exit(-1);
 			return -err;
 		}
 		if (close(fd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		frsize = st.f_frsize ? st.f_frsize : st.f_bsize;
 		if (has_st) {
@@ -156,6 +168,7 @@ emuxfs_statfs(const char *path, struct statvfs *stvfs)
 static void *
 emuxfs_fuse_init(struct fuse_conn_info *fci)
 {
+	EMUXFS_TRACE("enter");
 	(void)fci;
 
 	emuxfs_info("Mounted");
@@ -165,17 +178,20 @@ emuxfs_fuse_init(struct fuse_conn_info *fci)
 static void
 emuxfs_fuse_destroy(void *data)
 {
+	EMUXFS_TRACE("enter");
 	(void)data;
 
 	emuxfs_wrbuf_flush();
 	emuxfs_info("Unmounting");
 	if (emuxfs_final())
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 }
 
 static int
 emuxfs_fsync(const char *path, int datasync, struct fuse_file_info *ffi)
 {
+	EMUXFS_TRACE("enter");
 	/*
 	 * A call to fsync(2) is made as part of the create, update, and delete
 	 * operations.
@@ -191,6 +207,7 @@ emuxfs_fsync(const char *path, int datasync, struct fuse_file_info *ffi)
 static int
 emuxfs_open(const char *path, struct fuse_file_info *ffi)
 {
+	EMUXFS_TRACE("enter");
 	dind dev_count, i;
 	struct emuxfs_dev *dev;
 	int fd, err;
@@ -212,6 +229,7 @@ emuxfs_open(const char *path, struct fuse_file_info *ffi)
 		if (fd == -1)
 			return -err;
 		if (close(fd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		return 0;
 	}
@@ -221,6 +239,7 @@ emuxfs_open(const char *path, struct fuse_file_info *ffi)
 static int
 emuxfs_opendir(const char *path, struct fuse_file_info *ffi)
 {
+	EMUXFS_TRACE("enter");
 	dind dev_count, i;
 	struct emuxfs_dev *dev;
 	int fd, err;
@@ -242,6 +261,7 @@ emuxfs_opendir(const char *path, struct fuse_file_info *ffi)
 		if (fd == -1)
 			return -err;
 		if (close(fd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		return 0;
 	}
@@ -251,6 +271,7 @@ emuxfs_opendir(const char *path, struct fuse_file_info *ffi)
 static int
 emuxfs_flush(const char *path, struct fuse_file_info *ffi)
 {
+	EMUXFS_TRACE("enter");
 	(void)path;
 	(void)ffi;
 
@@ -261,6 +282,7 @@ emuxfs_flush(const char *path, struct fuse_file_info *ffi)
 static int
 emuxfs_release(const char *path, struct fuse_file_info *ffi)
 {
+	EMUXFS_TRACE("enter");
 	(void)path;
 	(void)ffi;
 
@@ -271,6 +293,7 @@ emuxfs_release(const char *path, struct fuse_file_info *ffi)
 static int
 emuxfs_releasedir(const char *path, struct fuse_file_info *ffi)
 {
+	EMUXFS_TRACE("enter");
 	(void)path;
 	(void)ffi;
 
@@ -281,6 +304,7 @@ static int
 emuxfs_lock(const char *path, struct fuse_file_info *ffi, int op,
     struct flock *flk)
 {
+	EMUXFS_TRACE("enter");
 	(void)path;
 	(void)ffi;
 	(void)op;
@@ -305,6 +329,7 @@ struct emuxfs_op_create_args {
 static int
 emuxfs_op_create(struct emuxfs_op_create_args *args)
 {
+	EMUXFS_TRACE("enter");
 	struct fuse_context *fc;
 
 	dind dev_count, i;
@@ -342,7 +367,7 @@ emuxfs_op_create(struct emuxfs_op_create_args *args)
 
 	if (emuxfs_parent_gid(&parent_gid, args->path))
 		return -EIO;
-	dprintf(2, "op_create: parent_gid ok\n");
+	EMUXFS_TRACE("op_create: parent_gid ok\n");
 
 	now = time(NULL);
 
@@ -350,6 +375,7 @@ emuxfs_op_create(struct emuxfs_op_create_args *args)
 		if (emuxfs_dev_get(&dev, i, 0))
 			continue;
 		if (emuxfs_working_push(i))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 
 		fd = dev->root_fd;
@@ -392,6 +418,7 @@ emuxfs_op_create(struct emuxfs_op_create_args *args)
 				emuxfs_eids_reset();
 				if (subfd != -1) {
 					if (close(subfd))
+						EMUXFS_TRACE("exit(-1)");
 						exit(-1);
 					subrc = 0;
 				} else
@@ -418,6 +445,7 @@ emuxfs_op_create(struct emuxfs_op_create_args *args)
 			emuxfs_eids_reset();
 			break;
 		default:
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1); /* Programming error. */
 		}
 		if (subrc) {
@@ -433,8 +461,10 @@ emuxfs_op_create(struct emuxfs_op_create_args *args)
 			    O_RDONLY|O_NOFOLLOW|O_CLOEXEC)) == -1)
 				goto fail;
 			if (fsync(subfd))
+				EMUXFS_TRACE("exit(-1)");
 				exit(-1);
 			if (close(subfd))
+				EMUXFS_TRACE("exit(-1)");
 				exit(-1);
 		}
 
@@ -447,25 +477,27 @@ emuxfs_op_create(struct emuxfs_op_create_args *args)
 		};
 
 		emuxfs_fault_point("create/before_meta");
-		dprintf(2, "op_create: before meta\n");
+		EMUXFS_TRACE("op_create: before meta\n");
 		if (emuxfs_meta_write(&meta, i, ino))
 			goto fail;
 		emuxfs_fault_point("create/after_meta");
-		dprintf(2, "op_create: after meta\n");
+		EMUXFS_TRACE("op_create: after meta\n");
 		if (emuxfs_assign_write(&assign, i, eno))
 			goto fail;
-		dprintf(2, "op_create: after assign\n");
+		EMUXFS_TRACE("op_create: after assign\n");
 
 		if (fsync(dev->meta_fd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		if (fsync(dev->assign_fd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		if (emuxfs_fsync_parent(fd, args->path))
 			goto fail;
 
 		if (emuxfs_readback(i, args->path, 0, &meta))
 			goto fail;
-		dprintf(2, "op_create: readback ok\n");
+		EMUXFS_TRACE("op_create: readback ok\n");
 
 		cud.type = EMUXFS_CUD_CREATE;
 		cud.path = args->path;
@@ -495,6 +527,7 @@ early:
 static int
 emuxfs_mknod(const char *path, mode_t mode, dev_t sys_dev)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_op_create_args args;
 
 	emuxfs_wrbuf_flush();
@@ -513,6 +546,7 @@ emuxfs_mknod(const char *path, mode_t mode, dev_t sys_dev)
 static int
 emuxfs_mkdir(const char *path, mode_t mode)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_op_create_args args;
 
 	emuxfs_wrbuf_flush();
@@ -530,6 +564,7 @@ emuxfs_mkdir(const char *path, mode_t mode)
 static int
 emuxfs_symlink(const char *link_content, const char *path)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_op_create_args args;
 
 	emuxfs_wrbuf_flush();
@@ -553,6 +588,7 @@ enum emuxfs_op_delete_type {
 static int
 emuxfs_op_delete(const char *path, enum emuxfs_op_delete_type type)
 {
+	EMUXFS_TRACE("enter");
 	dind			 dev_count;
 	dind			 i;
 	struct emuxfs_dev	*dev;
@@ -591,6 +627,7 @@ emuxfs_op_delete(const char *path, enum emuxfs_op_delete_type type)
 		if (emuxfs_dev_get(&dev, i, 0))
 			continue;
 		if (emuxfs_working_push(i))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 
 		fd = dev->root_fd;
@@ -670,6 +707,7 @@ emuxfs_op_delete(const char *path, enum emuxfs_op_delete_type type)
 			emuxfs_eids_reset();
 			break;
 		default:
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1); /* Programming error. */
 		}
 		if (subrc) {
@@ -689,8 +727,10 @@ emuxfs_op_delete(const char *path, enum emuxfs_op_delete_type type)
 		    O_RDONLY|O_NOFOLLOW|O_CLOEXEC)) == -1)
 			goto fail;
 		if (fsync(postwr_pfd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		if (close(postwr_pfd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 
 		if (fstatat(fd, path, &postwr_st, AT_SYMLINK_NOFOLLOW) != -1)
@@ -713,8 +753,10 @@ emuxfs_op_delete(const char *path, enum emuxfs_op_delete_type type)
 		 * assign entry stale while the device looks clean.
 		 */
 		if (fsync(dev->meta_fd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		if (fsync(dev->assign_fd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 
 		cud.type = EMUXFS_CUD_DELETE;
@@ -741,6 +783,7 @@ early:
 
 	if (has_write) {
 		if (emuxfs_state_eno_next_return(return_eno))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		return 0;
 	}
@@ -750,6 +793,7 @@ early:
 static int
 emuxfs_unlink(const char *path)
 {
+	EMUXFS_TRACE("enter");
 	emuxfs_wrbuf_flush();
 
 	if (emuxfs_path_sanitize(&path))
@@ -761,6 +805,7 @@ emuxfs_unlink(const char *path)
 static int
 emuxfs_rmdir(const char *path)
 {
+	EMUXFS_TRACE("enter");
 	emuxfs_wrbuf_flush();
 
 	if (emuxfs_path_sanitize(&path))
@@ -795,6 +840,7 @@ static int
 emuxfs_getattr_inner(struct stat *st_out, struct stat *st, uint64_t eno,
     int *err)
 {
+	EMUXFS_TRACE("enter");
 	size_t sz;
 
 	(void)err;
@@ -815,6 +861,7 @@ emuxfs_read_inner(int root_fd, struct emuxfs_op_read_args *args,
     enum emuxfs_chk_alg_type alg, size_t chksz, struct emuxfs_meta *meta,
     ssize_t *rdsz_out, int *err, int lfile_fd)
 {
+	EMUXFS_TRACE("enter");
 	int fd, rc;
 	size_t fsz;
 	uint8_t buf[EMUXFS_BLOCK_SIZE];
@@ -911,14 +958,18 @@ emuxfs_read_inner(int root_fd, struct emuxfs_op_read_args *args,
 	rc = 0;
 out4:
 	if (r.lfilesz == 0)
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1); /* Programming error. */
 	if (munmap(lfile, r.lfilesz))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 out3:
 	if (close(lfd))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 out2:
 	if (close(fd))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 out:
 	return rc;
@@ -929,6 +980,7 @@ emuxfs_readlink_inner(int root_fd, struct emuxfs_op_read_args *args,
     enum emuxfs_chk_alg_type alg, size_t chksz, const struct emuxfs_desc *desc,
     const struct emuxfs_meta *meta, int *err)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_desc lnk_desc;
 	ssize_t lnksz, rdsz;
 	char lnkbuf[PATH_MAX];
@@ -969,6 +1021,7 @@ emuxfs_readdir_inner(dind dev_index, int root_fd,
     struct stat *st, struct emuxfs_desc *desc, struct emuxfs_meta *meta,
     int *err)
 {
+	EMUXFS_TRACE("enter");
 	int rc, fd;
 	uint8_t content_sum[EMUXFS_CHKSZ_MAX];
 	struct emuxfs_dir dir;
@@ -992,9 +1045,11 @@ emuxfs_readdir_inner(dind dev_index, int root_fd,
 		goto out;
 	}
 	if (close(fd))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	if (emuxfs_pushdir(&dir, root_fd, args->path))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	if (emuxfs_dir_content_chk(content_sum, dev_index, &dir)) {
@@ -1017,6 +1072,7 @@ emuxfs_readdir_inner(dind dev_index, int root_fd,
 	rc = 0;
 out2:
 	if (emuxfs_popdir(&dir))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 out:
 	return rc;
@@ -1025,6 +1081,7 @@ out:
 static int
 emuxfs_op_read(struct emuxfs_op_read_args *args)
 {
+	EMUXFS_TRACE("enter");
 	dind dev_count, i;
 	struct emuxfs_dev *dev;
 	int fd;
@@ -1094,12 +1151,14 @@ emuxfs_op_read(struct emuxfs_op_read_args *args)
 			    &st, &desc, &meta, &err);
 			break;
 		default:
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1); /* Programming error. */
 		}
 		switch (subrc) {
 		case 0:
 			break;
 		case EMUXFS_EINT:
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1); /* Unrecoverable runtime error. */
 		case EMUXFS_EFS:
 			rc = -err;
@@ -1107,6 +1166,7 @@ emuxfs_op_read(struct emuxfs_op_read_args *args)
 		case EMUXFS_ECHK:
 			goto fail;
 		default:
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1); /* Programming error. */
 		}
 
@@ -1116,6 +1176,7 @@ emuxfs_op_read(struct emuxfs_op_read_args *args)
 		return 0;
 fail:
 		if (emuxfs_state_restore_push_back(i, args->path))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		continue;
 early:
@@ -1128,6 +1189,7 @@ early:
 static int
 emuxfs_getattr(const char *path, struct stat *st_out)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_op_read_args args;
 
 	emuxfs_wrbuf_flush();
@@ -1146,6 +1208,7 @@ static int
 emuxfs_read(const char *path, char *buf_out, size_t size, off_t offset,
     struct fuse_file_info *ffi)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_op_read_args args;
 
 	emuxfs_wrbuf_flush();
@@ -1166,6 +1229,7 @@ emuxfs_read(const char *path, char *buf_out, size_t size, off_t offset,
 static int
 emuxfs_readlink(const char *path, char *buf_out, size_t size)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_op_read_args args;
 
 	emuxfs_wrbuf_flush();
@@ -1185,6 +1249,7 @@ static int
 emuxfs_readdir(const char *path, void *fill_data, fuse_fill_dir_t fill,
     off_t offset, struct fuse_file_info *ffi)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_op_read_args args;
 
 	emuxfs_wrbuf_flush();
@@ -1229,6 +1294,7 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
     struct emuxfs_meta *prewr_meta, struct emuxfs_meta *wr_meta,
     struct emuxfs_desc *wr_desc, int *err, int lfile_fd)
 {
+	EMUXFS_TRACE("enter");
 	int rc;
 	int fd;
 	uint8_t content_buf[EMUXFS_BLOCK_SIZE];
@@ -1335,10 +1401,12 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 		}
 
 		if (munmap(lfile, r.lfilesz))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		lfile = MAP_FAILED;
 		r.lfilesz = 0;
 		if (close(lfd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		lfd = -1;
 	}
@@ -1391,10 +1459,12 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 		}
 
 		if (munmap(lfile, r.lfilesz))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		lfile = MAP_FAILED;
 		r.lfilesz = 0;
 		if (close(lfd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		lfd = -1;
 
@@ -1432,10 +1502,12 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 			emuxfs_chk_final(&lfile[0], &wr_content_chk);
 
 			if (munmap(lfile, r.lfilesz))
+				EMUXFS_TRACE("exit(-1)");
 				exit(-1);
 			lfile = MAP_FAILED;
 			r.lfilesz = 0;
 			if (close(lfd))
+				EMUXFS_TRACE("exit(-1)");
 				exit(-1);
 			lfd = -1;
 
@@ -1483,10 +1555,12 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 		}
 
 		if (munmap(lfile, r.lfilesz))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		lfile = MAP_FAILED;
 		r.lfilesz = 0;
 		if (close(lfd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		lfd = -1;
 
@@ -1496,6 +1570,7 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 			goto out;
 		break;
 	default:
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1); /* Unreachable. */
 	}
 
@@ -1510,6 +1585,7 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 out:
 	if (fd != -1) {
 		if (close(fd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 	}
 	return rc;
@@ -1522,6 +1598,7 @@ emuxfs_write_inner(int root_fd, struct emuxfs_op_update_args *args,
     struct emuxfs_desc *wr_desc, int *err, int lfile_fd,
     const struct emuxfs_wrctx *wc)
 {
+	EMUXFS_TRACE("enter");
 	int rc;
 	int fd;
 	uint8_t content_buf[EMUXFS_BLOCK_SIZE];
@@ -1628,10 +1705,12 @@ emuxfs_write_inner(int root_fd, struct emuxfs_op_update_args *args,
 		}
 
 		if (munmap(lfile, r.lfilesz))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		lfile = MAP_FAILED;
 		r.lfilesz = 0;
 		if (close(lfd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		lfd = -1;
 	}
@@ -1732,12 +1811,15 @@ emuxfs_write_inner(int root_fd, struct emuxfs_op_update_args *args,
 		}
 
 		if (munmap(lfile, r.lfilesz))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		lfile = MAP_FAILED;
 		r.lfilesz = 0;
 		if (fsync(lfd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		if (close(lfd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		lfd = -1;
 
@@ -1755,17 +1837,22 @@ emuxfs_write_inner(int root_fd, struct emuxfs_op_update_args *args,
 out:
 	if (lfile != MAP_FAILED) {
 		if (r.lfilesz == 0)
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1); /* Programming error. */
 		if (munmap(lfile, r.lfilesz))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 	} else if (r.lfilesz != 0)
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1); /* Programming error. */
 	if (lfd != -1) {
 		if (close(lfd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 	}
 	if (fd != -1) {
 		if (close(fd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 	}
 	return rc;
@@ -1774,6 +1861,7 @@ out:
 static int
 emuxfs_op_update(struct emuxfs_op_update_args *args)
 {
+	EMUXFS_TRACE("enter");
 	dind			 dev_count;
 	dind			 i;
 	struct emuxfs_dev	*dev;
@@ -1813,6 +1901,7 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 		if (emuxfs_dev_get(&dev, i, 0))
 			continue;
 		if (emuxfs_working_push(i))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 
 		fd = dev->root_fd;
@@ -1896,12 +1985,14 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 			    dev->lfile_fd, wc);
 			break;
 		default:
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1); /* Programming error. */
 		}
 		switch (subrc) {
 		case 0:
 			break;
 		case EMUXFS_EINT:
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1); /* Unrecoverable runtime error. */
 		case EMUXFS_EFS:
 			if (has_write)
@@ -1911,6 +2002,7 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 		case EMUXFS_ECHK:
 			goto fail;
 		default:
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1); /* Programming error. */
 		}
 		emuxfs_desc_chk_meta(&wr_meta.checksums[0], &wr_desc, alg);
@@ -1924,11 +2016,14 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 			    O_RDONLY|O_NOFOLLOW)) == -1)
 				goto fail;
 			if (fsync(subfd))
+				EMUXFS_TRACE("exit(-1)");
 				exit(-1);
 			if (close(subfd))
+				EMUXFS_TRACE("exit(-1)");
 				exit(-1);
 		}
 		if (fsync(dev->meta_fd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 
 		switch (args->type) {
@@ -2006,6 +2101,7 @@ early:
 static int
 emuxfs_rename(const char *from, const char *to)
 {
+	EMUXFS_TRACE("enter");
 	dind			 dev_count;
 	dind			 i;
 	struct emuxfs_dev	*dev;
@@ -2045,6 +2141,7 @@ emuxfs_rename(const char *from, const char *to)
 		if (emuxfs_dev_get(&dev, i, 0))
 			continue;
 		if (emuxfs_working_push(i))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 
 		fd = dev->root_fd;
@@ -2146,6 +2243,7 @@ early:
 static int
 emuxfs_link(const char *from, const char *to)
 {
+	EMUXFS_TRACE("enter");
 	(void)from;
 	(void)to;
 
@@ -2155,6 +2253,7 @@ emuxfs_link(const char *from, const char *to)
 static int
 emuxfs_chmod(const char *path, mode_t mode)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_op_update_args args;
 
 	emuxfs_wrbuf_flush();
@@ -2173,6 +2272,7 @@ emuxfs_chmod(const char *path, mode_t mode)
 static int
 emuxfs_chown(const char *path, uid_t uid, gid_t gid)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_op_update_args args;
 
 	emuxfs_wrbuf_flush();
@@ -2192,6 +2292,7 @@ emuxfs_chown(const char *path, uid_t uid, gid_t gid)
 static int
 emuxfs_utimens(const char *path, const struct timespec *ts)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_op_update_args args;
 
 	emuxfs_wrbuf_flush();
@@ -2210,6 +2311,7 @@ emuxfs_utimens(const char *path, const struct timespec *ts)
 static int
 emuxfs_truncate(const char *path, off_t offset)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_op_update_args args;
 
 	emuxfs_wrbuf_flush();
@@ -2234,6 +2336,7 @@ emuxfs_truncate(const char *path, off_t offset)
 static int
 emuxfs_access(const char *path, int amode)
 {
+	EMUXFS_TRACE("enter");
 	dind			 dev_count;
 	dind			 i;
 	struct emuxfs_dev	*dev;
@@ -2261,6 +2364,7 @@ emuxfs_access(const char *path, int amode)
 static void
 emuxfs_wrbuf_flush(void)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_op_update_args args;
 	const struct emuxfs_wrbuf *wr;
 	int subrc;
@@ -2269,6 +2373,7 @@ emuxfs_wrbuf_flush(void)
 		return;
 
 	if (emuxfs_state_wrbuf_get(&wr))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	args.type = EMUXFS_UT_WRITE;
@@ -2280,9 +2385,11 @@ emuxfs_wrbuf_flush(void)
 
 	subrc = emuxfs_op_update(&args);
 	if (subrc < 0 || (size_t)subrc != wr->sz)
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	if (emuxfs_state_wrbuf_reset())
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 }
 
@@ -2290,6 +2397,7 @@ static int
 emuxfs_buffered_write_begin(const char *path, const char *buf, size_t bufsz,
     off_t offset, struct fuse_context *fc)
 {
+	EMUXFS_TRACE("enter");
 	int rc;
 
 	rc = emuxfs_access(path, W_OK);
@@ -2298,6 +2406,7 @@ emuxfs_buffered_write_begin(const char *path, const char *buf, size_t bufsz,
 
 	if (emuxfs_state_wrbuf_set(path, fc->uid, fc->gid, bufsz,
 	    (size_t)offset, (const uint8_t *)buf))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	return (int)bufsz;
 }
@@ -2306,10 +2415,12 @@ static int
 emuxfs_buffered_write(const char *path, const char *buf, size_t bufsz,
     off_t offset)
 {
+	EMUXFS_TRACE("enter");
 	struct fuse_context *fc;
 	size_t wrsz;
 
 	if (bufsz > EMUXFS_WRBUF_SIZE)
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1); /* Programming error. */
 
 	fc = fuse_get_context();
@@ -2327,6 +2438,7 @@ emuxfs_buffered_write(const char *path, const char *buf, size_t bufsz,
 			emuxfs_wrbuf_flush();
 			if (emuxfs_state_wrbuf_set(path, fc->uid, fc->gid,
 			    bufsz, (size_t)offset, (const uint8_t *)buf))
+				EMUXFS_TRACE("exit(-1)");
 				exit(-1);
 		}
 		return (int)bufsz;
@@ -2340,6 +2452,7 @@ static int
 emuxfs_write(const char *path, const char *buf, size_t bufsz, off_t offset,
     struct fuse_file_info *ffi)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_op_update_args args;
 
 	(void)ffi;

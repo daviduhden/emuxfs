@@ -66,10 +66,13 @@ static int emuxfs_ds_add_pages(size_t);
 EMUXFS int
 emuxfs_dspush(void **p, size_t sz)
 {
+	EMUXFS_TRACE("enter");
 	struct ds *n;
 	size_t s;
 
 	sz = emuxfs_align_up(sz, emuxfs_ds_memalign);
+	EMUXFS_TRACE("dspush sz=%zu total=%zu max=%zu", sz,
+	    emuxfs_ds_total_pagecount, emuxfs_ds_max_pagecount);
 
 	n = SLIST_FIRST(&emuxfs_ds_head);
 	if (n->allocend + sz >= n->end) {
@@ -93,6 +96,7 @@ emuxfs_dspush(void **p, size_t sz)
 static void
 emuxfs_ds_free_head(struct ds *n)
 {
+	EMUXFS_TRACE("enter");
 	SLIST_REMOVE_HEAD(&emuxfs_ds_head, ent);
 	--emuxfs_ds_entcount;
 	emuxfs_ds_total_pagecount -= n->pagecount;
@@ -103,6 +107,7 @@ emuxfs_ds_free_head(struct ds *n)
 EMUXFS int
 emuxfs_dspop(void *p)
 {
+	EMUXFS_TRACE("enter");
 	struct ds *n;
 
 	while (!SLIST_EMPTY(&emuxfs_ds_head)) {
@@ -131,16 +136,18 @@ emuxfs_dspop(void *p)
 EMUXFS int
 emuxfs_dsgrow(void **p_inout, size_t sz)
 {
+	EMUXFS_TRACE("enter");
 	struct ds *n;
 	uint8_t *sp, *dp;
 	size_t ssz, dsz;
 
 	sp = (uint8_t *)*p_inout;
 	sz = emuxfs_align_up(sz, emuxfs_ds_memalign);
+	EMUXFS_TRACE("dsgrow sp=%p sz=%zu", (void *)sp, sz);
 
 	n = SLIST_FIRST(&emuxfs_ds_head);
 	if ((n->begin < sp) || (sp >= n->allocend)) {
-		dprintf(2, "DBG dsgrow: sp=%p begin=%p allocend=%p end=%p\n",
+		EMUXFS_TRACE("dsgrow: sp=%p begin=%p allocend=%p end=%p\n",
 		    (void *)sp, (void *)n->begin, (void *)n->allocend,
 		    (void *)n->end);
 		return 1;
@@ -165,6 +172,7 @@ emuxfs_dsgrow(void **p_inout, size_t sz)
 static int
 emuxfs_ds_add_pages(size_t pagecount)
 {
+	EMUXFS_TRACE("enter");
 	uint8_t *d;
 	struct ds *n;
 	size_t sz;
@@ -191,6 +199,7 @@ emuxfs_ds_add_pages(size_t pagecount)
 EMUXFS int
 emuxfs_dsinit(void)
 {
+	EMUXFS_TRACE("enter");
 	long pagesz;
 
 	emuxfs_ds_offset = emuxfs_align_up(sizeof(struct ds),
@@ -216,6 +225,7 @@ emuxfs_dsinit(void)
 EMUXFS int
 emuxfs_dsfinal(void)
 {
+	EMUXFS_TRACE("enter");
 	struct ds *n;
 
 	while (!SLIST_EMPTY(&emuxfs_ds_head)) {

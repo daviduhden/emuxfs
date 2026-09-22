@@ -61,6 +61,7 @@ static dind			emuxfs_dev_array_degraded_count;
 EMUXFS int
 emuxfs_dev_state_is_valid(const struct emuxfs_dev_state *state)
 {
+	EMUXFS_TRACE("enter");
 	if (state->mounted > 1 || state->working > 1 ||
 	    state->restoring > 1 || state->degraded > 1)
 		return 0;
@@ -74,6 +75,7 @@ emuxfs_dev_state_is_valid(const struct emuxfs_dev_state *state)
 static int
 emuxfs_dev_state_read(struct emuxfs_dev_state *state, int fd)
 {
+	EMUXFS_TRACE("enter");
 	struct stat st;
 	struct emuxfs_dev_state disk_state;
 
@@ -102,6 +104,7 @@ emuxfs_dev_state_read(struct emuxfs_dev_state *state, int fd)
 static int
 emuxfs_dev_state_is_clean(struct emuxfs_dev_state *state)
 {
+	EMUXFS_TRACE("enter");
 	return !(state->mounted || state->restoring || state->working ||
 	    state->degraded);
 }
@@ -109,9 +112,17 @@ emuxfs_dev_state_is_clean(struct emuxfs_dev_state *state)
 EMUXFS int
 emuxfs_dev_state_write_fd(int fd, struct emuxfs_dev_state *state)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_dev_state disk_state;
 
 	const size_t sz = sizeof(disk_state);
+
+	EMUXFS_TRACE("state_write fd=%d seq=%llu mounted=%llu working=%llu "
+	    "restoring=%llu degraded=%llu", fd, (unsigned long long)state->seq,
+	    (unsigned long long)state->mounted,
+	    (unsigned long long)state->working,
+	    (unsigned long long)state->restoring,
+	    (unsigned long long)state->degraded);
 
 	disk_state = (struct emuxfs_dev_state){
 	    .seq       = htole64(state->seq),
@@ -140,6 +151,7 @@ emuxfs_dev_state_write_fd(int fd, struct emuxfs_dev_state *state)
 static int
 emuxfs_dev_state_mount(struct emuxfs_dev_state *state, int fd)
 {
+	EMUXFS_TRACE("enter");
 	state->mounted = 1;
 	if (emuxfs_dev_state_write_fd(fd, state))
 		return 1;
@@ -149,6 +161,7 @@ emuxfs_dev_state_mount(struct emuxfs_dev_state *state, int fd)
 static int
 emuxfs_dev_state_unmount(struct emuxfs_dev_state *state, int fd)
 {
+	EMUXFS_TRACE("enter");
 	state->mounted = 0;
 	if (emuxfs_dev_state_write_fd(fd, state))
 		return 1;
@@ -158,12 +171,14 @@ emuxfs_dev_state_unmount(struct emuxfs_dev_state *state, int fd)
 EMUXFS dind
 emuxfs_dev_count(void)
 {
+	EMUXFS_TRACE("enter");
 	return emuxfs_dev_array_count;
 }
 
 EMUXFS int
 emuxfs_dev_get(struct emuxfs_dev **dev_out, size_t dev_index, int force)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_dev *dev;
 
 	if (dev_index >= emuxfs_dev_array_count)
@@ -184,6 +199,7 @@ emuxfs_dev_get(struct emuxfs_dev **dev_out, size_t dev_index, int force)
 static void
 emuxfs_dev_init(dind dev_index)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_dev *dev;
 
 	memset(&emuxfs_dev_roots[dev_index], 0, PATH_MAX);
@@ -200,6 +216,7 @@ emuxfs_dev_init(dind dev_index)
 EMUXFS void
 emuxfs_dev_module_init(void)
 {
+	EMUXFS_TRACE("enter");
 	dind i;
 
 	memset(&emuxfs_dev_roots, 0, EMUXFS_DEV_COUNT_MAX * (PATH_MAX));
@@ -213,12 +230,14 @@ emuxfs_dev_module_init(void)
 EMUXFS int
 emuxfs_dev_is_mounted(dind dev_index)
 {
+	EMUXFS_TRACE("enter");
 	return emuxfs_dev_array[dev_index].mounted_now;
 }
 
 EMUXFS int
 emuxfs_dev_append(dind *dev_index_out, const char *path)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_dev *dev;
 	dind i;
 	size_t len;
@@ -246,6 +265,7 @@ emuxfs_dev_append(dind *dev_index_out, const char *path)
 EMUXFS int
 emuxfs_dev_open(dind dev_index, int force, int readonly)
 {
+	EMUXFS_TRACE("enter");
 	int rc, root_fd, conf_fd, state_fd, meta_fd, assign_fd, lfile_fd;
 	int file_flags;
 	struct emuxfs_dev *dev, *first;
@@ -376,12 +396,14 @@ fail:
 EMUXFS int
 emuxfs_dev_mount(dind dev_index, int force)
 {
+	EMUXFS_TRACE("enter");
 	return emuxfs_dev_open(dev_index, force, 0);
 }
 
 EMUXFS int
 emuxfs_dev_unmount(size_t index)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_dev *dev;
 
 	/* force=1 so that a degraded device can still be unmounted. */
@@ -397,31 +419,37 @@ emuxfs_dev_unmount(size_t index)
 
 	if (!dev->readonly_now) {
 		if (emuxfs_dev_state_unmount(&dev->state, dev->state_fd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 	}
 
 	if (dev->lfile_fd != -1) {
 		if (close(dev->lfile_fd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		dev->lfile_fd = -1;
 	}
 	if (dev->assign_fd != -1) {
 		if (close(dev->assign_fd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		dev->assign_fd = -1;
 	}
 	if (dev->meta_fd != -1) {
 		if (close(dev->meta_fd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		dev->meta_fd = -1;
 	}
 	if (dev->state_fd != -1) {
 		if (close(dev->state_fd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		dev->state_fd = -1;
 	}
 	if (dev->root_fd != -1) {
 		if (close(dev->root_fd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		dev->root_fd = -1;
 	}
@@ -436,6 +464,7 @@ emuxfs_dev_unmount(size_t index)
 EMUXFS int
 emuxfs_working_push(size_t index)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_dev *dev;
 
 	if (emuxfs_dev_get(&dev, index, 0))
@@ -451,6 +480,7 @@ emuxfs_working_push(size_t index)
 		 * recovery contract (an interrupted operation must be
 		 * detectable), so fail closed.
 		 */
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	}
 
@@ -460,12 +490,14 @@ emuxfs_working_push(size_t index)
 EMUXFS int
 emuxfs_working_pop(size_t index, time_t now)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_dev *dev;
 
 	if (emuxfs_dev_get(&dev, index, 1))
 		return 1;
 
 	if (dev->state.working == 0)
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	(void)now;
@@ -492,6 +524,7 @@ emuxfs_working_pop(size_t index, time_t now)
 		 * on-disk state divergent; recovery then sees an interrupted
 		 * device and requires 'sync'.
 		 */
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	}
 
@@ -501,6 +534,7 @@ emuxfs_working_pop(size_t index, time_t now)
 EMUXFS int
 emuxfs_restoring_push(size_t index)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_dev *dev;
 
 	if (emuxfs_dev_get(&dev, index, 0))
@@ -510,6 +544,7 @@ emuxfs_restoring_push(size_t index)
 
 	dev->state.restoring++;
 	if (emuxfs_dev_state_write_fd(dev->state_fd, &dev->state))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	return 0;
@@ -518,16 +553,19 @@ emuxfs_restoring_push(size_t index)
 EMUXFS int
 emuxfs_restoring_pop(size_t index)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_dev *dev;
 
 	if (emuxfs_dev_get(&dev, index, 1))
 		return 1;
 
 	if (dev->state.restoring == 0)
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	dev->state.restoring--;
 	if (emuxfs_dev_state_write_fd(dev->state_fd, &dev->state))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	return 0;
@@ -536,6 +574,7 @@ emuxfs_restoring_pop(size_t index)
 static int
 emuxfs_degraded_set_val(size_t dev_index, uint64_t val)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_dev *dev;
 	uint64_t *deg;
 
@@ -548,6 +587,7 @@ emuxfs_degraded_set_val(size_t dev_index, uint64_t val)
 		val ? ++emuxfs_dev_array_degraded_count :
 		    --emuxfs_dev_array_degraded_count;
 		if (emuxfs_dev_state_write_fd(dev->state_fd, &dev->state))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 	}
 
@@ -557,6 +597,7 @@ emuxfs_degraded_set_val(size_t dev_index, uint64_t val)
 EMUXFS int
 emuxfs_degraded_set(size_t dev_index)
 {
+	EMUXFS_TRACE("enter");
 	emuxfs_alert("Degraded: %lu", (unsigned long)dev_index);
 	return emuxfs_degraded_set_val(dev_index, 1);
 }
@@ -564,12 +605,14 @@ emuxfs_degraded_set(size_t dev_index)
 EMUXFS int
 emuxfs_degraded_clear(size_t dev_index)
 {
+	EMUXFS_TRACE("enter");
 	return emuxfs_degraded_set_val(dev_index, 0);
 }
 
 EMUXFS int
 emuxfs_meta_size_raw(size_t *size_out, enum emuxfs_chk_alg_type alg)
 {
+	EMUXFS_TRACE("enter");
 	size_t chk_size, base_size;
 
 	const size_t a = EMUXFS_MEM_ALIGN;
@@ -584,6 +627,7 @@ emuxfs_meta_size_raw(size_t *size_out, enum emuxfs_chk_alg_type alg)
 EMUXFS int
 emuxfs_meta_size(size_t *size_out, dind dev_index)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_dev *dev;
 
 	if (emuxfs_dev_get(&dev, dev_index, 0))
@@ -595,6 +639,7 @@ emuxfs_meta_size(size_t *size_out, dind dev_index)
 EMUXFS int
 emuxfs_meta_read(struct emuxfs_meta *meta, dind dev_index, uint64_t ino)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_dev *dev;
 	size_t msz;
 	struct emuxfs_meta disk_meta;
@@ -625,6 +670,7 @@ EMUXFS int
 emuxfs_meta_write_fd(int fd, const struct emuxfs_meta *meta, uint64_t ino,
     size_t msz)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_meta disk_meta;
 
 	if (msz == 0)
@@ -645,6 +691,7 @@ emuxfs_meta_write_fd(int fd, const struct emuxfs_meta *meta, uint64_t ino,
 EMUXFS int
 emuxfs_meta_write(const struct emuxfs_meta *meta, dind dev_index, uint64_t ino)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_dev *dev;
 	size_t msz;
 
@@ -660,6 +707,7 @@ emuxfs_meta_write(const struct emuxfs_meta *meta, dind dev_index, uint64_t ino)
 EMUXFS int
 emuxfs_assign_peek_next_eno(uint64_t *eno_out, dind dev_index)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_dev *dev;
 	struct stat st;
 
@@ -680,6 +728,7 @@ emuxfs_assign_peek_next_eno(uint64_t *eno_out, dind dev_index)
 EMUXFS int
 emuxfs_assign_read(struct emuxfs_assign *assign, dind dev_index, uint64_t eno)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_dev *dev;
 	struct emuxfs_assign disk_assign;
 
@@ -705,6 +754,7 @@ emuxfs_assign_read(struct emuxfs_assign *assign, dind dev_index, uint64_t eno)
 EMUXFS int
 emuxfs_assign_write_fd(int fd, const struct emuxfs_assign *assign, uint64_t eno)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_assign disk_assign;
 
 	const size_t asz = sizeof(struct emuxfs_assign);
@@ -722,6 +772,7 @@ EMUXFS int
 emuxfs_assign_write(const struct emuxfs_assign *assign, dind dev_index,
     uint64_t eno)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_dev *dev;
 
 	if (emuxfs_dev_get(&dev, dev_index, 0))
@@ -737,6 +788,7 @@ emuxfs_assign_write(const struct emuxfs_assign *assign, dind dev_index,
 EMUXFS int
 emuxfs_assign_validate(dind dev_index, uint64_t ino, uint64_t eno)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_assign assign;
 
 	if (emuxfs_assign_read(&assign, dev_index, eno))
@@ -759,6 +811,7 @@ emuxfs_assign_validate(dind dev_index, uint64_t ino, uint64_t eno)
 EMUXFS int
 emuxfs_meta_assign_check(dind dev_index, size_t *bad_out)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_dev *dev;
 	struct emuxfs_assign assign;
 	struct emuxfs_meta meta;
@@ -802,6 +855,7 @@ emuxfs_meta_assign_check(dind dev_index, size_t *bad_out)
 EMUXFS int
 emuxfs_dev_seq_check(void)
 {
+	EMUXFS_TRACE("enter");
 	dind i, dev_count;
 	uint64_t seq;
 	time_t seq_zero_time;

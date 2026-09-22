@@ -32,6 +32,7 @@ EMUXFS int
 emuxfs_desc_chk_reg_content(struct emuxfs_desc *desc, dind dev_index,
     const char *path)
 {
+	EMUXFS_TRACE("enter");
 	int rc;
 	struct emuxfs_dev *dev;
 	struct stat st;
@@ -68,6 +69,7 @@ emuxfs_desc_chk_reg_content(struct emuxfs_desc *desc, dind dev_index,
 		rc = 0;
 out2:
 		if (close(fd))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 out:
 		return rc;
@@ -81,6 +83,7 @@ static int
 emuxfs_desc_chk_dir_content(struct emuxfs_desc *desc, dind dev_index,
     const char *path)
 {
+	EMUXFS_TRACE("enter");
 	int rc, fd;
 	struct emuxfs_dev *dev;
 	struct emuxfs_dir dir;
@@ -92,11 +95,14 @@ emuxfs_desc_chk_dir_content(struct emuxfs_desc *desc, dind dev_index,
 	    -1)
 		return 1;
 	if (emuxfs_pushdir(&dir, fd, "."))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	rc = emuxfs_dir_content_chk(desc->content_checksum, dev_index, &dir);
 	if (emuxfs_popdir(&dir))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	if (close(fd))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 	return rc;
 }
@@ -105,6 +111,7 @@ EMUXFS int
 emuxfs_desc_chk_symlink_content(struct emuxfs_desc *desc, dind dev_index,
     const char *path)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_dev *dev;
 	int fd;
 	enum emuxfs_chk_alg_type alg;
@@ -130,6 +137,7 @@ emuxfs_desc_chk_provided_content(struct emuxfs_desc *desc,
     const uint8_t *content,
     size_t contentsz, enum emuxfs_chk_alg_type alg_type)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_chk chk;
 
 	emuxfs_chk_init(&chk, alg_type);
@@ -145,6 +153,7 @@ EMUXFS int
 emuxfs_desc_chk_node_content(struct emuxfs_desc *desc, dind dev_index,
     const char *path)
 {
+	EMUXFS_TRACE("enter");
 	switch (desc->type) {
 	case EMUXFS_DT_REG:
 		return emuxfs_desc_chk_reg_content(desc, dev_index, path);
@@ -156,6 +165,7 @@ emuxfs_desc_chk_node_content(struct emuxfs_desc *desc, dind dev_index,
 		return 1;
 	}
 
+	EMUXFS_TRACE("exit(-1)");
 	exit(-1); /* Unreachable. */
 }
 
@@ -163,6 +173,7 @@ EMUXFS void
 emuxfs_desc_chk_meta(uint8_t *sum_out, const struct emuxfs_desc *desc,
     enum emuxfs_chk_alg_type alg_type)
 {
+	EMUXFS_TRACE("enter");
 	struct emuxfs_chk chk;
 	size_t chksz;
 	uint64_t u64h, u64le;
@@ -197,6 +208,7 @@ EMUXFS int
 emuxfs_desc_init_from_stat(struct emuxfs_desc *desc_out, struct stat *st,
     uint64_t eno)
 {
+	EMUXFS_TRACE("enter");
 	emuxfs_desc_type desc_type;
 
 	if (emuxfs_desc_type_from_mode(&desc_type, st->st_mode))
@@ -218,6 +230,7 @@ emuxfs_desc_init_from_stat(struct emuxfs_desc *desc_out, struct stat *st,
 EMUXFS int
 emuxfs_desc_type_from_mode(emuxfs_desc_type *dt_out, mode_t mode)
 {
+	EMUXFS_TRACE("enter");
 	if (S_ISREG(mode))
 		*dt_out = EMUXFS_DT_REG;
 	else if (S_ISDIR(mode))

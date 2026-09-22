@@ -32,44 +32,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <fcntl.h>
 
 #include "ds.h"
 #include "emuxfs.h"
 #include "ops.h"
 #include "sandbox.h"
 
-/* TEMPORARY diagnostics: append a line to <dev0>/.muxfs/mount.log. */
-static void
-emuxfs_mount_dbg(const char *msg)
-{
-	char path[PATH_MAX];
-	int fd;
-
-	if (emuxfs_cmdline.dev_count == 0)
-		return;
-	if (snprintf(path, sizeof(path), "%s/.muxfs/mount.log",
-	    emuxfs_cmdline.dev_paths[0]) >= (int)sizeof(path))
-		return;
-	fd = open(path, O_WRONLY|O_CREAT|O_APPEND, 0600);
-	if (fd == -1)
-		return;
-	(void)write(fd, msg, strlen(msg));
-	close(fd);
-}
-
-static void
-emuxfs_mount_dbg_pid(const char *what, long v)
-{
-	char buf[128];
-
-	snprintf(buf, sizeof(buf), "pid %ld: %s %ld\n", (long)getpid(), what, v);
-	emuxfs_mount_dbg(buf);
-}
-
 static void
 emuxfs_mount_usage(void)
 {
+	EMUXFS_TRACE("enter");
 	fprintf(stderr, "usage: emuxfs mount [-f] mount_point directory ...\n");
 }
 
@@ -82,6 +54,7 @@ emuxfs_mount_usage(void)
 static int
 emuxfs_mount_absolutize(struct emuxfs_args *args)
 {
+	EMUXFS_TRACE("enter");
 	size_t i;
 	char *rp;
 
@@ -102,6 +75,7 @@ emuxfs_mount_absolutize(struct emuxfs_args *args)
 static void
 emuxfs_mount_teardown(struct fuse *fuse, char *mp)
 {
+	EMUXFS_TRACE("enter");
 	/*
 	 * fuse_destroy(3) invokes the destroy callback, which flushes any
 	 * buffered write and detaches the array.  It does not unmount:
@@ -117,6 +91,7 @@ emuxfs_mount_teardown(struct fuse *fuse, char *mp)
 EMUXFS int
 emuxfs_mount_main(int argc, char *argv[])
 {
+	EMUXFS_TRACE("enter");
 	int n, rc;
 	char *fuse_argv[8];
 	char *mp;
@@ -124,24 +99,30 @@ emuxfs_mount_main(int argc, char *argv[])
 
 	if (emuxfs_parse_args(argc, argv, 0)) {
 		emuxfs_mount_usage();
+		EMUXFS_TRACE("exit(1)");
 		exit(1);
 	}
 	if (emuxfs_mount_absolutize(&emuxfs_cmdline)) {
 		fprintf(stderr, "Error: Unable to resolve array directories.\n");
+		EMUXFS_TRACE("exit(1)");
 		exit(1);
 	}
 
 	if (emuxfs_init(0))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	switch (emuxfs_dev_seq_check()) {
 	case 0:
 		break; /* Match. */
 	case 1:
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1); /* Error. */
 	case 2:
+		EMUXFS_TRACE("exit(1)");
 		exit(1); /* Mismatch.  Error message already printed. */
 	default:
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1); /* Programming error. */
 	}
 
@@ -156,12 +137,12 @@ emuxfs_mount_main(int argc, char *argv[])
 	mp = NULL;
 	fuse = fuse_setup(n, fuse_argv, &emuxfs_fuse_ops,
 	    sizeof(emuxfs_fuse_ops), &mp, NULL, NULL);
-	emuxfs_mount_dbg(fuse == NULL ? "fuse_setup NULL\n" :
-	    "fuse_setup ok\n");
+	EMUXFS_TRACE("fuse_setup %s", fuse == NULL ? "NULL" : "ok");
 	if (fuse == NULL) {
 		fprintf(stderr, "Error: Unable to mount %s.\n",
 		    emuxfs_cmdline.mp_path);
 		emuxfs_final();
+		EMUXFS_TRACE("exit(1)");
 		exit(1);
 	}
 
@@ -171,27 +152,30 @@ emuxfs_mount_main(int argc, char *argv[])
 	 * privileged syscalls need to remain available.
 	 */
 	if (emuxfs_sandbox_unveil_mirrors(&emuxfs_cmdline)) {
-		emuxfs_mount_dbg("unveil mirrors failed\n");
+		EMUXFS_TRACE("unveil mirrors failed");
 		fprintf(stderr, "Error: Unable to restrict filesystem "
 		    "visibility.\n");
 		emuxfs_mount_teardown(fuse, mp);
+		EMUXFS_TRACE("exit(1)");
 		exit(1);
 	}
 	if (emuxfs_sandbox_unveil_lock()) {
-		emuxfs_mount_dbg("unveil lock failed\n");
+		EMUXFS_TRACE("unveil lock failed");
 		emuxfs_mount_teardown(fuse, mp);
+		EMUXFS_TRACE("exit(1)");
 		exit(1);
 	}
 	if (emuxfs_sandbox_pledge(EMUXFS_PLEDGE_MOUNT)) {
-		emuxfs_mount_dbg("pledge failed\n");
+		EMUXFS_TRACE("pledge failed");
 		fprintf(stderr, "Error: Unable to restrict system calls.\n");
 		emuxfs_mount_teardown(fuse, mp);
+		EMUXFS_TRACE("exit(1)");
 		exit(1);
 	}
 
-	emuxfs_mount_dbg("entering fuse_loop\n");
+	EMUXFS_TRACE("entering fuse_loop");
 	rc = fuse_loop(fuse);
-	emuxfs_mount_dbg_pid("fuse_loop returned", rc);
+	EMUXFS_TRACE("fuse_loop returned %d", rc);
 	emuxfs_mount_teardown(fuse, mp);
 
 	return (rc == -1) ? 1 : 0;

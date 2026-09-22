@@ -169,38 +169,31 @@ sub state_mounted {
 
 sub mount_array {
     my $mlog = "$sandbox/mount-fg.log";
-    # DIAGNOSTIC: run in the foreground (as a background shell job) so the
-    # daemon's stderr, including any crash message, is captured.
+    # Run in the foreground (as a background shell job) so the daemon's
+    # standard error, including the trace output, is captured.
     system("$EMUXFS mount -f $mp $dev_a $dev_b >'$mlog' 2>&1 &");
     $mounted = 1;
-    print "diag: after mount dev_a mounted=" . state_mounted($dev_a) . "\n";
 
-    my $ready = 0;
+    # Wait until the daemon has entered its event loop.
     for ( my $i = 0 ; $i < 500 ; $i++ ) {
-        if ( open( my $fh, ">", "$mp/.muxfs-probe" ) ) {
-            close($fh);
-            unlink("$mp/.muxfs-probe");
-            $ready = 1;
-            last;
-        }
+        my $l = slurp($mlog);
+        last if defined($l) && $l =~ /entering fuse_loop/;
         select( undef, undef, undef, 0.02 );
     }
-    if ( !$ready ) {
-        print "diag: mount not ready: $!\n";
-        my $l = slurp($mlog);
-        print "diag: fg log: " . ( defined($l) ? $l : "(none)" ) . "\n";
-        return 0;
-    }
-    my $l = slurp($mlog);
-    print "diag: fg log after mount: " . ( defined($l) ? $l : "(none)" ) . "\n";
     return 1;
 }
 
 sub unmount_array {
     {
         my $l = slurp("$sandbox/mount-fg.log");
-        print "diag: fg log before umount: " . ( defined($l) ? $l : "(none)" )
-            . "\n";
+        if ( defined($l) ) {
+            my @ln = split( /\n/, $l );
+            my @t  = @ln > 200 ? @ln[ -200 .. -1 ] : @ln;
+            print "diag: daemon trace tail:\n", join( "\n", @t ), "\n";
+        }
+        else {
+            print "diag: daemon trace: (none)\n";
+        }
     }
     must_run( "umount", "umount", $mp );
     $mounted = 0;
@@ -214,6 +207,9 @@ sub unmount_array {
 }
 
 # ---------------------------------------------------------------------------
+
+# Enable the always-compiled debug traces for every emuxfs invocation.
+$ENV{EMUXFS_TRACE} = 1;
 
 make_path( $dev_a, $dev_b, $dev_c, $mp, $work );
 

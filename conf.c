@@ -59,6 +59,7 @@ struct emuxfs_dev_conf_checklist {
 static int
 emuxfs_conf_key_is(const char *key, size_t key_len, const char *literal)
 {
+	EMUXFS_TRACE("enter");
 	size_t n;
 
 	n = strlen(literal);
@@ -69,6 +70,7 @@ static int
 emuxfs_conf_version_parse(struct emuxfs_dev_conf *conf, const char *version,
     size_t version_len)
 {
+	EMUXFS_TRACE("enter");
 	char		 version_string_buf[EMUXFS_VERSION_STRING_LENGTH_MAX +
 			 1];
 	char		*b, *e;
@@ -131,6 +133,7 @@ emuxfs_conf_version_parse(struct emuxfs_dev_conf *conf, const char *version,
 static int
 emuxfs_uuid_read(uint8_t *dest, const char *src, size_t len)
 {
+	EMUXFS_TRACE("enter");
 	char *str;
 	uint32_t status;
 	uuid_t uuid;
@@ -156,6 +159,7 @@ static int
 emuxfs_conf_line_parse(struct emuxfs_dev_conf *conf, const char *line,
     size_t len, struct emuxfs_dev_conf_checklist *cl)
 {
+	EMUXFS_TRACE("enter");
 	const char *eq, *key, *val;
 	size_t key_len, val_len;
 	char num_buf[EMUXFS_DECIMAL_UINT64_LENGTH_MAX + 1];
@@ -227,6 +231,7 @@ static int
 emuxfs_conf_check(struct emuxfs_dev_conf *conf,
     struct emuxfs_dev_conf_checklist cl)
 {
+	EMUXFS_TRACE("enter");
 	if (!(cl.has_alg && cl.has_array_uuid && cl.has_dev_uuid &&
 	    cl.has_version && cl.has_seq_zero_time))
 		return EMUXFS_CONF_EPARSE;
@@ -240,6 +245,7 @@ emuxfs_conf_check(struct emuxfs_dev_conf *conf,
 EMUXFS int
 emuxfs_conf_parse(struct emuxfs_dev_conf *conf, int fd)
 {
+	EMUXFS_TRACE("enter");
 	char buf[EMUXFS_BLOCK_SIZE];
 	ssize_t readsz;
 	size_t bufsz, rawlen, linesz;
@@ -299,6 +305,7 @@ emuxfs_conf_parse(struct emuxfs_dev_conf *conf, int fd)
 static const char *
 emuxfs_version_flavor_str(enum emuxfs_version_flavor flavor)
 {
+	EMUXFS_TRACE("enter");
 	switch (flavor) {
 	case VF_CURRENT:
 		return "current";
@@ -307,12 +314,14 @@ emuxfs_version_flavor_str(enum emuxfs_version_flavor flavor)
 	case VF_STABLE:
 		return "stable";
 	}
+	EMUXFS_TRACE("exit(-1)");
 	exit(-1); /* Programming error. */
 }
 
 EMUXFS int
 emuxfs_conf_write(struct emuxfs_dev_conf *conf, int fd)
 {
+	EMUXFS_TRACE("enter");
 	uuid_t uuid;
 	char *uuid_str;
 	uint32_t uuid_status;

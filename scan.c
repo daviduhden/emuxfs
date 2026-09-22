@@ -37,6 +37,7 @@ static int
 emuxfs_scan_impl(enum emuxfs_scan_mode mode, dind dev_index, char *path,
     size_t len)
 {
+	EMUXFS_TRACE("enter");
 	int			 rc;
 	struct emuxfs_dev	*dev;
 	struct stat		 st;
@@ -106,13 +107,15 @@ emuxfs_scan_impl(enum emuxfs_scan_mode mode, dind dev_index, char *path,
 			printf("%s/%s\n", dev->root_path, epath);
 			if ((mode == EMUXFS_SCAN_HEAL) &&
 			    emuxfs_state_restore_push_back(dev_index, epath))
+				EMUXFS_TRACE("exit(-1)");
 				exit(-1);
 		}
 		rc = 0;
 dirout2:
 		if (emuxfs_popdir(&dir)) {
-			dprintf(2, "DBG scan_impl: popdir failed for %s\n",
+			EMUXFS_TRACE("scan_impl: popdir failed for %s\n",
 			    epath);
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		}
 dirout:
@@ -127,6 +130,7 @@ dirout:
 		printf("%s/%s\n", dev->root_path, epath);
 		if ((mode == EMUXFS_SCAN_HEAL) &&
 		    emuxfs_state_restore_push_back(dev_index, epath))
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 	}
 	return 0;
@@ -135,6 +139,7 @@ dirout:
 static int
 emuxfs_scan(enum emuxfs_scan_mode mode, dind dev_index)
 {
+	EMUXFS_TRACE("enter");
 	char path[PATH_MAX];
 	struct emuxfs_dev *dev;
 	size_t bad;
@@ -169,18 +174,21 @@ emuxfs_scan(enum emuxfs_scan_mode mode, dind dev_index)
 static void
 emuxfs_audit_usage(void)
 {
+	EMUXFS_TRACE("enter");
 	fprintf(stderr, "usage: emuxfs audit directory ...\n");
 }
 
 static void
 emuxfs_heal_usage(void)
 {
+	EMUXFS_TRACE("enter");
 	fprintf(stderr, "usage: emuxfs heal directory ...\n");
 }
 
 EMUXFS int
 emuxfs_scan_main(enum emuxfs_scan_mode scan_mode, int argc, char *argv[])
 {
+	EMUXFS_TRACE("enter");
 	dind i, dev_count;
 
 	/*
@@ -193,6 +201,7 @@ emuxfs_scan_main(enum emuxfs_scan_mode scan_mode, int argc, char *argv[])
 			emuxfs_audit_usage();
 		else
 			emuxfs_heal_usage();
+		EMUXFS_TRACE("exit(1)");
 		exit(1);
 	}
 
@@ -201,10 +210,13 @@ emuxfs_scan_main(enum emuxfs_scan_mode scan_mode, int argc, char *argv[])
 	 * system call privileges before mounting the devices.
 	 */
 	if (emuxfs_sandbox_unveil_mirrors(&emuxfs_cmdline))
+		EMUXFS_TRACE("exit(1)");
 		exit(1);
 	if (emuxfs_sandbox_unveil_lock())
+		EMUXFS_TRACE("exit(1)");
 		exit(1);
 	if (emuxfs_sandbox_pledge(EMUXFS_PLEDGE_SCAN))
+		EMUXFS_TRACE("exit(1)");
 		exit(1);
 
 	/*
@@ -213,44 +225,50 @@ emuxfs_scan_main(enum emuxfs_scan_mode scan_mode, int argc, char *argv[])
 	 */
 	emuxfs_cmdline.readonly = (scan_mode == EMUXFS_SCAN_AUDIT);
 
-	dprintf(2, "DBG scan_main: before init\n");
+	EMUXFS_TRACE("scan_main: before init\n");
 	if (emuxfs_init(0))
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
-	dprintf(2, "DBG scan_main: after init, dev_count=%lu\n",
+	EMUXFS_TRACE("scan_main: after init, dev_count=%lu\n",
 	    (unsigned long)emuxfs_dev_count());
 
 	if ((dev_count = emuxfs_dev_count()) == 0) {
 		dprintf(2, "Error: The directory array is empty.\n");
 		emuxfs_final();
+		EMUXFS_TRACE("exit(1)");
 		exit(1);
 	}
 
-	dprintf(2, "DBG scan_main: before seq_check\n");
+	EMUXFS_TRACE("scan_main: before seq_check\n");
 	switch (emuxfs_dev_seq_check()) {
 	case 0:
 		break; /* Match. */
 	case 1:
 		emuxfs_final();
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1); /* Error. */
 	case 2:
 		emuxfs_final();
+		EMUXFS_TRACE("exit(1)");
 		exit(1); /* Mismatch.  Error message already printed. */
 	default:
 		emuxfs_final();
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1); /* Programming error. */
 	}
-	dprintf(2, "DBG scan_main: after seq_check\n");
+	EMUXFS_TRACE("scan_main: after seq_check\n");
 
 	for (i = 0; i < dev_count; ++i) {
-		dprintf(2, "DBG scan_main: scanning dev %lu\n", (unsigned long)i);
+		EMUXFS_TRACE("scan_main: scanning dev %lu\n", (unsigned long)i);
 		if (emuxfs_scan(scan_mode, i)) {
-			dprintf(2, "DBG scan_main: scan dev %lu failed\n",
+			EMUXFS_TRACE("scan_main: scan dev %lu failed\n",
 			    (unsigned long)i);
 			emuxfs_final();
+			EMUXFS_TRACE("exit(-1)");
 			exit(-1);
 		}
 	}
-	dprintf(2, "DBG scan_main: scans done\n");
+	EMUXFS_TRACE("scan_main: scans done\n");
 
 	if ((scan_mode == EMUXFS_SCAN_HEAL) &&
 	    (emuxfs_state_ambiguity_count() > 0)) {
@@ -258,10 +276,12 @@ emuxfs_scan_main(enum emuxfs_scan_mode scan_mode, int argc, char *argv[])
 		    "overwritten. Resolve them explicitly with "
 		    "'emuxfs sync destination source'.\n");
 		emuxfs_final();
+		EMUXFS_TRACE("exit(1)");
 		exit(1);
 	}
 
 	if (emuxfs_final())
+		EMUXFS_TRACE("exit(-1)");
 		exit(-1);
 
 	return 0;

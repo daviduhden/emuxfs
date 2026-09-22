@@ -325,6 +325,17 @@ EMUXFS void emuxfs_warn(const char *, ...)
 EMUXFS void emuxfs_alert(const char *, ...)
     __attribute__((__format__ (printf, 1, 2)));
 
+/*
+ * Debug tracing.  It is always compiled in and is inert unless enabled at run
+ * time: setting EMUXFS_TRACE makes traces go to the standard error, and
+ * setting EMUXFS_TRACE_FILE appends them to that file (which also works for
+ * the mount daemon, whose standard error is closed by daemon(3)).  The
+ * file:line prefix identifies the call site.
+ */
+EMUXFS void emuxfs_trace(const char *, int, const char *, ...)
+    __attribute__((__format__ (printf, 3, 4)));
+#define EMUXFS_TRACE(...)	emuxfs_trace(__FILE__, __LINE__, __VA_ARGS__)
+
 EMUXFS int  emuxfs_state_restore_queue_init(void);
 EMUXFS void emuxfs_state_restore_queue_final(void);
 EMUXFS int  emuxfs_state_restore_only_set(dind);

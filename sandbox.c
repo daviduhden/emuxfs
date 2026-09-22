@@ -35,6 +35,7 @@
 static int
 emuxfs_sandbox_unveil_path_perm(const char *path, const char *permissions)
 {
+	EMUXFS_TRACE("enter");
 	if (unveil(path, permissions) == -1) {
 		dprintf(2, "emuxfs: unveil(\"%s\", \"%s\"): %s\n", path,
 		    permissions, strerror(errno));
@@ -46,12 +47,14 @@ emuxfs_sandbox_unveil_path_perm(const char *path, const char *permissions)
 EMUXFS int
 emuxfs_sandbox_unveil_path(const char *path)
 {
+	EMUXFS_TRACE("enter");
 	return emuxfs_sandbox_unveil_path_perm(path, "rwc");
 }
 
 EMUXFS int
 emuxfs_sandbox_unveil_mirrors(const struct emuxfs_args *args)
 {
+	EMUXFS_TRACE("enter");
 	size_t i;
 
 	for (i = 0; i < args->dev_count; ++i) {
@@ -65,6 +68,7 @@ emuxfs_sandbox_unveil_mirrors(const struct emuxfs_args *args)
 EMUXFS int
 emuxfs_sandbox_unveil_lock(void)
 {
+	EMUXFS_TRACE("enter");
 	if (unveil(NULL, NULL) == -1) {
 		dprintf(2, "emuxfs: unveil lock: %s\n", strerror(errno));
 		return 1;
@@ -75,6 +79,7 @@ emuxfs_sandbox_unveil_lock(void)
 EMUXFS int
 emuxfs_sandbox_pledge(const char *promises)
 {
+	EMUXFS_TRACE("enter");
 	if (pledge(promises, NULL) == -1) {
 		dprintf(2, "emuxfs: pledge(\"%s\"): %s\n", promises,
 		    strerror(errno));
