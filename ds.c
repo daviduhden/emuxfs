@@ -146,7 +146,7 @@ emuxfs_dsgrow(void **p_inout, size_t sz)
 	EMUXFS_TRACE("dsgrow sp=%p sz=%zu", (void *)sp, sz);
 
 	n = SLIST_FIRST(&emuxfs_ds_head);
-	if ((n->begin < sp) || (sp >= n->allocend)) {
+	if ((sp < n->begin) || (sp >= n->allocend)) {
 		EMUXFS_TRACE("dsgrow: sp=%p begin=%p allocend=%p end=%p\n",
 		    (void *)sp, (void *)n->begin, (void *)n->allocend,
 		    (void *)n->end);
