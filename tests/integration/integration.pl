@@ -246,8 +246,10 @@ print "== a second mount of the same array is refused\n";
     elsif ( $pid == 0 ) {
         open( STDOUT, ">", "$sandbox/mp2.log" );
         open( STDERR, ">&STDOUT" );
-        exec( $EMUXFS, "mount", "-f", $mp2, $dev_a, $dev_b );
-        exit 127;
+
+        # Do not run the parent's END cleanup in the child if exec fails.
+        exec( $EMUXFS, "mount", "-f", $mp2, $dev_a, $dev_b )
+          or POSIX::_exit(127);
     }
     else {
 
