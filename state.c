@@ -363,10 +363,13 @@ emuxfs_init(int skip_first_mount)
 		if (emuxfs_dev_open(j, 0, args->readonly)) {
 			dprintf(2, "Error: Unable to mount %s.\n",
 			    args->dev_paths[i]);
+			emuxfs_final();
 			exit(1);
 		}
-		if (emuxfs_assign_peek_next_eno(&next_eno, j))
+		if (emuxfs_assign_peek_next_eno(&next_eno, j)) {
+			emuxfs_final();
 			exit(-1);
+		}
 		++mnts;
 		if (next_eno > max_next_eno)
 			max_next_eno = next_eno;

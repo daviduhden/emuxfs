@@ -18,6 +18,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <dirent.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,8 +51,11 @@ emuxfs_scan_impl(enum emuxfs_scan_mode mode, dind dev_index, char *path,
 	if (emuxfs_dev_get(&dev, dev_index, 0))
 		return 1;
 
-	if (fstatat(dev->root_fd, epath, &st, AT_SYMLINK_NOFOLLOW))
+	if (fstatat(dev->root_fd, epath, &st, AT_SYMLINK_NOFOLLOW)) {
+		fprintf(stderr, "Cannot stat %s/%s: %s\n", dev->root_path,
+		    epath, strerror(errno));
 		return 1;
+	}
 
 	/*
 	 * emuxfs does not support hard links.  Two names for one inode share a
@@ -67,8 +71,11 @@ emuxfs_scan_impl(enum emuxfs_scan_mode mode, dind dev_index, char *path,
 
 	if (S_ISDIR(st.st_mode)) {
 		rc = 1;
-		if (emuxfs_pushdir(&dir, dev->root_fd, epath))
+		if (emuxfs_pushdir(&dir, dev->root_fd, epath)) {
+			fprintf(stderr, "Cannot read directory %s/%s\n",
+			    dev->root_path, epath);
 			goto dirout;
+		}
 		for (i = 0; i < dir.ent_count; ++i) {
 			dirent = dir.ent_array[i];
 			dname = dirent->d_name;
@@ -83,8 +90,11 @@ emuxfs_scan_impl(enum emuxfs_scan_mode mode, dind dev_index, char *path,
 			sublen = dnamelen;
 			if (len > 0)
 				sublen += len + 1;
-			if (sublen >= PATH_MAX)
+			if (sublen >= PATH_MAX) {
+				fprintf(stderr, "Path too long: %s/%s\n",
+				    dev->root_path, epath);
 				goto dirout2;
+			}
 			if (len > 0)
 				strlcat(path, "/", PATH_MAX);
 			strlcat(path, dname, PATH_MAX);
@@ -105,8 +115,11 @@ dirout2:
 dirout:
 		return rc;
 	}
-	if (!(S_ISREG(st.st_mode) || S_ISLNK(st.st_mode)))
+	if (!(S_ISREG(st.st_mode) || S_ISLNK(st.st_mode))) {
+		fprintf(stderr, "Unsupported node type: %s/%s (mode %o)\n",
+		    dev->root_path, epath, (unsigned)st.st_mode);
 		return 1;
+	}
 	if (emuxfs_readback(dev_index, epath, 0, NULL)) {
 		printf("%s/%s\n", dev->root_path, epath);
 		if ((mode == EMUXFS_SCAN_HEAL) &&
@@ -131,8 +144,11 @@ emuxfs_scan(enum emuxfs_scan_mode mode, dind dev_index)
 	 */
 	if (emuxfs_dev_get(&dev, dev_index, 0))
 		return 1;
-	if (emuxfs_meta_assign_check(dev_index, &bad))
+	if (emuxfs_meta_assign_check(dev_index, &bad)) {
+		dprintf(2, "Error: %s: cannot read the metadata/assign "
+		    "mappings\n", dev->root_path);
 		return 1;
+	}
 	if (bad != 0) {
 		dprintf(2, "Error: %s: %lu metadata/assign mapping(s) are "
 		    "inconsistent\n", dev->root_path, (unsigned long)bad);
@@ -199,6 +215,7 @@ emuxfs_scan_main(enum emuxfs_scan_mode scan_mode, int argc, char *argv[])
 
 	if ((dev_count = emuxfs_dev_count()) == 0) {
 		dprintf(2, "Error: The directory array is empty.\n");
+		emuxfs_final();
 		exit(1);
 	}
 
@@ -206,16 +223,21 @@ emuxfs_scan_main(enum emuxfs_scan_mode scan_mode, int argc, char *argv[])
 	case 0:
 		break; /* Match. */
 	case 1:
+		emuxfs_final();
 		exit(-1); /* Error. */
 	case 2:
+		emuxfs_final();
 		exit(1); /* Mismatch.  Error message already printed. */
 	default:
+		emuxfs_final();
 		exit(-1); /* Programming error. */
 	}
 
 	for (i = 0; i < dev_count; ++i) {
-		if (emuxfs_scan(scan_mode, i))
+		if (emuxfs_scan(scan_mode, i)) {
+			emuxfs_final();
 			exit(-1);
+		}
 	}
 
 	if ((scan_mode == EMUXFS_SCAN_HEAL) &&
@@ -223,6 +245,7 @@ emuxfs_scan_main(enum emuxfs_scan_mode scan_mode, int argc, char *argv[])
 		dprintf(2, "Error: ambiguous copies were found; nothing was "
 		    "overwritten. Resolve them explicitly with "
 		    "'emuxfs sync destination source'.\n");
+		emuxfs_final();
 		exit(1);
 	}
 
