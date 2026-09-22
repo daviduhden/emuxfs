@@ -94,6 +94,7 @@ emuxfs_dev_format(const char *dev_root, enum emuxfs_chk_alg_type alg,
 
 	conf = (struct emuxfs_dev_conf){
 	    .version = emuxfs_program_version,
+	    .format_version = EMUXFS_FORMAT_VERSION,
 	    .chk_alg_type = alg,
 	    .seq_zero_time = now,
 	};
