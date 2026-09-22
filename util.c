@@ -245,11 +245,19 @@ emuxfs_dir_meta_recompute(struct emuxfs_cud *pcud_out, dind dev_index,
 	memcpy(&pre_meta.checksums[chksz], pre_desc.content_checksum, chksz);
 	memcpy(&post_meta.checksums[chksz], post_desc.content_checksum, chksz);
 
-	if (bcmp(&pre_meta.checksums[0], &db_pre_meta.checksums[0], chksz) != 0)
+	if (bcmp(&pre_meta.checksums[0], &db_pre_meta.checksums[0], chksz) != 0) {
+		EMUXFS_TRACE("dir_meta_recompute: pre meta checksum "
+		    "dev=%lu path=%s\n", (unsigned long)dev_index,
+		    ccud_in->path);
 		goto out3;
+	}
 	if (bcmp(&pre_meta.checksums[chksz], &db_pre_meta.checksums[chksz],
-	    chksz) != 0)
+	    chksz) != 0) {
+		EMUXFS_TRACE("dir_meta_recompute: pre content checksum "
+		    "dev=%lu path=%s\n", (unsigned long)dev_index,
+		    ccud_in->path);
 		goto out3;
+	}
 
 	if (emuxfs_meta_write(&post_meta, dev_index, ino))
 		goto out3;
@@ -314,33 +322,58 @@ emuxfs_readback(dind i, const char *path, int shallow,
 	root_fd = dev->root_fd;
 	alg = dev->conf.chk_alg_type;
 	chksz = emuxfs_chk_size(alg);
-	if (fstatat(root_fd, path, &st, AT_SYMLINK_NOFOLLOW))
+	if (fstatat(root_fd, path, &st, AT_SYMLINK_NOFOLLOW)) {
+		EMUXFS_TRACE("readback: fstatat dev=%lu path=%s\n",
+		    (unsigned long)i, path);
 		goto fail;
+	}
 	ino = st.st_ino;
-	if (emuxfs_meta_read(&meta, i, ino))
+	if (emuxfs_meta_read(&meta, i, ino)) {
+		EMUXFS_TRACE("readback: meta_read dev=%lu ino=%llu path=%s\n",
+		    (unsigned long)i, (unsigned long long)ino, path);
 		goto fail;
+	}
 	eno = meta.header.eno;
-	if (emuxfs_desc_init_from_stat(&desc, &st, eno))
+	if (emuxfs_desc_init_from_stat(&desc, &st, eno)) {
+		EMUXFS_TRACE("readback: desc_init dev=%lu ino=%llu path=%s\n",
+		    (unsigned long)i, (unsigned long long)ino, path);
 		goto fail;
+	}
 	if (shallow)
 		memcpy(desc.content_checksum, &meta.checksums[chksz], chksz);
 	else {
-		if (emuxfs_desc_chk_node_content(&desc, i, path))
+		if (emuxfs_desc_chk_node_content(&desc, i, path)) {
+			EMUXFS_TRACE("readback: content dev=%lu ino=%llu "
+			    "path=%s\n", (unsigned long)i,
+			    (unsigned long long)ino, path);
 			goto fail;
+		}
 	}
 	emuxfs_desc_chk_meta(meta_chk_buf, &desc, alg);
-	if (bcmp(meta_chk_buf, &meta.checksums[0], chksz) != 0)
+	if (bcmp(meta_chk_buf, &meta.checksums[0], chksz) != 0) {
+		EMUXFS_TRACE("readback: meta checksum dev=%lu ino=%llu "
+		    "path=%s\n", (unsigned long)i, (unsigned long long)ino,
+		    path);
 		goto fail;
+	}
 	/*
 	 * Cross-check the eno -> ino mapping.  This detects a crash between
 	 * the metadata and assign writes, and stale mappings left by inode
 	 * reuse.
 	 */
-	if (emuxfs_assign_validate(i, ino, eno))
+	if (emuxfs_assign_validate(i, ino, eno)) {
+		EMUXFS_TRACE("readback: assign dev=%lu ino=%llu eno=%llu "
+		    "path=%s\n", (unsigned long)i, (unsigned long long)ino,
+		    (unsigned long long)eno, path);
 		goto fail;
+	}
 	if ((expected != NULL) &&
-	    (bcmp(meta_chk_buf, &expected->checksums[0], chksz) != 0))
+	    (bcmp(meta_chk_buf, &expected->checksums[0], chksz) != 0)) {
+		EMUXFS_TRACE("readback: expected mismatch dev=%lu ino=%llu "
+		    "path=%s\n", (unsigned long)i, (unsigned long long)ino,
+		    path);
 		goto fail;
+	}
 	return 0;
 fail:
 	return 1;
