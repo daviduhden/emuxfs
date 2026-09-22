@@ -143,6 +143,22 @@ sub subdir {
     return join( "/", $base, @parts );
 }
 
+# The FUSE daemon clears 'mounted' in state.db asynchronously, after umount(8)
+# returns.  Wait until the device is clean so that a following command (audit,
+# heal, mount) does not race the daemon's teardown.
+sub wait_state_clean {
+    my ($dev) = @_;
+    for ( my $i = 0 ; $i < 500 ; $i++ ) {
+        my $db = slurp("$dev/.muxfs/state.db");
+        if ( defined($db) && length($db) == 40 ) {
+            my @f = unpack( "Q<5", $db );
+            return 1 if $f[1] == 0 && $f[2] == 0 && $f[3] == 0;
+        }
+        select( undef, undef, undef, 0.02 );
+    }
+    return 0;
+}
+
 sub mount_array {
     unless ( must_run( "mount", $EMUXFS, "mount", $mp, $dev_a, $dev_b ) ) {
         return 0;
@@ -160,6 +176,8 @@ sub mount_array {
 sub unmount_array {
     must_run( "umount", "umount", $mp );
     $mounted = 0;
+    fail("dev_a not clean after umount") unless wait_state_clean($dev_a);
+    fail("dev_b not clean after umount") unless wait_state_clean($dev_b);
 }
 
 # ---------------------------------------------------------------------------

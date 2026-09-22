@@ -126,6 +126,21 @@ sub slurp {
     return $data;
 }
 
+# The FUSE daemon clears 'mounted' in state.db asynchronously after umount(8);
+# wait for the device to be clean before running audit/heal/sync.
+sub wait_state_clean {
+    my ($dev) = @_;
+    for ( my $i = 0 ; $i < 500 ; $i++ ) {
+        my $db = slurp("$dev/.muxfs/state.db");
+        if ( defined($db) && length($db) == 40 ) {
+            my @f = unpack( "Q<5", $db );
+            return 1 if $f[1] == 0 && $f[2] == 0 && $f[3] == 0;
+        }
+        select( undef, undef, undef, 0.02 );
+    }
+    return 0;
+}
+
 # Read the five little-endian 64-bit fields of a device's state.db:
 # seq, mounted, working, restoring, degraded.  Returns undef on a malformed
 # file so a test can report it explicitly.
@@ -181,6 +196,8 @@ must_run( "mkdir d", "mkdir", "$mp/d" );
 put( "$mp/d/n", "nested\n" ) or fail("write nested");
 must_run( "umount", "umount", $mp );
 $mounted = 0;
+wait_state_clean($dev_a) or fail("dev_a not clean after umount");
+wait_state_clean($dev_b) or fail("dev_b not clean after umount");
 
 # Corrupt both a file and a nested file on one mirror.
 sub corrupt {
