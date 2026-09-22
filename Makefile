@@ -155,7 +155,7 @@ fuzz-conf: tests/fuzz/fuzz_conf.c ${CORE_OBJ}
 # toolchain provides it; otherwise the standalone mutation driver
 # (tests/fuzz/fuzz_main.c) is built, under AddressSanitizer if available.  This
 # keeps the step meaningful on OpenBSD's base clang, which has no libFuzzer.
-FUZZ_RUNS ?=20000
+FUZZ_RUNS ?= 20000
 fuzz-smoke: ${CORE_OBJ}
 	@if ${CC} ${CFLAGS} ${CPPFLAGS} -DEMUXFS= -I. \
 	    -fsanitize=fuzzer,address -o tests/fuzz/fuzz_conf \

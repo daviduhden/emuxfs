@@ -192,7 +192,7 @@ sub try_put {
 # normal binary is used.
 sub fuse_mount_bg {
     my ( $a, $b, $point, $log ) = @_;
-    my $bin = defined($point) ? $EMUXFS_FAULT : $EMUXFS;
+    my $bin = defined($point) ? $EMUXFS_FAULT                  : $EMUXFS;
     my $env = defined($point) ? "EMUXFS_FAULT_POINT='$point' " : "";
 
     # Remove any previous log so readiness below cannot be satisfied by a
@@ -230,8 +230,8 @@ sub fuse_fault_recover {
     remove_tree( $a, $b );
     make_path( $a, $b );
     return
-      unless must_run( "format ($tag)", $EMUXFS, "format", "-a", "md5",
-        $a, $b );
+      unless must_run( "format ($tag)", $EMUXFS, "format", "-a", "md5", $a,
+        $b );
 
     fuse_mount_bg( $a, $b, undef, $log );
     put( "$mp/f", "v0\n" ) or fail("populate f ($tag)");

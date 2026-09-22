@@ -295,8 +295,8 @@ print "== modes are mirrored\n";
     my @a = stat("$dev_a/mode");
     my @b = stat("$dev_b/mode");
     fail("cannot stat mode copies") unless @a && @b;
-    fail("mode not mirrored to a") unless ( $a[2] & 07777 ) == 0640;
-    fail("mode not mirrored to b") unless ( $b[2] & 07777 ) == 0640;
+    fail("mode not mirrored to a")  unless ( $a[2] & 07777 ) == 0640;
+    fail("mode not mirrored to b")  unless ( $b[2] & 07777 ) == 0640;
 }
 
 print "== directory rename\n";
@@ -379,8 +379,7 @@ print "== self-healing reproduces the source timestamps\n";
     print $sfh "stamped\n";
     close($sfh);
     run("sync");
-    must_run( "set stamp time", "touch", "-t", "202001020304.05",
-        "$mp/stamp" );
+    must_run( "set stamp time", "touch", "-t", "202001020304.05", "$mp/stamp" );
     run("sync");
     my @ref = stat("$dev_b/stamp");
     fail("cannot stat stamp on b") unless @ref;
@@ -421,7 +420,8 @@ print "== repeated mount / unmount cycles\n";
 for ( my $i = 0 ; $i < 5 ; $i++ ) {
     mount_array() or exit 1;
     fail("cycle $i content") unless ( slurp("$mp/healme") // "" ) eq "good\n";
-    fail("cycle $i post")    unless ( slurp("$mp/post") // "" ) eq "post-remount\n";
+    fail("cycle $i post")
+      unless ( slurp("$mp/post") // "" ) eq "post-remount\n";
     unmount_array();
 }
 
