@@ -210,8 +210,11 @@ emuxfs_scan_main(enum emuxfs_scan_mode scan_mode, int argc, char *argv[])
 	 */
 	emuxfs_cmdline.readonly = (scan_mode == EMUXFS_SCAN_AUDIT);
 
+	dprintf(2, "DBG scan_main: before init\n");
 	if (emuxfs_init(0))
 		exit(-1);
+	dprintf(2, "DBG scan_main: after init, dev_count=%lu\n",
+	    (unsigned long)emuxfs_dev_count());
 
 	if ((dev_count = emuxfs_dev_count()) == 0) {
 		dprintf(2, "Error: The directory array is empty.\n");
@@ -219,6 +222,7 @@ emuxfs_scan_main(enum emuxfs_scan_mode scan_mode, int argc, char *argv[])
 		exit(1);
 	}
 
+	dprintf(2, "DBG scan_main: before seq_check\n");
 	switch (emuxfs_dev_seq_check()) {
 	case 0:
 		break; /* Match. */
@@ -232,13 +236,18 @@ emuxfs_scan_main(enum emuxfs_scan_mode scan_mode, int argc, char *argv[])
 		emuxfs_final();
 		exit(-1); /* Programming error. */
 	}
+	dprintf(2, "DBG scan_main: after seq_check\n");
 
 	for (i = 0; i < dev_count; ++i) {
+		dprintf(2, "DBG scan_main: scanning dev %lu\n", (unsigned long)i);
 		if (emuxfs_scan(scan_mode, i)) {
+			dprintf(2, "DBG scan_main: scan dev %lu failed\n",
+			    (unsigned long)i);
 			emuxfs_final();
 			exit(-1);
 		}
 	}
+	dprintf(2, "DBG scan_main: scans done\n");
 
 	if ((scan_mode == EMUXFS_SCAN_HEAL) &&
 	    (emuxfs_state_ambiguity_count() > 0)) {

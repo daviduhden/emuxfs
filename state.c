@@ -376,6 +376,7 @@ emuxfs_init(int skip_first_mount)
 	}
 	if (mnts == 0)
 		exit(-1);
+	dprintf(2, "DBG init: opened %lu devices\n", (unsigned long)mnts);
 
 	if (emuxfs_state_eno_next_init(max_next_eno))
 		exit(-1);
