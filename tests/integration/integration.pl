@@ -320,8 +320,15 @@ print "== audit is read-only on persistent state\n";
 {
     my @files = qw(muxfs.conf state.db meta.db assign.db);
     my %before;
-    print "diag: pre-audit dev_a mounted=" . state_mounted($dev_a) . "\n";
-    system("ps -ax");
+    for my $d ($dev_a, $dev_b) {
+        my $db = slurp("$d/.muxfs/state.db");
+        my @f = defined($db) && length($db) == 40 ? unpack("Q<5", $db) : ();
+        print "diag: pre-audit $d seq=$f[0] mounted=$f[1] working=$f[2] "
+            . "restoring=$f[3] degraded=$f[4]\n";
+    }
+    my ($aout, $ast) = capture("/bin/sh", "-c",
+        "$EMUXFS audit $dev_a $dev_b 2>&1");
+    print "diag: audit out: @$aout (status " . ($ast >> 8) . ")\n";
     for my $d ($dev_a, $dev_b) {
         for my $f (@files) {
             $before{"$d/$f"} = slurp("$d/.muxfs/$f");
