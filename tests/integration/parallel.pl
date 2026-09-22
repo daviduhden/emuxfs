@@ -473,8 +473,25 @@ else {
 if ( $failures != 0 ) {
     my $l = slurp($mlog);
     if ( defined $l ) {
-        my @ln = split( /\n/, $l );
-        my @t  = @ln > 200 ? @ln[ -200 .. -1 ] : @ln;
+        my @all   = split( /\n/, $l );
+        my $first = -1;
+        for my $i ( 0 .. $#all ) {
+            if ( $all[$i] =~
+                /fail|readback:|dir_meta_recompute:|degraded=1/ )
+            {
+                $first = $i;
+                last;
+            }
+        }
+        if ( $first >= 0 ) {
+            my $s = $first - 30;
+            $s = 0 if $s < 0;
+            my $e = $first + 30;
+            $e = $#all if $e > $#all;
+            print STDERR "diag: daemon lines around the first failure:\n",
+              join( "\n", @all[ $s .. $e ] ), "\n";
+        }
+        my @t = @all > 120 ? @all[ -120 .. -1 ] : @all;
         print STDERR "diag: daemon trace tail:\n", join( "\n", @t ), "\n";
     }
     print STDERR "$failures parallel test(s) failed\n";
