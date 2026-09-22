@@ -319,6 +319,19 @@ else {
 
 print "== heal repairs corruption\n";
 must_run( "heal", $EMUXFS, "heal", $dev_a, $dev_b );
+{
+    for my $d ($dev_a, $dev_b) {
+        my $db = slurp("$d/.muxfs/state.db");
+        if (defined($db) && length($db) == 40) {
+            my @f = unpack("Q<5", $db);
+            print "diag: $d seq=$f[0] mounted=$f[1] working=$f[2] "
+                . "restoring=$f[3] degraded=$f[4]\n";
+        }
+        else {
+            print "diag: $d state.db unreadable\n";
+        }
+    }
+}
 fail("heal did not converge") if compare( "$dev_a/post", "$dev_b/post" ) != 0;
 must_run( "audit after heal", $EMUXFS, "audit", $dev_a, $dev_b );
 
