@@ -18,7 +18,6 @@
 #ifndef _EMUXFS_H_
 #define _EMUXFS_H_
 
-#include <sys/cdefs.h>
 #include <sys/syslimits.h>
 #include <sys/types.h>
 
@@ -312,10 +311,19 @@ EMUXFS int  emuxfs_init(int);
 EMUXFS int  emuxfs_final(void);
 EMUXFS int  emuxfs_state_syslog_init(void);
 EMUXFS int  emuxfs_state_syslog_final(void);
-EMUXFS void emuxfs_debug(const char *, ...) __printflike(1, 2);
-EMUXFS void emuxfs_info(const char *, ...) __printflike(1, 2);
-EMUXFS void emuxfs_warn(const char *, ...) __printflike(1, 2);
-EMUXFS void emuxfs_alert(const char *, ...) __printflike(1, 2);
+/*
+ * OpenBSD does not provide the __printflike() convenience macro, so the
+ * format attribute is written out; this matches how its own headers (for
+ * example stdio.h and syslog.h) declare printf-like functions.
+ */
+EMUXFS void emuxfs_debug(const char *, ...)
+    __attribute__((__format__ (printf, 1, 2)));
+EMUXFS void emuxfs_info(const char *, ...)
+    __attribute__((__format__ (printf, 1, 2)));
+EMUXFS void emuxfs_warn(const char *, ...)
+    __attribute__((__format__ (printf, 1, 2)));
+EMUXFS void emuxfs_alert(const char *, ...)
+    __attribute__((__format__ (printf, 1, 2)));
 
 EMUXFS int  emuxfs_state_restore_queue_init(void);
 EMUXFS void emuxfs_state_restore_queue_final(void);
