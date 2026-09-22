@@ -168,35 +168,40 @@ sub state_mounted {
 }
 
 sub mount_array {
-    unless ( must_run( "mount", $EMUXFS, "mount", $mp, $dev_a, $dev_b ) ) {
-        return 0;
-    }
+    my $mlog = "$sandbox/mount-fg.log";
+    # DIAGNOSTIC: run in the foreground (as a background shell job) so the
+    # daemon's stderr, including any crash message, is captured.
+    system("$EMUXFS mount -f $mp $dev_a $dev_b >'$mlog' 2>&1 &");
     $mounted = 1;
     print "diag: after mount dev_a mounted=" . state_mounted($dev_a) . "\n";
 
-    # The daemon records 'mounted' in emuxfs_init() before fuse_setup() mounts
-    # the filesystem and starts serving requests, so wait until a FUSE
-    # operation on the mount point actually succeeds (it returns ENXIO,
-    # "Device not configured", until the daemon is serving).
     my $ready = 0;
     for ( my $i = 0 ; $i < 500 ; $i++ ) {
-        if ( stat($mp) ) {
+        if ( open( my $fh, ">", "$mp/.muxfs-probe" ) ) {
+            close($fh);
+            unlink("$mp/.muxfs-probe");
             $ready = 1;
             last;
         }
         select( undef, undef, undef, 0.02 );
     }
     if ( !$ready ) {
-        print "diag: mount never served a request: $!\n";
-        my $log = slurp("$dev_a/.muxfs/mount.log");
-        print "diag: mount.log: " . ( defined($log) ? $log : "(none)" ) . "\n";
-        system("ps -ax");
+        print "diag: mount not ready: $!\n";
+        my $l = slurp($mlog);
+        print "diag: fg log: " . ( defined($l) ? $l : "(none)" ) . "\n";
         return 0;
     }
+    my $l = slurp($mlog);
+    print "diag: fg log after mount: " . ( defined($l) ? $l : "(none)" ) . "\n";
     return 1;
 }
 
 sub unmount_array {
+    {
+        my $l = slurp("$sandbox/mount-fg.log");
+        print "diag: fg log before umount: " . ( defined($l) ? $l : "(none)" )
+            . "\n";
+    }
     must_run( "umount", "umount", $mp );
     $mounted = 0;
     print "diag: after umount dev_a mounted=" . state_mounted($dev_a) . "\n";
