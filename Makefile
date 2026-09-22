@@ -24,6 +24,12 @@ CFLAGS +=	${CSTD} ${WARNINGS}
 # emuxfs uses the FUSE implementation shipped with OpenBSD (libfuse in the
 # base system, FUSE 2.6 high-level API).  There is no external FUSE
 # dependency and no libfuse3 requirement; see COMPATIBILITY.md.
+#
+# OpenBSD installs the base FUSE headers under /usr/include/fuse (fuse.h,
+# fuse_common.h, fuse_opt.h, fuse_lowlevel.h) and the library as
+# /usr/lib/libfuse.a, so the include directory must be named explicitly.  The
+# same directory is what the base system's fuse.pc advertises.
+CPPFLAGS +=	-I/usr/include/fuse
 LDLIBS +=	-lfuse -lz
 
 # Full strict set (openutils "check" policy).

@@ -40,11 +40,14 @@ jobs:
             uname -a
             uname -m
 
-            echo "== FUSE device =="
-            # The FUSE library is in the base system; only the device node may
-            # be missing from a minimal image.
-            (cd /dev && MAKEDEV fuse) || true
-            test -f /usr/include/fuse.h
+            echo "== FUSE device and headers =="
+            # The FUSE library and headers are in the base system's comp set:
+            # /usr/include/fuse/fuse.h and /usr/lib/libfuse.a.  Only the device
+            # node may be missing from a minimal image.
+            (cd /dev && ./MAKEDEV fuse) || true
+            ls -l /dev/fuse0 2>/dev/null || true
+            ls -l /usr/include/fuse/fuse.h
+            ls -l /usr/lib/libfuse.a
 
             echo "== Clang =="
             clang --version
@@ -121,11 +124,14 @@ jobs:
             uname -a
             uname -m
 
-            echo "== FUSE device =="
-            # The FUSE library is in the base system; only the device node may
-            # be missing from a minimal image.
-            (cd /dev && MAKEDEV fuse) || true
-            test -f /usr/include/fuse.h
+            echo "== FUSE device and headers =="
+            # The FUSE library and headers are in the base system's comp set:
+            # /usr/include/fuse/fuse.h and /usr/lib/libfuse.a.  Only the device
+            # node may be missing from a minimal image.
+            (cd /dev && ./MAKEDEV fuse) || true
+            ls -l /dev/fuse0 2>/dev/null || true
+            ls -l /usr/include/fuse/fuse.h
+            ls -l /usr/lib/libfuse.a
 
             echo "== Clang =="
             clang --version
