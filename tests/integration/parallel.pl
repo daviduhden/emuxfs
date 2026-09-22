@@ -64,6 +64,7 @@ my $mp       = "$sandbox/mp";
 my $mlog     = "$sandbox/mount-fg.log";
 my $mounted  = 0;
 my $failures = 0;
+my $daemon_pid;
 
 my $parent = $$;
 
@@ -107,6 +108,16 @@ sub cleanup {
         system("umount -f $mp >/dev/null 2>&1");
         $mounted = 0;
     }
+    if ( defined $daemon_pid ) {
+        kill( "TERM", $daemon_pid );
+        for ( my $i = 0 ; $i < 50 ; $i++ ) {
+            last if waitpid( $daemon_pid, WNOHANG ) == $daemon_pid;
+            select( undef, undef, undef, 0.02 );
+        }
+        kill( "KILL", $daemon_pid );
+        waitpid( $daemon_pid, 0 );
+        $daemon_pid = undef;
+    }
     if ( $sandbox =~ m{\A\Q$tmpbase\E/[^/]+\z} ) {
         remove_tree($sandbox);
     }
@@ -134,8 +145,24 @@ sub wait_state_clean {
 
 sub mount_array {
     unlink($mlog);
-    system("EMUXFS_TRACE=1 $EMUXFS mount -f $mp $dev_a $dev_b >'$mlog' 2>&1 &");
-    $mounted = 1;
+
+    # Run the daemon as a direct child so that its exit status (including a
+    # fatal signal) can be reported if it dies while serving requests.
+    my $pid = fork();
+    if ( !defined $pid ) {
+        fail("fork (mount): $!");
+        return 0;
+    }
+    if ( $pid == 0 ) {
+        open( STDOUT, ">", $mlog );
+        open( STDERR, ">&STDOUT" );
+        $ENV{EMUXFS_TRACE} = 1;
+        exec( $EMUXFS, "mount", "-f", $mp, $dev_a, $dev_b )
+          or POSIX::_exit(127);
+    }
+    $daemon_pid = $pid;
+    $mounted    = 1;
+
     my $ready = 0;
     for ( my $i = 0 ; $i < 500 ; $i++ ) {
         my $l = slurp($mlog);
@@ -147,6 +174,48 @@ sub mount_array {
     }
     fail("mount did not become ready") unless $ready;
     return $ready;
+}
+
+# Report (once) whether the daemon child has already exited or been killed.
+sub report_daemon_death {
+    return 1 unless defined $daemon_pid;
+    my $r = waitpid( $daemon_pid, WNOHANG );
+    return 1 if $r != $daemon_pid;
+    my $st = $?;
+    if ( $st & 127 ) {
+        fail( "daemon died from signal " . ( $st & 127 ) );
+    }
+    elsif ( ( $st >> 8 ) != 0 ) {
+        fail( "daemon exited with status " . ( $st >> 8 ) );
+    }
+    $daemon_pid = undef;
+    return 0;
+}
+
+# Reap the daemon without reporting (used after a clean unmount or cleanup).
+sub reap_daemon {
+    return unless defined $daemon_pid;
+    waitpid( $daemon_pid, 0 );
+    $daemon_pid = undef;
+}
+
+# Unmount with a bound so that a wedged mount cannot hang the whole test.
+sub umount_array {
+    my $ok = 0;
+    eval {
+        local $SIG{ALRM} = sub { die "umount timeout\n" };
+        alarm(30);
+        system("umount $mp >/dev/null 2>&1");
+        alarm(0);
+        $ok = 1;
+    };
+    alarm(0);
+    if ( !$ok ) {
+        fail("umount did not complete within 30s");
+        system("umount -f $mp >/dev/null 2>&1");
+    }
+    $mounted = 0;
+    return $ok;
 }
 
 # Confirm that the mount is actually serving requests before loading it.
@@ -343,6 +412,20 @@ if ($bad) {
     }
 }
 
+# If the daemon is already gone here, say how it went.
+report_daemon_death();
+
+# A device that was marked degraded during the load explains the EIO storm.
+for my $dev ( $dev_a, $dev_b ) {
+    my $st = state_fields($dev);
+    if ( !defined $st ) {
+        fail("cannot read state.db for $dev after the load");
+    }
+    elsif ( $st->[4] != 0 ) {
+        fail("$dev is degraded after the load");
+    }
+}
+
 # The mount point is empty again after unmount, so check it first.
 print "== verify through the mount\n";
 for my $id ( 0 .. $WORKERS - 1 ) {
@@ -353,8 +436,8 @@ for my $id ( 0 .. $WORKERS - 1 ) {
 }
 
 print "== unmount and verify the mirrors\n";
-must_run( "umount", "umount", $mp );
-$mounted = 0;
+umount_array();
+reap_daemon();
 wait_state_clean($dev_a) or fail("dev_a not clean after umount");
 wait_state_clean($dev_b) or fail("dev_b not clean after umount");
 
