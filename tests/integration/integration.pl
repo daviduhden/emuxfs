@@ -184,26 +184,21 @@ sub mount_array {
 }
 
 sub unmount_array {
-    {
+    must_run( "umount", "umount", $mp );
+    $mounted = 0;
+    my $clean_a = wait_state_clean($dev_a);
+    my $clean_b = wait_state_clean($dev_b);
+    if ( !$clean_a || !$clean_b ) {
+        fail("dev_a not clean after umount") unless $clean_a;
+        fail("dev_b not clean after umount") unless $clean_b;
         my $l = slurp("$sandbox/mount-fg.log");
         if ( defined($l) ) {
             my @ln = split( /\n/, $l );
             my @t  = @ln > 200 ? @ln[ -200 .. -1 ] : @ln;
             print "diag: daemon trace tail:\n", join( "\n", @t ), "\n";
         }
-        else {
-            print "diag: daemon trace: (none)\n";
-        }
-    }
-    must_run( "umount", "umount", $mp );
-    $mounted = 0;
-    print "diag: after umount dev_a mounted=" . state_mounted($dev_a) . "\n";
-    if ( !wait_state_clean($dev_a) ) {
         system("ps -ax");
-        fail("dev_a not clean after umount");
     }
-    fail("dev_b not clean after umount") unless wait_state_clean($dev_b);
-    print "diag: waited dev_a mounted=" . state_mounted($dev_a) . "\n";
 }
 
 # ---------------------------------------------------------------------------

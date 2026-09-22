@@ -39,7 +39,7 @@ CHECK_WARNINGS = -Wall -Wextra -Wpedantic -Wshadow -Wformat=2 -Wundef \
 
 PREFIX ?=	/usr/local
 BINDIR ?=	${PREFIX}/sbin
-MANDIR ?=	${PREFIX}/man/man
+MANDIR ?=	${PREFIX}/man
 
 EMUXFS_DS_MALLOC ?=0
 .if ${EMUXFS_DS_MALLOC} == 1
