@@ -70,15 +70,17 @@ make integration
 ```
 
 The suite formats two fresh devices, mounts them and then exercises: create,
-mkdir, symlink, write, read, truncate, rename, unlink, rmdir, chmod,
-boundary sizes (0, 1, 4095, 4096, 4097, 8191, 8192, 8193, 65537), a deep
-tree, unusual but valid names, unmount/remount, self-healing from content
+mkdir, symlink, write, read, truncate, rename (file and directory), unlink,
+rmdir, chmod, boundary sizes (0, 1, 4095, 4096, 4097, 8191, 8192, 8193,
+65537), a deep
+tree, unusual but valid names, the refusal of a second mount of an
+already-mounted array, unmount/remount, self-healing from content
 corruption, a deleted node and a corrupt symlink, `audit`, `heal`, `sync` to
 a replacement device, the refusal of hard links (both through the filesystem
 and as a direct modification detected by `audit`), the read-only property of
 `audit` (`muxfs.conf`, `state.db`, `meta.db` and `assign.db` are
-byte-identical before and after), five repeated mount/unmount cycles, and
-`version`.
+byte-identical before and after), the reproduction of source timestamps by a
+repair, five repeated mount/unmount cycles, and `version`.
 
 A second Perl suite, `test.pl`, is the end-to-end suite ported from the
 original shell tests.  Unlike the integration suite it uses the dedicated

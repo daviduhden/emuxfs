@@ -46,8 +46,10 @@ Fifth phase: commit ordering, identity and the v1/v2 decision.
   requires `audit` to be clean and the uncommitted operation to be rolled back.
   Previously those points were only available for manual investigation.
 * The FUSE integration suite now also performs five repeated mount/unmount
-  cycles, and the fuzzer runs for a bounded number of iterations in CI
-  (skipped, not failed, when the toolchain has no libFuzzer).
+  cycles and checks that a second mount of a mounted array is refused, that a
+  repair reproduces the source timestamps, and that mode changes and directory
+  renames are mirrored; the fuzzer runs for a bounded number of iterations in
+  CI (skipped, not failed, when the toolchain has no libFuzzer).
 
 ## 1.3-enhanced (2026-09-22)
 

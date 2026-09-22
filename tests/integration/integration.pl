@@ -283,6 +283,33 @@ my $target = readlink("$mp/lnk");
 $target = "" unless defined $target;
 fail("readlink after retarget") unless $target eq "other";
 
+print "== modes are mirrored\n";
+{
+    open( my $mfh, ">", "$mp/mode" ) or fail("create mode: $!");
+    print $mfh "mode\n";
+    close($mfh);
+    must_run( "chmod 0640", "chmod", "0640", "$mp/mode" );
+    run("sync");
+    my @a = stat("$dev_a/mode");
+    my @b = stat("$dev_b/mode");
+    fail("cannot stat mode copies") unless @a && @b;
+    fail("mode not mirrored to a") unless ( $a[2] & 07777 ) == 0640;
+    fail("mode not mirrored to b") unless ( $b[2] & 07777 ) == 0640;
+}
+
+print "== directory rename\n";
+{
+    must_run( "mkdir z", "mkdir", "$mp/z" );
+    open( my $zfh, ">", "$mp/z/f" ) or fail("create z/f: $!");
+    print $zfh "z\n";
+    close($zfh);
+    must_run( "mv z z2", "mv", "$mp/z", "$mp/z2" );
+    fail("dir rename not mirrored a")
+      unless -f "$dev_a/z2/f" && !-e "$dev_a/z";
+    fail("dir rename not mirrored b") unless -f "$dev_b/z2/f";
+    fail("dir rename content") unless ( slurp("$mp/z2/f") // "" ) eq "z\n";
+}
+
 print "== boundary sizes\n";
 foreach my $sz ( 0, 1, 4095, 4096, 4097, 8191, 8192, 8193, 65537 ) {
     my $src = "$work/sz";
@@ -341,6 +368,29 @@ run("sync");
 must_run( "remove mirror a copy", "rm", "-f", "$dev_a/gone" );
 fail("restore read") unless ( slurp("$mp/gone") // "" ) eq "gone\n";
 fail("missing node not restored") unless -f "$dev_a/gone";
+
+# A repair must reproduce the source timestamps (they are not checksummed in
+# format version 1, but the copy should still match).
+print "== self-healing reproduces the source timestamps\n";
+{
+    open( my $sfh, ">", "$mp/stamp" ) or fail("create stamp: $!");
+    print $sfh "stamped\n";
+    close($sfh);
+    run("sync");
+    must_run( "set stamp time", "touch", "-t", "202001020304.05",
+        "$mp/stamp" );
+    run("sync");
+    my @ref = stat("$dev_b/stamp");
+    fail("cannot stat stamp on b") unless @ref;
+    open( my $cfh, ">", "$dev_a/stamp" ) or fail("corrupt stamp: $!");
+    print $cfh "evil\n";
+    close($cfh);
+    fail("stamp self-heal")
+      unless ( slurp("$mp/stamp") // "" ) eq "stamped\n";
+    my @got = stat("$dev_a/stamp");
+    fail("cannot stat healed stamp") unless @got;
+    fail("healed mtime not reproduced") if $got[9] != $ref[9];
+}
 
 print "== self-healing (corrupt symlink)\n";
 must_run( "create slink",    "ln", "-s", "right", "$mp/slink" );
