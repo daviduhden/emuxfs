@@ -599,8 +599,10 @@ emuxfs_pushdir(struct emuxfs_dir *dir_out, int fd, const char *path)
 		return 1;
 
 	blksz = (size_t)st.st_blksize;
-	if (emuxfs_dspush((void **)&dirbuf, blksz))
+	if (emuxfs_dspush((void **)&dirbuf, blksz)) {
+		dprintf(2, "DBG pushdir: dspush dirbuf failed\n");
 		exit(-1);
+	}
 
 	if ((dirfd = openat(fd, path, O_RDONLY|O_DIRECTORY|O_NOFOLLOW)) == -1)
 		goto fail;
@@ -613,8 +615,10 @@ emuxfs_pushdir(struct emuxfs_dir *dir_out, int fd, const char *path)
 			++ent_count;
 		}
 		rdend += i;
-		if (emuxfs_dsgrow((void **)&dirbuf, blksz))
+		if (emuxfs_dsgrow((void **)&dirbuf, blksz)) {
+			dprintf(2, "DBG pushdir: dsgrow failed\n");
 			exit(-1);
+		}
 	}
 	if (rdsz == -1)
 		goto fail2;
@@ -622,8 +626,10 @@ emuxfs_pushdir(struct emuxfs_dir *dir_out, int fd, const char *path)
 		exit(-1);
 
 	if (emuxfs_dspush((void **)&ent_array,
-	    ent_count * sizeof(struct dirent *)))
+	    ent_count * sizeof(struct dirent *))) {
+		dprintf(2, "DBG pushdir: dspush ent_array failed\n");
 		exit(-1);
+	}
 
 	for (i = 0, j = 0; i < rdend; i += dirent->d_reclen, ++j)
 		dirent = ent_array[j] = (struct dirent *)&dirbuf[i];
@@ -648,10 +654,14 @@ fail:
 EMUXFS int
 emuxfs_popdir(struct emuxfs_dir *dir)
 {
-	if (emuxfs_dspop(dir->ent_array))
+	if (emuxfs_dspop(dir->ent_array)) {
+		dprintf(2, "DBG popdir: dspop ent_array failed\n");
 		exit(-1);
-	if (emuxfs_dspop(dir->base))
+	}
+	if (emuxfs_dspop(dir->base)) {
+		dprintf(2, "DBG popdir: dspop base failed\n");
 		exit(-1);
+	}
 	return 0;
 }
 

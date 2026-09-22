@@ -110,8 +110,11 @@ emuxfs_scan_impl(enum emuxfs_scan_mode mode, dind dev_index, char *path,
 		}
 		rc = 0;
 dirout2:
-		if (emuxfs_popdir(&dir))
+		if (emuxfs_popdir(&dir)) {
+			dprintf(2, "DBG scan_impl: popdir failed for %s\n",
+			    epath);
 			exit(-1);
+		}
 dirout:
 		return rc;
 	}
