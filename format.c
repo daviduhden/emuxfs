@@ -85,8 +85,8 @@ emuxfs_dev_format(const char *dev_root, enum emuxfs_chk_alg_type alg,
 	if (strlen(dev_root) + strlen(sepdotemuxfs) >= PATH_MAX)
 		goto out;
 	memset(path_buf, 0, PATH_MAX);
-	strcat(path_buf, dev_root);
-	strcat(path_buf, sepdotemuxfs);
+	strlcat(path_buf, dev_root, PATH_MAX);
+	strlcat(path_buf, sepdotemuxfs, PATH_MAX);
 	if (mkdir(path_buf, 0700))
 		goto out;
 	if (emuxfs_fsync_parent(AT_FDCWD, path_buf))
@@ -107,9 +107,9 @@ emuxfs_dev_format(const char *dev_root, enum emuxfs_chk_alg_type alg,
 	    strlen(sepemuxfsdotconf) >= PATH_MAX)
 		goto out;
 	memset(path_buf, 0, PATH_MAX);
-	strcat(path_buf, dev_root);
-	strcat(path_buf, sepdotemuxfs);
-	strcat(path_buf, sepemuxfsdotconf);
+	strlcat(path_buf, dev_root, PATH_MAX);
+	strlcat(path_buf, sepdotemuxfs, PATH_MAX);
+	strlcat(path_buf, sepemuxfsdotconf, PATH_MAX);
 	if ((fd = open(path_buf, O_RDWR|O_CREAT|O_EXCL, 0700)) == -1)
 		goto out;
 	if (emuxfs_conf_write(&conf, fd)) {
@@ -131,9 +131,9 @@ emuxfs_dev_format(const char *dev_root, enum emuxfs_chk_alg_type alg,
 	    strlen(sepstatedotdb) >= PATH_MAX)
 		goto out;
 	memset(path_buf, 0, PATH_MAX);
-	strcat(path_buf, dev_root);
-	strcat(path_buf, sepdotemuxfs);
-	strcat(path_buf, sepstatedotdb);
+	strlcat(path_buf, dev_root, PATH_MAX);
+	strlcat(path_buf, sepdotemuxfs, PATH_MAX);
+	strlcat(path_buf, sepstatedotdb, PATH_MAX);
 	if ((fd = open(path_buf, O_RDWR|O_CREAT|O_EXCL, 0700)) == -1)
 		goto out;
 	if (emuxfs_dev_state_write_fd(fd, &dstate)) {
@@ -168,9 +168,9 @@ emuxfs_dev_format(const char *dev_root, enum emuxfs_chk_alg_type alg,
 	    strlen(sepmetadotdb) >= PATH_MAX)
 		goto out;
 	memset(path_buf, 0, PATH_MAX);
-	strcat(path_buf, dev_root);
-	strcat(path_buf, sepdotemuxfs);
-	strcat(path_buf, sepmetadotdb);
+	strlcat(path_buf, dev_root, PATH_MAX);
+	strlcat(path_buf, sepdotemuxfs, PATH_MAX);
+	strlcat(path_buf, sepmetadotdb, PATH_MAX);
 	if ((fd = open(path_buf, O_RDWR|O_CREAT|O_EXCL, 0700)) == -1)
 		goto out;
 	if (emuxfs_meta_write_fd(fd, &meta, ino, metasz)) {
@@ -194,9 +194,9 @@ emuxfs_dev_format(const char *dev_root, enum emuxfs_chk_alg_type alg,
 	    strlen(sepassigndotdb) >= PATH_MAX)
 		goto out;
 	memset(path_buf, 0, PATH_MAX);
-	strcat(path_buf, dev_root);
-	strcat(path_buf, sepdotemuxfs);
-	strcat(path_buf, sepassigndotdb);
+	strlcat(path_buf, dev_root, PATH_MAX);
+	strlcat(path_buf, sepdotemuxfs, PATH_MAX);
+	strlcat(path_buf, sepassigndotdb, PATH_MAX);
 	if ((fd = open(path_buf, O_RDWR|O_CREAT|O_EXCL, 0700)) == -1)
 		goto out;
 	if (emuxfs_assign_write_fd(fd, &assign, eno)) {
@@ -216,9 +216,9 @@ emuxfs_dev_format(const char *dev_root, enum emuxfs_chk_alg_type alg,
 	    strlen(seplfile) >= PATH_MAX)
 		goto out;
 	memset(path_buf, 0, PATH_MAX);
-	strcat(path_buf, dev_root);
-	strcat(path_buf, sepdotemuxfs);
-	strcat(path_buf, seplfile);
+	strlcat(path_buf, dev_root, PATH_MAX);
+	strlcat(path_buf, sepdotemuxfs, PATH_MAX);
+	strlcat(path_buf, seplfile, PATH_MAX);
 	if (mkdir(path_buf, 0700))
 		goto out;
 	if (emuxfs_fsync_parent(AT_FDCWD, path_buf))

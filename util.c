@@ -357,7 +357,7 @@ emuxfs_parent_readback(dind i, const char *path)
 
 	if (emuxfs_path_pop(NULL, ppath, NULL)) {
 		memset(ppath, 0, PATH_MAX);
-		strcpy(ppath, ".");
+		strlcpy(ppath, ".", PATH_MAX);
 	}
 
 	return emuxfs_readback(i, ppath, 0, NULL);
@@ -690,8 +690,8 @@ emuxfs_removeat_impl(int fd, char *path, size_t len)
 			sublen = len + 1 + dnamelen;
 			if (sublen >= PATH_MAX)
 				goto dirout2;
-			strcat(path, "/");
-			strcat(path, dname);
+			strlcat(path, "/", PATH_MAX);
+			strlcat(path, dname, PATH_MAX);
 			if (emuxfs_removeat_impl(fd, path, sublen))
 				goto dirout2;
 			path[len] = '\0';
@@ -852,9 +852,9 @@ emuxfs_restore_dir(dind ddev_index, dind sdev_index, const char *path,
 		if (pathlen + 1 + dnamelen >= PATH_MAX)
 			goto out2;
 		memset(pathbuf, 0, PATH_MAX);
-		strcpy(pathbuf, path);
-		strcat(pathbuf, "/");
-		strcat(pathbuf, dname);
+		strlcpy(pathbuf, path, PATH_MAX);
+		strlcat(pathbuf, "/", PATH_MAX);
+		strlcat(pathbuf, dname, PATH_MAX);
 		if (fstatat(sfd, dname, &subst, AT_SYMLINK_NOFOLLOW))
 			goto out2;
 		subino = subst.st_ino;
@@ -922,9 +922,9 @@ subout:
 			memset(pathbuf, 0, PATH_MAX);
 			if (pathlen + 1 + dnamelen >= PATH_MAX)
 				goto out2;
-			strcpy(pathbuf, path);
-			strcat(pathbuf, "/");
-			strcat(pathbuf, dname);
+			strlcpy(pathbuf, path, PATH_MAX);
+			strlcat(pathbuf, "/", PATH_MAX);
+			strlcat(pathbuf, dname, PATH_MAX);
 			emuxfs_removeat(ddev->root_fd, pathbuf);
 		}
 	}
@@ -1409,7 +1409,7 @@ emuxfs_restore_possible(int *is_delete_out, dind ddev_index, dind sdev_index,
 	struct emuxfs_dir_patch	 patch;
 
 	memset(path, 0, PATH_MAX);
-	strcpy(path, _path);
+	strlcpy(path, _path, PATH_MAX);
 
 	if (emuxfs_dev_get(&ddev, ddev_index, 0))
 		return 1;
@@ -1429,7 +1429,7 @@ emuxfs_restore_possible(int *is_delete_out, dind ddev_index, dind sdev_index,
 	}
 
 	memset(ppathbuf, 0, PATH_MAX);
-	strcpy(ppathbuf, path);
+	strlcpy(ppathbuf, path, PATH_MAX);
 	ppath = ppathbuf;
 	ppathlen = strlen(ppath);
 	is_first = 1;
@@ -1464,7 +1464,7 @@ emuxfs_restore_possible(int *is_delete_out, dind ddev_index, dind sdev_index,
 		if (is_last)
 			break;
 		memset(path, 0, PATH_MAX);
-		strcpy(path, ppath);
+		strlcpy(path, ppath, PATH_MAX);
 		is_first = 0;
 	}
 	*is_delete_out = is_delete;
@@ -1504,10 +1504,10 @@ emuxfs_restore_delete(dind ddev_index, dind sdev_index, const char *path)
 		goto out;
 
 	memset(ppath, 0, PATH_MAX);
-	strcpy(ppath, path);
+	strlcpy(ppath, path, PATH_MAX);
 	if (emuxfs_path_pop(NULL, ppath, NULL)) {
 		memset(ppath, 0, PATH_MAX);
-		strcpy(ppath, ".");
+		strlcpy(ppath, ".", PATH_MAX);
 	}
 
 	if (emuxfs_dev_get(&sdev, sdev_index, 0))
@@ -1847,7 +1847,7 @@ emuxfs_parent_gid(gid_t *parent_gid_out, const char *path)
 		return 1;
 	ppath = pbuf;
 	memset(ppath, 0, PATH_MAX);
-	strcpy(ppath, path);
+	strlcpy(ppath, path, PATH_MAX);
 	if (emuxfs_path_pop(NULL, ppath, &ppathlen)) {
 		ppath = ".";
 		ppathlen = 1;

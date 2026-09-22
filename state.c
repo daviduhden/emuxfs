@@ -470,7 +470,7 @@ emuxfs_state_wrbuf_set(const char *path, uid_t user, gid_t group, size_t sz,
 	    .sz = sz,
 	    .off = off,
 	};
-	strcpy(wrbuf->path, path);
+	strlcpy(wrbuf->path, path, sizeof(wrbuf->path));
 	memcpy(wrbuf->buf, buf, sz);
 
 	return 0;

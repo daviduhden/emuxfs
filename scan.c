@@ -86,8 +86,8 @@ emuxfs_scan_impl(enum emuxfs_scan_mode mode, dind dev_index, char *path,
 			if (sublen >= PATH_MAX)
 				goto dirout2;
 			if (len > 0)
-				strcat(path, "/");
-			strcat(path, dname);
+				strlcat(path, "/", PATH_MAX);
+			strlcat(path, dname, PATH_MAX);
 			if (emuxfs_scan_impl(mode, dev_index, path, sublen))
 				goto dirout2;
 			path[len] = '\0';

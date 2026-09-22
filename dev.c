@@ -230,7 +230,7 @@ emuxfs_dev_append(dind *dev_index_out, const char *path)
 	if (len >= PATH_MAX)
 		return 1;
 
-	strcpy(emuxfs_dev_roots[i], path);
+	strlcpy(emuxfs_dev_roots[i], path, PATH_MAX);
 	dev->root_path = emuxfs_dev_roots[i];
 	dev->attached_now = 1;
 	if (dev_index_out != NULL)

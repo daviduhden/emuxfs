@@ -675,10 +675,10 @@ emuxfs_op_delete(const char *path, enum emuxfs_op_delete_type type)
 		}
 
 		memset(postwr_ppath, 0, PATH_MAX);
-		strcpy(postwr_ppath, path);
+		strlcpy(postwr_ppath, path, PATH_MAX);
 		if (emuxfs_path_pop(NULL, postwr_ppath, NULL)) {
 			memset(postwr_ppath, 0, PATH_MAX);
-			strcpy(postwr_ppath, ".");
+			strlcpy(postwr_ppath, ".", PATH_MAX);
 		}
 		if ((postwr_pfd = openat(dev->root_fd, postwr_ppath,
 		    O_RDONLY|O_NOFOLLOW|O_CLOEXEC)) == -1)
