@@ -584,6 +584,7 @@ emuxfs_op_delete(const char *path, enum emuxfs_op_delete_type type)
 
 	int			 rc, err, subrc;
 	int			 has_write;
+	const char		*stage;
 	struct stat		 prewr_st;
 	ino_t			 prewr_ino;
 	struct emuxfs_meta	 prewr_meta;
@@ -604,6 +605,7 @@ emuxfs_op_delete(const char *path, enum emuxfs_op_delete_type type)
 
 	has_write = 0;
 	return_eno = UINT64_MAX;
+	stage = "start";
 
 	now = time(NULL);
 
@@ -617,6 +619,7 @@ emuxfs_op_delete(const char *path, enum emuxfs_op_delete_type type)
 		alg = dev->conf.chk_alg_type;
 		chksz = emuxfs_chk_size(alg);
 
+		stage = "fstatat";
 		emuxfs_eids_set();
 		subrc = fstatat(fd, path, &prewr_st, AT_SYMLINK_NOFOLLOW);
 		err = errno;
@@ -646,14 +649,18 @@ emuxfs_op_delete(const char *path, enum emuxfs_op_delete_type type)
 			goto early;
 		}
 
+		stage = "meta_read";
 		if (emuxfs_meta_read(&prewr_meta, i, prewr_ino))
 			goto fail;
 		prewr_eno = prewr_meta.header.eno;
+		stage = "desc_init";
 		if (emuxfs_desc_init_from_stat(&prewr_desc, &prewr_st,
 		    prewr_eno))
 			goto fail;
+		stage = "chk_node_content";
 		if (emuxfs_desc_chk_node_content(&prewr_desc, i, path))
 			goto fail;
+		stage = "chk_meta";
 		emuxfs_desc_chk_meta(prewr_meta_chk_buf, &prewr_desc, alg);
 		if (bcmp(prewr_meta_chk_buf, &prewr_meta.checksums[0],
 		    chksz) != 0)
@@ -661,6 +668,7 @@ emuxfs_op_delete(const char *path, enum emuxfs_op_delete_type type)
 
 		switch (type) {
 		case EMUXFS_DT_UNLINK:
+			stage = "unlinkat";
 			emuxfs_eids_set();
 			subrc = unlinkat(fd, path, 0);
 			err = errno;
@@ -678,12 +686,14 @@ emuxfs_op_delete(const char *path, enum emuxfs_op_delete_type type)
 			 * checksums of a still-live file.
 			 */
 			if (prewr_st.st_size > EMUXFS_BLOCK_SIZE) {
+				stage = "lfile_delete";
 				if (emuxfs_lfile_delete(dev->lfile_fd,
 				    prewr_ino))
 					goto fail;
 			}
 			break;
 		case EMUXFS_DT_RMDIR:
+			stage = "rmdir_unlinkat";
 			emuxfs_eids_set();
 			subrc = unlinkat(fd, path, AT_REMOVEDIR);
 			err = errno;
@@ -751,8 +761,9 @@ emuxfs_op_delete(const char *path, enum emuxfs_op_delete_type type)
 		emuxfs_working_pop(i, now);
 		continue;
 fail:
-		EMUXFS_TRACE("op_delete: fail dev=%lu type=%d path=%s\n",
-		    (unsigned long)i, (int)type, path);
+		EMUXFS_TRACE("op_delete: fail dev=%lu type=%d stage=%s path=%s\n",
+		    (unsigned long)i, (int)type,
+		    (stage != NULL) ? stage : "?", path);
 		emuxfs_degraded_set(i);
 		emuxfs_working_pop(i, now);
 		continue;

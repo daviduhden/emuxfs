@@ -632,20 +632,37 @@ emuxfs_meta_read(struct emuxfs_meta *meta, dind dev_index, uint64_t ino)
 	size_t msz;
 	struct emuxfs_meta disk_meta;
 
-	if (emuxfs_dev_get(&dev, dev_index, 0))
+	if (emuxfs_dev_get(&dev, dev_index, 0)) {
+		EMUXFS_TRACE("meta_read: dev_get dev=%lu ino=%llu\n",
+		    (unsigned long)dev_index, (unsigned long long)ino);
 		return 1;
+	}
 
-	if (emuxfs_meta_size(&msz, dev_index))
+	if (emuxfs_meta_size(&msz, dev_index)) {
+		EMUXFS_TRACE("meta_read: meta_size dev=%lu ino=%llu\n",
+		    (unsigned long)dev_index, (unsigned long long)ino);
 		return 1;
-	if (msz == 0)
+	}
+	if (msz == 0) {
+		EMUXFS_TRACE("meta_read: msz=0 dev=%lu ino=%llu\n",
+		    (unsigned long)dev_index, (unsigned long long)ino);
 		return 1;
-	if (ino > ((uint64_t)INT64_MAX / msz))
+	}
+	if (ino > ((uint64_t)INT64_MAX / msz)) {
+		EMUXFS_TRACE("meta_read: ino too large dev=%lu ino=%llu "
+		    "msz=%zu\n", (unsigned long)dev_index,
+		    (unsigned long long)ino, msz);
 		return 1;
+	}
 
 	memset(&disk_meta, 0, sizeof(disk_meta));
 	if (emuxfs_pread_exact(dev->meta_fd, &disk_meta, msz,
-	    (off_t)(ino * msz)))
+	    (off_t)(ino * msz))) {
+		EMUXFS_TRACE("meta_read: pread dev=%lu ino=%llu off=%lld "
+		    "msz=%zu\n", (unsigned long)dev_index,
+		    (unsigned long long)ino, (long long)(ino * msz), msz);
 		return 1;
+	}
 
 	memcpy(meta, &disk_meta, msz);
 	meta->header.flags = letoh64(disk_meta.header.flags);

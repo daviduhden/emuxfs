@@ -1977,8 +1977,12 @@ emuxfs_dir_content_chk(uint8_t *sum_out, dind dev_index, struct emuxfs_dir *dir)
 		    0))
 			continue;
 		ino = dirent->d_fileno;
-		if (emuxfs_meta_read(&meta, dev_index, ino))
+		if (emuxfs_meta_read(&meta, dev_index, ino)) {
+			EMUXFS_TRACE("dir_content_chk: meta_read dev=%lu "
+			    "dname=%s ino=%llu\n", (unsigned long)dev_index,
+			    dname, (unsigned long long)ino);
 			goto out;
+		}
 		emuxfs_chk_update(&chk, (uint8_t *)dname, dnamelen);
 		emuxfs_chk_update(&chk, &meta.checksums[0], chksz);
 	}
