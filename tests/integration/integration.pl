@@ -178,9 +178,18 @@ sub mount_array {
     # the filesystem and starts serving requests, so wait until a FUSE
     # operation on the mount point actually succeeds (it returns ENXIO,
     # "Device not configured", until the daemon is serving).
+    my $ready = 0;
     for ( my $i = 0 ; $i < 500 ; $i++ ) {
-        last if stat($mp);
+        if ( stat($mp) ) {
+            $ready = 1;
+            last;
+        }
         select( undef, undef, undef, 0.02 );
+    }
+    if ( !$ready ) {
+        print "diag: mount never served a request: $!\n";
+        system("ps -ax");
+        return 0;
     }
     return 1;
 }
