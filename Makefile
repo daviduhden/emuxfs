@@ -118,10 +118,12 @@ ${PROG}: ${OBJ}
 	${CC} ${CFLAGS} ${CPPFLAGS} -DEMUXFS= -DEMUXFS_FAULT_INJECTION -c -o $@ $<
 
 # Strict-warning build: same policy as the openutils 'check' target.
-# Any diagnostic is treated as an error; -Wno-* is not used.
+# Any diagnostic is treated as an error; -Wno-* is not used.  -k keeps the
+# build going after the first failing object so that a CI run reports every
+# diagnostic at once instead of one file per run.
 check:
 	${MAKE} clean
-	${MAKE} WARNINGS="${CHECK_WARNINGS} -Werror" ${PROG}
+	${MAKE} -k WARNINGS="${CHECK_WARNINGS} -Werror" ${PROG}
 
 # Headless unit tests: no FUSE, no mounts.
 unittest: tests/unit/test_core

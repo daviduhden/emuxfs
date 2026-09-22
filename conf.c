@@ -74,6 +74,7 @@ emuxfs_conf_version_parse(struct emuxfs_dev_conf *conf, const char *version,
 	char		*b, *e;
 	char		 saved;
 	const char	*errstr;
+	long long	 num;
 
 	if ((version_len == 0) ||
 	    (version_len > EMUXFS_VERSION_STRING_LENGTH_MAX))
@@ -88,9 +89,10 @@ emuxfs_conf_version_parse(struct emuxfs_dev_conf *conf, const char *version,
 	if ((e = memchr(b, '.', version_len)) == NULL)
 		return 1;
 	*e = '\0';
-	conf->version.number = strtonum(b, 0, INT32_MAX, &errstr);
+	num = strtonum(b, 0, INT32_MAX, &errstr);
 	if (errstr != NULL)
 		return 1;
+	conf->version.number = (uint32_t)num;
 	b = e + 1;
 
 	/*
@@ -104,10 +106,11 @@ emuxfs_conf_version_parse(struct emuxfs_dev_conf *conf, const char *version,
 		return 1;
 	saved = *e;
 	*e = '\0';
-	conf->version.revision = strtonum(b, 0, INT32_MAX, &errstr);
+	num = strtonum(b, 0, INT32_MAX, &errstr);
 	*e = saved;
 	if (errstr != NULL)
 		return 1;
+	conf->version.revision = (uint32_t)num;
 	b = e;
 
 	while ((*b == '-') || (*b == '.'))
@@ -157,12 +160,13 @@ emuxfs_conf_line_parse(struct emuxfs_dev_conf *conf, const char *line,
 	size_t key_len, val_len;
 	char num_buf[EMUXFS_DECIMAL_UINT64_LENGTH_MAX + 1];
 	const char *errstr;
+	long long num;
 
 	if ((eq = memchr(line, '=', len)) == NULL)
 		return 1;
 
 	key = line;
-	key_len = eq - line;
+	key_len = (size_t)(eq - line);
 	val = eq + 1;
 	val_len = len - (key_len + 1);
 
@@ -179,10 +183,10 @@ emuxfs_conf_line_parse(struct emuxfs_dev_conf *conf, const char *line,
 			return 1;
 		memset(num_buf, 0, sizeof(num_buf));
 		memcpy(num_buf, val, val_len);
-		conf->format_version = strtonum(num_buf, 0, UINT32_MAX,
-		    &errstr);
+		num = strtonum(num_buf, 0, UINT32_MAX, &errstr);
 		if (errstr != NULL)
 			return 1;
+		conf->format_version = (uint32_t)num;
 		cl->has_format_version = 1;
 	} else if (emuxfs_conf_key_is(key, key_len, "chk_alg")) {
 		if (cl->has_alg)
@@ -237,8 +241,8 @@ EMUXFS int
 emuxfs_conf_parse(struct emuxfs_dev_conf *conf, int fd)
 {
 	char buf[EMUXFS_BLOCK_SIZE];
-	ssize_t readsz, linesz;
-	size_t bufsz, rawlen;
+	ssize_t readsz;
+	size_t bufsz, rawlen, linesz;
 	char *eol;
 	struct emuxfs_dev_conf_checklist cl;
 	int rc;
@@ -258,10 +262,10 @@ emuxfs_conf_parse(struct emuxfs_dev_conf *conf, int fd)
 		if (readsz == 0)
 			break;
 
-		bufsz += readsz;
+		bufsz += (size_t)readsz;
 		while ((eol = memchr(buf, '\n', bufsz)) != NULL) {
 			/* Bytes before the newline, CR included if present. */
-			rawlen = eol - buf;
+			rawlen = (size_t)(eol - buf);
 			linesz = rawlen;
 			/* Tolerate CRLF line endings by stripping one CR. */
 			if ((rawlen > 0) && (buf[rawlen - 1] == '\r'))

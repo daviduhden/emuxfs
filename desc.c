@@ -49,7 +49,9 @@ emuxfs_desc_chk_reg_content(struct emuxfs_desc *desc, dind dev_index,
 
 	if (fstatat(dev->root_fd, path, &st, AT_SYMLINK_NOFOLLOW))
 		return 1;
-	fsz = st.st_size;
+	if (st.st_size < 0)
+		return 1;
+	fsz = (size_t)st.st_size;
 
 	if (fsz <= EMUXFS_BLOCK_SIZE) {
 		if ((fd = openat(dev->root_fd, path, O_RDONLY|O_NOFOLLOW)) ==
@@ -58,7 +60,7 @@ emuxfs_desc_chk_reg_content(struct emuxfs_desc *desc, dind dev_index,
 		emuxfs_chk_init(&chk, alg);
 		if (lseek(fd, 0, SEEK_SET) != 0)
 			goto out2;
-		if (read(fd, readbuf, fsz) != fsz)
+		if (read(fd, readbuf, fsz) != (ssize_t)fsz)
 			goto out2;
 		emuxfs_chk_update(&chk, readbuf, fsz);
 		emuxfs_chk_final(desc->content_checksum, &chk);
@@ -72,7 +74,7 @@ out:
 	}
 
 	return emuxfs_lfile_readback(desc->content_checksum, dev_index, path, 0,
-	    st.st_size, NULL);
+	    (size_t)st.st_size, NULL);
 }
 
 static int
@@ -198,6 +200,8 @@ emuxfs_desc_init_from_stat(struct emuxfs_desc *desc_out, struct stat *st,
 
 	if (emuxfs_desc_type_from_mode(&desc_type, st->st_mode))
 		return 1;
+	if (st->st_size < 0)
+		return 1;
 
 	*desc_out = (struct emuxfs_desc){
 	    .eno = eno,
@@ -205,7 +209,7 @@ emuxfs_desc_init_from_stat(struct emuxfs_desc *desc_out, struct stat *st,
 	    .owner = st->st_uid,
 	    .group = st->st_gid,
 	    .mode = st->st_mode,
-	    .size = st->st_size,
+	    .size = (uint64_t)st->st_size,
 	};
 	return 0;
 }
