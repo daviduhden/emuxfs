@@ -36,10 +36,10 @@ Stability is described in terms of evidence rather than aspiration:
 * **Tested**: builds cleanly and passes the unit, integration and FUSE suites
   in CI on a real OpenBSD VM (amd64 and arm64), with no known correctness
   defects.
-* **Hardened**: additionally, the sandbox (pledge/unveil) suite, the
-  fault-injection suite (recovery from an interrupted create, update, delete,
-  heal and sync), repeated mount/unmount cycles and a bounded parser fuzz run
-  pass, and the on-disk format is frozen.
+* **Hardened**: additionally, the sandboxed FUSE suites (the daemon runs
+  under `pledge(2)`/`unveil(2)`), the fault-injection suite (recovery from an
+  interrupted create, update, delete, heal and sync), repeated mount/unmount
+  cycles and a bounded parser fuzz run pass, and the on-disk format is frozen.
 
 The evidence for both levels is one command, `make stability`: strict-warning
 build, headless unit tests, the FUSE integration suite, the fault-injection
