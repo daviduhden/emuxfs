@@ -136,43 +136,98 @@ sub mount_array {
     unlink($mlog);
     system("EMUXFS_TRACE=1 $EMUXFS mount -f $mp $dev_a $dev_b >'$mlog' 2>&1 &");
     $mounted = 1;
+    my $ready = 0;
     for ( my $i = 0 ; $i < 500 ; $i++ ) {
         my $l = slurp($mlog);
-        last if defined($l) && $l =~ /entering fuse_loop/;
+        if ( defined($l) && $l =~ /entering fuse_loop/ ) {
+            $ready = 1;
+            last;
+        }
         select( undef, undef, undef, 0.02 );
     }
+    fail("mount did not become ready") unless $ready;
+    return $ready;
+}
+
+# Confirm that the mount is actually serving requests before loading it.
+sub probe_mount {
+    my $tag = "probe.$$";
+    my $dir = "$mp/$tag";
+    if ( !mkdir($dir) ) {
+        fail("mount probe mkdir failed: $!");
+        return 0;
+    }
+    my $pf;
+    if ( !open( $pf, ">", "$dir/p" ) ) {
+        fail("mount probe open failed: $!");
+        rmdir($dir);
+        return 0;
+    }
+    print $pf "probe\n" or fail("mount probe write failed: $!");
+    close($pf) or fail("mount probe close failed: $!");
+    my $got = slurp("$dev_a/$tag/p");
+    fail("mount probe was not mirrored to dev_a")
+      unless defined($got) && $got eq "probe\n";
+    unlink("$mp/$tag/p") or fail("mount probe unlink failed: $!");
+    rmdir($dir) or fail("mount probe rmdir failed: $!");
+    return 1;
 }
 
 # One worker: churn through its own private names, then leave a marker file.
+# A failure is reported through a per-worker file so that the parent can name
+# the exact operation that failed.
 sub worker {
     my ($id) = @_;
     my $tag = sprintf( "w%02d", $id );
+    my $err;
 
-    for my $i ( 1 .. $ITERS ) {
-        my $dir = "$mp/$tag-d$i";
-        return 1 unless mkdir($dir);
+    eval {
+        for my $i ( 1 .. $ITERS ) {
+            my $dir = "$mp/$tag-d$i";
+            die "mkdir $dir: $!\n" unless mkdir($dir);
 
-        my $name = "$dir/f";
-        open( my $fh, ">", $name ) or return 1;
-        print $fh "$tag:$i\n" or return 1;
-        close($fh) or return 1;
+            my $name = "$dir/f";
+            open( my $fh, ">", $name )
+              or die "open $name: $!\n";
+            print $fh "$tag:$i\n"
+              or die "write $name: $!\n";
+            close($fh)
+              or die "close $name: $!\n";
 
-        my $got = slurp($name);
-        return 1 unless defined($got) && $got eq "$tag:$i\n";
+            my $got = slurp($name);
+            die "read $name: wrong or missing content\n"
+              unless defined($got) && $got eq "$tag:$i\n";
 
-        my $name2 = "$dir/f.ren";
-        return 1 unless rename( $name, $name2 );
+            my $name2 = "$dir/f.ren";
+            die "rename $name -> $name2: $!\n"
+              unless rename( $name, $name2 );
 
-        $got = slurp($name2);
-        return 1 unless defined($got) && $got eq "$tag:$i\n";
+            $got = slurp($name2);
+            die "read $name2: wrong or missing content\n"
+              unless defined($got) && $got eq "$tag:$i\n";
 
-        return 1 unless unlink($name2);
-        return 1 unless rmdir($dir);
+            die "unlink $name2: $!\n" unless unlink($name2);
+            die "rmdir $dir: $!\n"    unless rmdir($dir);
+        }
+
+        open( my $fh, ">", "$mp/final_$tag" )
+          or die "open final_$tag: $!\n";
+        print $fh "$tag:done\n"
+          or die "write final_$tag: $!\n";
+        close($fh)
+          or die "close final_$tag: $!\n";
+
+        1;
+    } or $err = ( $@ // "unknown failure\n" );
+
+    if ( defined $err ) {
+        $err =~ s/\s+\z//;
+        if ( open( my $eh, ">", "$sandbox/worker-$tag.err" ) ) {
+            print $eh "$err\n";
+            close($eh);
+        }
+        return 1;
     }
-
-    open( my $fh, ">", "$mp/final_$tag" ) or return 1;
-    print $fh "$tag:done\n" or return 1;
-    close($fh) or return 1;
 
     return 0;
 }
@@ -229,6 +284,7 @@ must_run( "format", $EMUXFS, "format", "-a", "sha1", $dev_a, $dev_b )
 
 print "== mount\n";
 mount_array();
+probe_mount();
 
 print "== $WORKERS workers x $ITERS iterations\n";
 my @pids;
@@ -278,7 +334,14 @@ my $bad = 0;
 for my $st ( values %status ) {
     $bad++ if $st != 0;
 }
-fail("$bad worker(s) failed") if $bad;
+if ($bad) {
+    fail("$bad worker(s) failed");
+    for my $id ( 0 .. $WORKERS - 1 ) {
+        my $tag = sprintf( "w%02d", $id );
+        my $e   = slurp("$sandbox/worker-$tag.err");
+        print STDERR "worker $tag: $e\n" if defined $e;
+    }
+}
 
 # The mount point is empty again after unmount, so check it first.
 print "== verify through the mount\n";
@@ -325,6 +388,12 @@ else {
 }
 
 if ( $failures != 0 ) {
+    my $l = slurp($mlog);
+    if ( defined $l ) {
+        my @ln = split( /\n/, $l );
+        my @t  = @ln > 200 ? @ln[ -200 .. -1 ] : @ln;
+        print STDERR "diag: daemon trace tail:\n", join( "\n", @t ), "\n";
+    }
     print STDERR "$failures parallel test(s) failed\n";
     exit 1;
 }
