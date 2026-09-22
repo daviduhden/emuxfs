@@ -159,16 +159,26 @@ sub wait_state_clean {
     return 0;
 }
 
+sub state_mounted {
+    my ($dev) = @_;
+    my $db = slurp("$dev/.muxfs/state.db");
+    return -1 unless defined($db) && length($db) == 40;
+    my @f = unpack( "Q<5", $db );
+    return $f[1];
+}
+
 sub mount_array {
     unless ( must_run( "mount", $EMUXFS, "mount", $mp, $dev_a, $dev_b ) ) {
         return 0;
     }
     $mounted = 1;
+    print "diag: after mount dev_a mounted=" . state_mounted($dev_a) . "\n";
 
-    # Wait briefly for the mount point to become usable.
-    for ( my $i = 0 ; $i < 100 ; $i++ ) {
-        last if -e $mp;
-        select( undef, undef, undef, 0.01 );
+    # Wait until the daemon has recorded the mount in state.db before any
+    # operation touches the mount point.
+    for ( my $i = 0 ; $i < 500 ; $i++ ) {
+        last if state_mounted($dev_a) == 1;
+        select( undef, undef, undef, 0.02 );
     }
     return 1;
 }
@@ -176,8 +186,13 @@ sub mount_array {
 sub unmount_array {
     must_run( "umount", "umount", $mp );
     $mounted = 0;
-    fail("dev_a not clean after umount") unless wait_state_clean($dev_a);
+    print "diag: after umount dev_a mounted=" . state_mounted($dev_a) . "\n";
+    if ( !wait_state_clean($dev_a) ) {
+        system("ps -ax");
+        fail("dev_a not clean after umount");
+    }
     fail("dev_b not clean after umount") unless wait_state_clean($dev_b);
+    print "diag: waited dev_a mounted=" . state_mounted($dev_a) . "\n";
 }
 
 # ---------------------------------------------------------------------------
