@@ -71,9 +71,14 @@ emuxfs_dir_patch_sums(uint8_t *as_is_out, uint8_t *with_patch_out,
 	struct emuxfs_chk as_is_content_chk, with_patch_content_chk;
 	int patched;
 	const char *pstage;
+	const char *pbadname;
+	int pbadidx, pbaderrno;
 
 	rc = 1;
 	pstage = "start";
+	pbadname = "?";
+	pbadidx = -1;
+	pbaderrno = 0;
 
 	chksz = emuxfs_chk_size(alg);
 	fnamelen = strlen(patch->fname);
@@ -112,11 +117,17 @@ emuxfs_dir_patch_sums(uint8_t *as_is_out, uint8_t *with_patch_out,
 			continue;
 		if (fstatat(dirfd, dname, &subst, AT_SYMLINK_NOFOLLOW)) {
 			pstage = "fstatat";
+			pbadname = dname;
+			pbadidx = (int)i;
+			pbaderrno = errno;
 			goto out;
 		}
 		subino = subst.st_ino;
 		if (emuxfs_meta_read(&submeta, dev_index, subino)) {
 			pstage = "meta_read";
+			pbadname = dname;
+			pbadidx = (int)i;
+			pbaderrno = errno;
 			goto out;
 		}
 		emuxfs_chk_update(&as_is_content_chk, (uint8_t *)dname,
@@ -179,8 +190,10 @@ emuxfs_dir_patch_sums(uint8_t *as_is_out, uint8_t *with_patch_out,
 	rc = 0;
 out:
 	if (rc != 0)
-		EMUXFS_TRACE("dir_patch_sums: fail type=%d fname=%s stage=%s\n",
-		    (int)patch->type, patch->fname, pstage);
+		EMUXFS_TRACE("dir_patch_sums: fail type=%d fname=%s stage=%s "
+		    "badidx=%d badname=%s errno=%d\n",
+		    (int)patch->type, patch->fname, pstage, pbadidx, pbadname,
+		    pbaderrno);
 	return rc;
 }
 
