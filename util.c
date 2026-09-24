@@ -704,7 +704,17 @@ emuxfs_pushdir(struct emuxfs_dir *dir_out, int fd, const char *path)
 	while ((rdsz = getdents(dirfd, &dirbuf[rdend], blksz)) > 0) {
 		for (i = 0; i < rdsz; i += dirent->d_reclen) {
 			dirent = (struct dirent *)&dirbuf[rdend + i];
-			++ent_count;
+			/*
+			 * A directory entry with inode 0 is free space left
+			 * behind by a deletion; ffs keeps the old name in the
+			 * first entry of a directory block.  getdents(2)
+			 * returns it, but its name cannot be opened or
+			 * stat'ed, so it is not a directory member.  Counting
+			 * it made consumers such as dir_patch_sums fail with
+			 * ENOENT and marked the device degraded.
+			 */
+			if (dirent->d_fileno != 0)
+				++ent_count;
 		}
 		rdend += i;
 		EMUXFS_TRACE("pushdir: path=%s dirbuf=%p\n", path,
@@ -716,34 +726,6 @@ emuxfs_pushdir(struct emuxfs_dir *dir_out, int fd, const char *path)
 	}
 	if (rdsz == -1)
 		goto fail2;
-
-	EMUXFS_TRACE("pushdir: path=%s blksz=%zu rdend=%zd ent_count=%zu\n",
-	    path, blksz, (ssize_t)rdend, ent_count);
-
-	/*
-	 * A name returned by getdents must be resolvable.  If it is not, the
-	 * listing contains a phantom entry and any checksum computed from it
-	 * would be wrong; record it rather than failing silently later.
-	 */
-	for (i = 0; i < rdend; i += dirent->d_reclen) {
-		struct stat pst;
-
-		dirent = (struct dirent *)&dirbuf[i];
-		if ((dirent->d_namlen == 1) && (dirent->d_name[0] == '.'))
-			continue;
-		if ((dirent->d_namlen == 2) && (dirent->d_name[0] == '.') &&
-		    (dirent->d_name[1] == '.'))
-			continue;
-		if ((dirent->d_namlen == 6) &&
-		    (strncmp(dirent->d_name, ".muxfs", 6) == 0))
-			continue;
-		if (fstatat(dirfd, dirent->d_name, &pst,
-		    AT_SYMLINK_NOFOLLOW))
-			EMUXFS_TRACE("pushdir: PHANTOM path=%s name=%s "
-			    "ino=%llu errno=%d\n", path, dirent->d_name,
-			    (unsigned long long)dirent->d_fileno, errno);
-	}
-
 	if (close(dirfd))
 		exit(-1);
 
@@ -753,8 +735,11 @@ emuxfs_pushdir(struct emuxfs_dir *dir_out, int fd, const char *path)
 		exit(-1);
 	}
 
-	for (i = 0, j = 0; i < rdend; i += dirent->d_reclen, ++j)
-		dirent = ent_array[j] = (struct dirent *)&dirbuf[i];
+	for (i = 0, j = 0; i < rdend; i += dirent->d_reclen) {
+		dirent = (struct dirent *)&dirbuf[i];
+		if (dirent->d_fileno != 0)
+			ent_array[j++] = dirent;
+	}
 
 	qsort(ent_array, ent_count, sizeof(struct dirent *), emuxfs_alphasort);
 

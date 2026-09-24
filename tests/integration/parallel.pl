@@ -474,6 +474,12 @@ if ( $failures != 0 ) {
     my $l = slurp($mlog);
     if ( defined $l ) {
         my @all   = split( /\n/, $l );
+        my @key   = grep { /PHANTOM|: fail|stage=|readback:/ } @all;
+        @key = @key[ 0 .. 79 ] if @key > 80;
+        if (@key) {
+            print STDERR "diag: daemon failure lines:\n", join( "\n", @key ),
+              "\n";
+        }
         my $first = -1;
         for my $i ( 0 .. $#all ) {
             if ( $all[$i] =~
