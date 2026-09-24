@@ -1,5 +1,16 @@
 # Change log
 
+## Free directory entries (2026-09-24)
+
+* **`emuxfs_pushdir` now skips free directory entries.**  `getdents(2)` on
+  OpenBSD returns the space that a deletion leaves in the first entry of a
+  directory block, keeping the old name with `d_fileno == 0` (`ufs_readdir`
+  does not filter it).  emuxfs treated those entries as directory members, so
+  under a workload that creates and removes many names a directory
+  recomputation would `fstat(2)` a name that no longer existed, fail, and
+  mark the device degraded, after which every operation failed with `EIO`.
+  Found by the 32-worker parallel-load stress test.
+
 ## Production readiness (2026-09-22)
 
 emuxfs is declared **stable and ready for production use**.  The complete
