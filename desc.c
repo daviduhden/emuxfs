@@ -75,7 +75,7 @@ out:
 	}
 
 	return emuxfs_lfile_readback(desc->content_checksum, dev_index, path, 0,
-	    (size_t)st.st_size, NULL);
+	    (size_t)st.st_size, nullptr);
 }
 
 static int

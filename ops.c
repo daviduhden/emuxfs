@@ -158,20 +158,18 @@ emuxfs_statfs(const char *path, struct statvfs *stvfs)
 }
 
 static void *
-emuxfs_fuse_init(struct fuse_conn_info *fci)
+emuxfs_fuse_init(struct fuse_conn_info *)
 {
 	EMUXFS_TRACE("enter");
-	(void)fci;
 
 	emuxfs_info("Mounted");
-	return NULL;
+	return nullptr;
 }
 
 static void
-emuxfs_fuse_destroy(void *data)
+emuxfs_fuse_destroy(void *)
 {
 	EMUXFS_TRACE("enter");
-	(void)data;
 
 	emuxfs_wrbuf_flush();
 	emuxfs_info("Unmounting");
@@ -180,16 +178,13 @@ emuxfs_fuse_destroy(void *data)
 }
 
 static int
-emuxfs_fsync(const char *path, int datasync, struct fuse_file_info *ffi)
+emuxfs_fsync(const char *, int, struct fuse_file_info *)
 {
 	EMUXFS_TRACE("enter");
 	/*
 	 * A call to fsync(2) is made as part of the create, update, and delete
 	 * operations.
 	 */
-	(void)path;
-	(void)datasync;
-	(void)ffi;
 
 	emuxfs_wrbuf_flush();
 	return 0;
@@ -269,46 +264,35 @@ emuxfs_opendir(const char *path, struct fuse_file_info *ffi)
 }
 
 static int
-emuxfs_flush(const char *path, struct fuse_file_info *ffi)
+emuxfs_flush(const char *, struct fuse_file_info *)
 {
 	EMUXFS_TRACE("enter");
-	(void)path;
-	(void)ffi;
 
 	emuxfs_wrbuf_flush();
 	return 0;
 }
 
 static int
-emuxfs_release(const char *path, struct fuse_file_info *ffi)
+emuxfs_release(const char *, struct fuse_file_info *)
 {
 	EMUXFS_TRACE("enter");
-	(void)path;
-	(void)ffi;
 
 	emuxfs_wrbuf_flush();
 	return 0;
 }
 
 static int
-emuxfs_releasedir(const char *path, struct fuse_file_info *ffi)
+emuxfs_releasedir(const char *, struct fuse_file_info *)
 {
 	EMUXFS_TRACE("enter");
-	(void)path;
-	(void)ffi;
 
 	return 0;
 }
 
 static int
-emuxfs_lock(const char *path, struct fuse_file_info *ffi, int op,
-    struct flock *flk)
+emuxfs_lock(const char *, struct fuse_file_info *, int, struct flock *)
 {
 	EMUXFS_TRACE("enter");
-	(void)path;
-	(void)ffi;
-	(void)op;
-	(void)flk;
 
 	return -EOPNOTSUPP;
 }
@@ -369,7 +353,7 @@ emuxfs_op_create(struct emuxfs_op_create_args *args)
 		return -EIO;
 	EMUXFS_TRACE("op_create: parent_gid ok\n");
 
-	now = time(NULL);
+	now = time(nullptr);
 
 	for (i = 0; i < dev_count; ++i) {
 		if (emuxfs_dev_get(&dev, i, 0))
@@ -618,7 +602,7 @@ emuxfs_op_delete(const char *path, enum emuxfs_op_delete_type type)
 	return_eno = UINT64_MAX;
 	stage = "start";
 
-	now = time(NULL);
+	now = time(nullptr);
 
 	for (i = 0; i < dev_count; ++i) {
 		if (emuxfs_dev_get(&dev, i, 0))
@@ -722,7 +706,7 @@ emuxfs_op_delete(const char *path, enum emuxfs_op_delete_type type)
 
 		memset(postwr_ppath, 0, PATH_MAX);
 		strlcpy(postwr_ppath, path, PATH_MAX);
-		if (emuxfs_path_pop(NULL, postwr_ppath, NULL)) {
+		if (emuxfs_path_pop(nullptr, postwr_ppath, nullptr)) {
 			memset(postwr_ppath, 0, PATH_MAX);
 			strlcpy(postwr_ppath, ".", PATH_MAX);
 		}
@@ -774,7 +758,7 @@ emuxfs_op_delete(const char *path, enum emuxfs_op_delete_type type)
 fail:
 		EMUXFS_TRACE("op_delete: fail dev=%lu type=%d stage=%s path=%s\n",
 		    (unsigned long)i, (int)type,
-		    (stage != NULL) ? stage : "?", path);
+		    (stage != nullptr) ? stage : "?", path);
 		emuxfs_degraded_set(i);
 		emuxfs_working_pop(i, now);
 		continue;
@@ -839,12 +823,10 @@ struct emuxfs_op_read_args {
 
 static int
 emuxfs_getattr_inner(struct stat *st_out, struct stat *st, uint64_t eno,
-    int *err)
+    [[maybe_unused]] int *err)
 {
 	EMUXFS_TRACE("enter");
 	size_t sz;
-
-	(void)err;
 
 	st->st_ino = eno;
 	sz = (size_t)st->st_size;
@@ -924,7 +906,7 @@ emuxfs_read_inner(int root_fd, struct emuxfs_op_read_args *args,
 
 	if (emuxfs_lfile_open(&lfd, lfile_fd, st->st_ino, O_RDONLY))
 		goto out2;
-	if ((lfile = mmap(NULL, r.lfilesz, PROT_READ, MAP_SHARED, lfd,
+	if ((lfile = mmap(nullptr, r.lfilesz, PROT_READ, MAP_SHARED, lfd,
 	    (off_t)r.lfileoff)) == MAP_FAILED)
 		goto out3;
 
@@ -1013,9 +995,11 @@ emuxfs_readlink_inner(int root_fd, struct emuxfs_op_read_args *args,
 
 static int
 emuxfs_readdir_inner(dind dev_index, int root_fd,
-    struct emuxfs_op_read_args *args, enum emuxfs_chk_alg_type alg,
+    struct emuxfs_op_read_args *args,
+    [[maybe_unused]] enum emuxfs_chk_alg_type alg,
     size_t chksz,
-    struct stat *st, struct emuxfs_desc *desc, struct emuxfs_meta *meta,
+    [[maybe_unused]] struct stat *st,
+    [[maybe_unused]] struct emuxfs_desc *desc, struct emuxfs_meta *meta,
     int *err)
 {
 	EMUXFS_TRACE("enter");
@@ -1026,10 +1010,6 @@ emuxfs_readdir_inner(dind dev_index, int root_fd,
 	size_t i;
 	const char *dname;
 	size_t dnamelen;
-
-	(void)alg;
-	(void)st;
-	(void)desc;
 
 	rc = EMUXFS_EINT;
 
@@ -1061,7 +1041,7 @@ emuxfs_readdir_inner(dind dev_index, int root_fd,
 		dnamelen = dirent->d_namlen;
 		if ((dnamelen == 6) && (strncmp(".muxfs", dname, 6) == 0))
 			continue;
-		args->fill(args->fill_data, dname, NULL, 0);
+		args->fill(args->fill_data, dname, nullptr, 0);
 	}
 
 	rc = 0;
@@ -1366,7 +1346,7 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 
 		if (emuxfs_lfile_open(&lfd, lfile_fd, st->st_ino, O_RDONLY))
 			goto out;
-		if ((lfile = mmap(NULL, r.lfilesz, PROT_READ, MAP_SHARED, lfd,
+		if ((lfile = mmap(nullptr, r.lfilesz, PROT_READ, MAP_SHARED, lfd,
 		    (off_t)r.lfileoff)) == MAP_FAILED)
 			goto out;
 
@@ -1411,7 +1391,7 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 			rc = EMUXFS_EFS;
 			goto out;
 		}
-		/* FALLTHROUGH */
+		[[fallthrough]];
 	case 0:
 		emuxfs_chk_init(&wr_content_chk, alg);
 		emuxfs_chk_update(&wr_content_chk, content_buf, newoff);
@@ -1429,7 +1409,7 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 
 		if (emuxfs_lfile_open(&lfd, lfile_fd, st->st_ino, O_WRONLY))
 			goto out;
-		if ((lfile = mmap(NULL, r.lfilesz, PROT_WRITE, MAP_SHARED, lfd,
+		if ((lfile = mmap(nullptr, r.lfilesz, PROT_WRITE, MAP_SHARED, lfd,
 		    (off_t)r.lfileoff)) == MAP_FAILED)
 			goto out;
 
@@ -1474,7 +1454,7 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 			if (emuxfs_lfile_open(&lfd, lfile_fd, st->st_ino,
 			    O_WRONLY))
 				goto out;
-			if ((lfile = mmap(NULL, r.lfilesz, PROT_WRITE,
+			if ((lfile = mmap(nullptr, r.lfilesz, PROT_WRITE,
 			    MAP_SHARED, lfd, (off_t)r.lfileoff)) == MAP_FAILED)
 				goto out;
 
@@ -1509,7 +1489,7 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 
 		if (emuxfs_lfile_open(&lfd, lfile_fd, st->st_ino, O_WRONLY))
 			goto out;
-		if ((lfile = mmap(NULL, r.lfilesz, PROT_WRITE, MAP_SHARED, lfd,
+		if ((lfile = mmap(nullptr, r.lfilesz, PROT_WRITE, MAP_SHARED, lfd,
 		    (off_t)r.lfileoff)) == MAP_FAILED)
 			goto out;
 
@@ -1605,7 +1585,7 @@ emuxfs_write_inner(int root_fd, struct emuxfs_op_update_args *args,
 	lfile = MAP_FAILED;
 	r.lfilesz = 0;
 
-	if (wc != NULL)
+	if (wc != nullptr)
 		emuxfs_eids_wrctx_set(wc);
 	else
 		emuxfs_eids_set();
@@ -1662,7 +1642,7 @@ emuxfs_write_inner(int root_fd, struct emuxfs_op_update_args *args,
 
 		if (emuxfs_lfile_open(&lfd, lfile_fd, st->st_ino, O_RDONLY))
 			goto out;
-		if ((lfile = mmap(NULL, r.lfilesz, PROT_READ, MAP_SHARED, lfd,
+		if ((lfile = mmap(nullptr, r.lfilesz, PROT_READ, MAP_SHARED, lfd,
 		    (off_t)r.lfileoff)) == MAP_FAILED)
 			goto out;
 
@@ -1729,7 +1709,7 @@ emuxfs_write_inner(int root_fd, struct emuxfs_op_update_args *args,
 
 		if (emuxfs_lfile_open(&lfd, lfile_fd, st->st_ino, O_WRONLY))
 			goto out;
-		if ((lfile = mmap(NULL, r.lfilesz, PROT_WRITE, MAP_SHARED, lfd,
+		if ((lfile = mmap(nullptr, r.lfilesz, PROT_WRITE, MAP_SHARED, lfd,
 		    (off_t)r.lfileoff)) == MAP_FAILED)
 			goto out;
 
@@ -1882,7 +1862,7 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 
 	has_write = 0;
 
-	now = time(NULL);
+	now = time(nullptr);
 
 	wc = args->wc;
 
@@ -1896,7 +1876,7 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 		alg = dev->conf.chk_alg_type;
 		chksz = emuxfs_chk_size(alg);
 
-		if (wc != NULL)
+		if (wc != nullptr)
 			emuxfs_eids_wrctx_set(wc);
 		else
 			emuxfs_eids_set();
@@ -2019,7 +1999,7 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 				mod_begin = (size_t)prewr_st.st_size;
 			mod_size = mod_end;
 			if (mod_size > EMUXFS_BLOCK_SIZE) {
-				if (emuxfs_lfile_readback(NULL, i, args->path,
+				if (emuxfs_lfile_readback(nullptr, i, args->path,
 				    mod_begin, mod_end,
 				    &wr_meta.checksums[chksz]))
 					goto fail;
@@ -2039,7 +2019,7 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 			if (mod_size < (size_t)prewr_st.st_size)
 				mod_size = (size_t)prewr_st.st_size;
 			if (mod_size > EMUXFS_BLOCK_SIZE) {
-				if (emuxfs_lfile_readback(NULL, i, args->path,
+				if (emuxfs_lfile_readback(nullptr, i, args->path,
 				    mod_begin, mod_end,
 				    &wr_meta.checksums[chksz]))
 					goto fail;
@@ -2119,7 +2099,7 @@ emuxfs_rename(const char *from, const char *to)
 
 	has_write = 0;
 
-	now = time(NULL);
+	now = time(nullptr);
 
 	for (i = 0; i < dev_count; ++i) {
 		if (emuxfs_dev_get(&dev, i, 0))
@@ -2226,11 +2206,9 @@ early:
 }
 
 static int
-emuxfs_link(const char *from, const char *to)
+emuxfs_link(const char *, const char *)
 {
 	EMUXFS_TRACE("enter");
-	(void)from;
-	(void)to;
 
 	return -EOPNOTSUPP;
 }
@@ -2249,7 +2227,7 @@ emuxfs_chmod(const char *path, mode_t mode)
 	args.type = EMUXFS_UT_CHMOD;
 	args.path = path;
 	args.mode = mode;
-	args.wc = NULL;
+	args.wc = nullptr;
 
 	return emuxfs_op_update(&args);
 }
@@ -2269,7 +2247,7 @@ emuxfs_chown(const char *path, uid_t uid, gid_t gid)
 	args.path = path;
 	args.uid = uid;
 	args.gid = gid;
-	args.wc = NULL;
+	args.wc = nullptr;
 
 	return emuxfs_op_update(&args);
 }
@@ -2288,7 +2266,7 @@ emuxfs_utimens(const char *path, const struct timespec *ts)
 	args.type = EMUXFS_UT_UTIMENS;
 	args.path = path;
 	args.ts = ts;
-	args.wc = NULL;
+	args.wc = nullptr;
 
 	return emuxfs_op_update(&args);
 }
@@ -2307,7 +2285,7 @@ emuxfs_truncate(const char *path, off_t offset)
 	args.type = EMUXFS_UT_TRUNCATE;
 	args.path = path;
 	args.offset = offset;
-	args.wc = NULL;
+	args.wc = nullptr;
 
 	return emuxfs_op_update(&args);
 }
@@ -2429,12 +2407,10 @@ emuxfs_buffered_write(const char *path, const char *buf, size_t bufsz,
 
 static int
 emuxfs_write(const char *path, const char *buf, size_t bufsz, off_t offset,
-    struct fuse_file_info *ffi)
+    [[maybe_unused]] struct fuse_file_info *ffi)
 {
 	EMUXFS_TRACE("enter");
 	struct emuxfs_op_update_args args;
-
-	(void)ffi;
 
 	if (emuxfs_path_sanitize(&path))
 		return -EIO;
@@ -2449,7 +2425,7 @@ emuxfs_write(const char *path, const char *buf, size_t bufsz, off_t offset,
 	args.buf = buf;
 	args.bufsz = bufsz;
 	args.offset = offset;
-	args.wc = NULL;
+	args.wc = nullptr;
 
 	return emuxfs_op_update(&args);
 }

@@ -38,7 +38,7 @@ struct emuxfs_args emuxfs_cmdline;
  * emuxfs_pushdir() stores a struct dirent * array in an allocation obtained
  * from the dynamic stack, whose alignment is EMUXFS_MEM_ALIGN.
  */
-_Static_assert(EMUXFS_MEM_ALIGN >= _Alignof(struct dirent *),
+static_assert(EMUXFS_MEM_ALIGN >= alignof(struct dirent *),
     "the dynamic stack must align the dirent pointer arrays it stores");
 
 static int emuxfs_restore_reg(dind, dind, const char *, int, struct stat *,
@@ -350,7 +350,7 @@ emuxfs_path_is_root(const char *path)
  * returned.  If 'shallow' is non-zero then the content checksum used to
  * compute the meta checksum will be taken from that in the meta.db file,
  * otherwise the content checksum will be computed from the file content.  If
- * 'expected' is not NULL and the computed checksum does not match that in
+ * 'expected' is not nullptr and the computed checksum does not match that in
  * 'expected' then 1 is returned.
  */
 EMUXFS int
@@ -419,7 +419,7 @@ emuxfs_readback(dind i, const char *path, int shallow,
 		    (unsigned long long)eno, path);
 		goto fail;
 	}
-	if ((expected != NULL) &&
+	if ((expected != nullptr) &&
 	    (bcmp(meta_chk_buf, &expected->checksums[0], chksz) != 0)) {
 		EMUXFS_TRACE("readback: expected mismatch dev=%lu ino=%llu "
 		    "path=%s\n", (unsigned long)i, (unsigned long long)ino,
@@ -447,12 +447,12 @@ emuxfs_parent_readback(dind i, const char *path)
 	memcpy(ppath, path, path_len);
 	ppath[path_len] = '\0';
 
-	if (emuxfs_path_pop(NULL, ppath, NULL)) {
+	if (emuxfs_path_pop(nullptr, ppath, nullptr)) {
 		memset(ppath, 0, PATH_MAX);
 		strlcpy(ppath, ".", PATH_MAX);
 	}
 
-	return emuxfs_readback(i, ppath, 0, NULL);
+	return emuxfs_readback(i, ppath, 0, nullptr);
 }
 
 static void
@@ -462,7 +462,7 @@ emuxfs_path_trailing_seps_strip(char *path, size_t path_len)
 	char *sep;
 
 	sep = strrchr(path, '/');
-	if (sep == NULL)
+	if (sep == nullptr)
 		return;
 	while ((size_t)(sep - path) == path_len) {
 		*sep = '\0';
@@ -470,14 +470,14 @@ emuxfs_path_trailing_seps_strip(char *path, size_t path_len)
 		if (path_len == 0)
 			return;
 		sep = strrchr(path, '/');
-		if (sep == NULL)
+		if (sep == nullptr)
 			return;
 	}
 }
 
 /*
  * Replaces '/' in path with '\0' in order to split the path into directory and
- * filename components.  If fname_out is not NULL then *fname_out is set to
+ * filename components.  If fname_out is not nullptr then *fname_out is set to
  * point to the start of the filename component after the replaced '/'.
  * Returns 1 if there was not a preceeding path component, otherwise returns 0.
  */
@@ -488,7 +488,7 @@ emuxfs_path_pop(const char **fname_out, char *path, size_t *path_len_inout)
 	char	*sep, *fname;
 	size_t	 path_len;
 
-	if (path_len_inout != NULL)
+	if (path_len_inout != nullptr)
 		path_len = *path_len_inout;
 	else
 		path_len = strlen(path);
@@ -499,7 +499,7 @@ emuxfs_path_pop(const char **fname_out, char *path, size_t *path_len_inout)
 		return 1;
 
 	sep = strrchr(path, '/');
-	if (sep == NULL)
+	if (sep == nullptr)
 		return 1;
 	fname = sep + 1;
 	*sep = '\0';
@@ -511,9 +511,9 @@ emuxfs_path_pop(const char **fname_out, char *path, size_t *path_len_inout)
 	if (path_len == 0)
 		return 1;
 
-	if (path_len_inout != NULL)
+	if (path_len_inout != nullptr)
 		*path_len_inout = path_len;
-	if (fname_out != NULL)
+	if (fname_out != nullptr)
 		*fname_out = fname;
 	return 0;
 }
@@ -1406,7 +1406,7 @@ emuxfs_restore_possible_inner(int *is_delete_out, dind ddev_index,
 		rc = 3;
 		goto out;
 	}
-	if (emuxfs_readback(sdev_index, ppath, 0, NULL)) {
+	if (emuxfs_readback(sdev_index, ppath, 0, nullptr)) {
 		if (emuxfs_state_restore_push_back(sdev_index, ppath))
 			exit(-1);
 		rc = 3;
@@ -1422,7 +1422,7 @@ emuxfs_restore_possible_inner(int *is_delete_out, dind ddev_index,
 	}
 	if (exists) {
 		if (!expect_substitute) {
-			if (emuxfs_readback(sdev_index, path, 0, NULL)) {
+			if (emuxfs_readback(sdev_index, path, 0, nullptr)) {
 				if (emuxfs_state_restore_push_back(sdev_index,
 				    path))
 					exit(-1);
@@ -1508,7 +1508,7 @@ emuxfs_restore_possible_inner(int *is_delete_out, dind ddev_index,
 		}
 	}
 
-	if (is_delete_out != NULL)
+	if (is_delete_out != nullptr)
 		*is_delete_out = is_delete;
 	rc = 0;
 out3:
@@ -1556,7 +1556,7 @@ emuxfs_restore_possible(int *is_delete_out, dind ddev_index, dind sdev_index,
 	chksz = emuxfs_chk_size(alg);
 
 	if (emuxfs_path_is_root(path)) {
-		if (emuxfs_readback(sdev_index, path, 0, NULL)) {
+		if (emuxfs_readback(sdev_index, path, 0, nullptr)) {
 			if (emuxfs_state_restore_push_back(sdev_index, path))
 				exit(-1);
 			return 3;
@@ -1582,7 +1582,7 @@ emuxfs_restore_possible(int *is_delete_out, dind ddev_index, dind sdev_index,
 			patch.fname = fname;
 
 		subrc = emuxfs_restore_possible_inner((is_first ? &is_delete :
-		    NULL), ddev_index, sdev_index, path, ddev, sdev, alg, chksz,
+		    nullptr), ddev_index, sdev_index, path, ddev, sdev, alg, chksz,
 		    ppath, &patch, !is_first);
 
 		switch (subrc) {
@@ -1643,7 +1643,7 @@ emuxfs_restore_delete(dind ddev_index, dind sdev_index, const char *path)
 
 	memset(ppath, 0, PATH_MAX);
 	strlcpy(ppath, path, PATH_MAX);
-	if (emuxfs_path_pop(NULL, ppath, NULL)) {
+	if (emuxfs_path_pop(nullptr, ppath, nullptr)) {
 		memset(ppath, 0, PATH_MAX);
 		strlcpy(ppath, ".", PATH_MAX);
 	}
@@ -1717,7 +1717,7 @@ emuxfs_dir_meta_restore(dind ddev_index, dind sdev_index, const char *path)
 		return 1;
 	if (fsync(ddev->meta_fd))
 		exit(-1);
-	if (emuxfs_readback(ddev_index, path, 0, NULL))
+	if (emuxfs_readback(ddev_index, path, 0, nullptr))
 		return 1;
 	return 0;
 }
@@ -1790,7 +1790,7 @@ emuxfs_restore_source_ambiguous(int *ambiguous_out, dind ddev_index,
 			continue;
 		if (emuxfs_dev_get(&sdev, si, 0))
 			continue;
-		if (emuxfs_readback(si, path, 0, NULL))
+		if (emuxfs_readback(si, path, 0, nullptr))
 			continue; /* Not a valid copy; not eligible. */
 		if (fstatat(sdev->root_fd, path, &st, AT_SYMLINK_NOFOLLOW))
 			continue;
@@ -1992,7 +1992,7 @@ emuxfs_parent_gid(gid_t *parent_gid_out, const char *path)
 	ppath = pbuf;
 	memset(ppath, 0, PATH_MAX);
 	strlcpy(ppath, path, PATH_MAX);
-	if (emuxfs_path_pop(NULL, ppath, &ppathlen)) {
+	if (emuxfs_path_pop(nullptr, ppath, &ppathlen)) {
 		ppath = ".";
 		ppathlen = 1;
 	}
@@ -2143,7 +2143,7 @@ emuxfs_fsync_parent(int root_fd, const char *path)
 		return 1;
 	memcpy(pbuf, path, len + 1);
 
-	if (emuxfs_path_pop(NULL, pbuf, NULL))
+	if (emuxfs_path_pop(nullptr, pbuf, nullptr))
 		ppath = ".";
 	else
 		ppath = pbuf;

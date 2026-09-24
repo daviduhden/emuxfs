@@ -181,7 +181,7 @@ emuxfs_ds_add_pages(size_t pagecount)
 
 	d = malloc(sz);
 	n = (struct ds *)d;
-	if (n == NULL)
+	if (n == nullptr)
 		return 1;
 	n->pagecount = pagecount;
 	n->begin = n->allocend = (d + emuxfs_ds_offset);

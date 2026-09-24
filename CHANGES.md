@@ -1,5 +1,38 @@
 # Change log
 
+## C23 migration (2026-09-24)
+
+The required standard is now **C23** (`-std=c23`); the OpenBSD 7.9 base clang
+(19.1.7) accepts it.  The migration is deliberately conservative and only
+adopts features that make an existing intention clearer or safer:
+
+* `static_assert` and `alignof` are now used as keywords instead of
+  `_Static_assert`/`_Alignof`, with no `<assert.h>`/`<stdalign.h>` needed.
+* `nullptr` replaces `NULL`.  Every use was a null pointer constant (the
+  code already wrote integer zero as `0`), so the change is mechanical but
+  type-safe; the one diagnostic string that spelled "NULL" was updated too.
+* `[[fallthrough]]` marks the single intentional `switch` fallthrough
+  (`emuxfs_truncate_inner`).
+* `[[maybe_unused]]` and unnamed parameters replace the `(void)param;`
+  workaround for genuinely unused parameters (the trivial FUSE callbacks and
+  the few mixed helpers).
+* `[[nodiscard]]` marks the integrity/availability functions whose result
+  must not be ignored: `emuxfs_dev_get`, `emuxfs_meta_read`,
+  `emuxfs_assign_read` and `emuxfs_readback`.
+
+Evaluated and deliberately not applied, because C23 does not improve them or
+the toolchain/library support cannot be demonstrated statically: native
+`bool` (the project uses `int` predicates and flags; a mass conversion would
+change internal layouts without fixing a defect), `constexpr` (the numeric
+constants are macros used as array bounds and in `static_assert`), fixed
+underlying enum types, `_BitInt`, `#embed`, `#elifdef`/`#warning`,
+`<stdckdint.h>`/`<stdbit.h>` (OpenBSD libc availability not verified),
+`typeof`, `[[noreturn]]` (no function is provably non-returning),
+`[[unsequenced]]`/`[[reproducible]]` (contract and support not demonstrable),
+`u8` literals and digit separators.  The `__attribute__((format))` extension
+and the `#pragma clang diagnostic` around `vsnprintf` remain: C23 has no
+equivalent for either.
+
 ## Memory-safety audit (2026-09-24)
 
 * **Write starting inside a file block.**  `emuxfs_write_inner` copied the

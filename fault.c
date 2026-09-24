@@ -27,21 +27,19 @@
 #include "fault.h"
 
 void
-emuxfs_fault_point(const char *name)
+emuxfs_fault_point([[maybe_unused]] const char *name)
 {
 #ifdef EMUXFS_FAULT_INJECTION
 	const char *point, *action;
 
 	point = getenv(EMUXFS_FAULT_ENV_POINT);
-	if ((point == NULL) || (strcmp(point, name) != 0))
+	if ((point == nullptr) || (strcmp(point, name) != 0))
 		return;
 
 	action = getenv(EMUXFS_FAULT_ENV_ACTION);
-	if ((action == NULL) || (strcmp(action, "exit") == 0))
+	if ((action == nullptr) || (strcmp(action, "exit") == 0))
 		_exit(EMUXFS_FAULT_EXIT_STATUS);
 	if (strcmp(action, "abort") == 0)
 		abort();
-#else
-	(void)name;
 #endif
 }

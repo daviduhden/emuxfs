@@ -40,7 +40,7 @@ struct emuxfs_restore_item {
  * their offsets are rounded up to sizeof(size_t); that rounding only keeps
  * each item aligned if the struct's alignment is no larger than that.
  */
-_Static_assert(_Alignof(struct emuxfs_restore_item) <= sizeof(size_t),
+static_assert(alignof(struct emuxfs_restore_item) <= sizeof(size_t),
     "restore queue item alignment must not exceed the offset rounding");
 
 struct emuxfs_state {
@@ -126,7 +126,7 @@ emuxfs_restore_queue_reserve(size_t extra)
 	}
 
 	q = reallocarray(st->restore_queue, newsz, 1);
-	if (q == NULL)
+	if (q == nullptr)
 		exit(-1);
 	st->restore_queue = q;
 	st->restore_queue_size = newsz;
@@ -226,7 +226,7 @@ emuxfs_state_restore_queue_init(void)
 
 	state = &emuxfs_global_state;
 
-	state->restore_queue = NULL;
+	state->restore_queue = nullptr;
 	state->restore_queue_size = 0;
 	state->restore_front = 0;
 	state->restore_back = 0;
@@ -245,7 +245,7 @@ emuxfs_state_restore_queue_final(void)
 {
 	EMUXFS_TRACE("enter");
 	free(emuxfs_global_state.restore_queue);
-	emuxfs_global_state.restore_queue = NULL;
+	emuxfs_global_state.restore_queue = nullptr;
 	emuxfs_global_state.restore_queue_size = 0;
 	emuxfs_global_state.restore_front = 0;
 	emuxfs_global_state.restore_back = 0;
@@ -327,9 +327,9 @@ emuxfs_state_syslog_init(void)
 	    &emuxfs_global_state.log);
 
 	emuxfs_trace_fd = -1;
-	emuxfs_trace_stderr = (getenv("EMUXFS_TRACE") != NULL);
+	emuxfs_trace_stderr = (getenv("EMUXFS_TRACE") != nullptr);
 	trace_file = getenv("EMUXFS_TRACE_FILE");
-	if ((trace_file != NULL) && (trace_file[0] != '\0'))
+	if ((trace_file != nullptr) && (trace_file[0] != '\0'))
 		emuxfs_trace_fd = open(trace_file,
 		    O_WRONLY|O_CREAT|O_APPEND, 0600);
 
@@ -541,7 +541,7 @@ emuxfs_state_wrbuf_set(const char *path, uid_t user, gid_t group, size_t sz,
 
 	if (emuxfs_state_wrbuf_is_set())
 		return 1;
-	if (path == NULL)
+	if (path == nullptr)
 		return 1;
 	if (path[0] == '\0')
 		return 1;
@@ -549,7 +549,7 @@ emuxfs_state_wrbuf_set(const char *path, uid_t user, gid_t group, size_t sz,
 		return 1;
 	if (sz > EMUXFS_WRBUF_SIZE)
 		return 1;
-	if (buf == NULL)
+	if (buf == nullptr)
 		return 1;
 
 	*wrbuf = (struct emuxfs_wrbuf){
@@ -577,7 +577,7 @@ emuxfs_state_wrbuf_append(size_t *wrsz_out, const char *path, uid_t user,
 
 	if (!emuxfs_state_wrbuf_is_set())
 		return 1;
-	if (path == NULL)
+	if (path == nullptr)
 		return 1;
 	if (path[0] == '\0')
 		return 1;
@@ -591,9 +591,9 @@ emuxfs_state_wrbuf_append(size_t *wrsz_out, const char *path, uid_t user,
 		return 1;
 	if (off != (wrbuf->off + wrbuf->sz))
 		return 1;
-	if (buf == NULL)
+	if (buf == nullptr)
 		return 1;
-	if (wrsz_out == NULL)
+	if (wrsz_out == nullptr)
 		return 1;
 
 	if ((wrbuf->sz + sz) > EMUXFS_WRBUF_SIZE)

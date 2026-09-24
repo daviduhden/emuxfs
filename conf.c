@@ -46,7 +46,7 @@
  * The configuration stores UUIDs as 16 raw bytes and both uuid_enc_le() and
  * uuid_dec_le() move sizeof(uuid_t) bytes, so the sizes must agree.
  */
-_Static_assert(sizeof(uuid_t) == EMUXFS_UUID_SIZE,
+static_assert(sizeof(uuid_t) == EMUXFS_UUID_SIZE,
     "uuid_t must be EMUXFS_UUID_SIZE bytes for uuid_enc_le/uuid_dec_le");
 
 /*
@@ -95,11 +95,11 @@ emuxfs_conf_version_parse(struct emuxfs_dev_conf *conf, const char *version,
 	b = version_string_buf;
 
 	/* Major number: everything up to the first dot. */
-	if ((e = memchr(b, '.', version_len)) == NULL)
+	if ((e = memchr(b, '.', version_len)) == nullptr)
 		return 1;
 	*e = '\0';
 	num = strtonum(b, 0, INT32_MAX, &errstr);
-	if (errstr != NULL)
+	if (errstr != nullptr)
 		return 1;
 	conf->version.number = (uint32_t)num;
 	b = e + 1;
@@ -117,7 +117,7 @@ emuxfs_conf_version_parse(struct emuxfs_dev_conf *conf, const char *version,
 	*e = '\0';
 	num = strtonum(b, 0, INT32_MAX, &errstr);
 	*e = saved;
-	if (errstr != NULL)
+	if (errstr != nullptr)
 		return 1;
 	conf->version.revision = (uint32_t)num;
 	b = e;
@@ -148,7 +148,7 @@ emuxfs_uuid_read(uint8_t *dest, const char *src, size_t len)
 	if (len > EMUXFS_UUID_SIZE * 5)
 		return 1;
 	str = calloc(len + 1, sizeof(char));
-	if (str == NULL)
+	if (str == nullptr)
 		return 1;
 
 	memcpy(str, src, len);
@@ -173,7 +173,7 @@ emuxfs_conf_line_parse(struct emuxfs_dev_conf *conf, const char *line,
 	const char *errstr;
 	long long num;
 
-	if ((eq = memchr(line, '=', len)) == NULL)
+	if ((eq = memchr(line, '=', len)) == nullptr)
 		return 1;
 
 	key = line;
@@ -195,7 +195,7 @@ emuxfs_conf_line_parse(struct emuxfs_dev_conf *conf, const char *line,
 		memset(num_buf, 0, sizeof(num_buf));
 		memcpy(num_buf, val, val_len);
 		num = strtonum(num_buf, 0, UINT32_MAX, &errstr);
-		if (errstr != NULL)
+		if (errstr != nullptr)
 			return 1;
 		conf->format_version = (uint32_t)num;
 		cl->has_format_version = 1;
@@ -225,7 +225,7 @@ emuxfs_conf_line_parse(struct emuxfs_dev_conf *conf, const char *line,
 		memset(num_buf, 0, sizeof(num_buf));
 		memcpy(num_buf, val, val_len);
 		conf->seq_zero_time = strtonum(num_buf, 0, INT64_MAX, &errstr);
-		if (errstr != NULL)
+		if (errstr != nullptr)
 			return 1;
 		cl->has_seq_zero_time = 1;
 	} else
@@ -276,7 +276,7 @@ emuxfs_conf_parse(struct emuxfs_dev_conf *conf, int fd)
 			break;
 
 		bufsz += (size_t)readsz;
-		while ((eol = memchr(buf, '\n', bufsz)) != NULL) {
+		while ((eol = memchr(buf, '\n', bufsz)) != nullptr) {
 			/* Bytes before the newline, CR included if present. */
 			rawlen = (size_t)(eol - buf);
 			linesz = rawlen;

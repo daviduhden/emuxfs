@@ -34,7 +34,7 @@
  * The tree fans in by EMUXFS_LEVEL_FACTOR entries per level; a zero factor
  * would make emuxfs_lfile_root_level() and friends loop forever.
  */
-_Static_assert(EMUXFS_BLOCK_SIZE >= EMUXFS_CHKSZ_MAX,
+static_assert(EMUXFS_BLOCK_SIZE >= EMUXFS_CHKSZ_MAX,
     "lfile level factor must be at least one");
 
 EMUXFS void
@@ -115,7 +115,7 @@ emuxfs_lfile_root_abs_index(uint64_t file_blk_count)
 
 	level = emuxfs_lfile_root_level(file_blk_count);
 
-	if (emuxfs_lfile_abs_range(&index, NULL, file_blk_count, level))
+	if (emuxfs_lfile_abs_range(&index, nullptr, file_blk_count, level))
 		exit(-1); /* Programming error. */
 
 	return index;
@@ -132,7 +132,7 @@ emuxfs_lfile_open(int *fd_out, int lfile_fd, ino_t ino, int flags)
 
 	rc = 1;
 
-	path_len = snprintf(NULL, 0, "%llu", ino);
+	path_len = snprintf(nullptr, 0, "%llu", ino);
 	if (path_len < 0)
 		goto out;
 	if (path_len >= (PATH_MAX - 1))
@@ -169,7 +169,7 @@ emuxfs_lfile_create(int lfile_fd, size_t chksz, ino_t ino, size_t filesz)
 
 	lfilesz = chksz * (emuxfs_lfile_root_abs_index(blk_count) + 1);
 
-	path_len = snprintf(NULL, 0, "%llu", ino);
+	path_len = snprintf(nullptr, 0, "%llu", ino);
 	if (path_len < 0)
 		goto out;
 	if (path_len >= (PATH_MAX - 1))
@@ -221,7 +221,7 @@ emuxfs_lfile_grow(int lfile_fd, size_t chksz, ino_t ino, size_t old_filesz,
 		goto out;
 	if (ftruncate(fd, (off_t)new_lfilesz2))
 		goto out2;
-	if ((lfile = mmap(NULL, new_lfilesz, PROT_READ|PROT_WRITE, MAP_SHARED,
+	if ((lfile = mmap(nullptr, new_lfilesz, PROT_READ|PROT_WRITE, MAP_SHARED,
 	    fd, 0)) == MAP_FAILED)
 		goto out2;
 
@@ -277,7 +277,7 @@ emuxfs_lfile_shrink(int lfile_fd, size_t chksz, ino_t ino, size_t old_filesz,
 
 	if (emuxfs_lfile_open(&fd, lfile_fd, ino, O_RDWR))
 		goto out;
-	if ((lfile = mmap(NULL, old_lfilesz, PROT_READ|PROT_WRITE, MAP_SHARED,
+	if ((lfile = mmap(nullptr, old_lfilesz, PROT_READ|PROT_WRITE, MAP_SHARED,
 	    fd, 0)) == MAP_FAILED)
 		goto out2;
 
@@ -350,7 +350,7 @@ emuxfs_lfile_delete(int lfile_fd, ino_t ino)
 
 	rc = 1;
 
-	path_len = snprintf(NULL, 0, "%llu", ino);
+	path_len = snprintf(nullptr, 0, "%llu", ino);
 	if (path_len < 0)
 		goto out;
 	if (path_len >= (PATH_MAX - 1))
@@ -373,7 +373,7 @@ emuxfs_lfile_exists(int *exists_out, int lfile_fd, ino_t ino)
 	char path_buf[PATH_MAX];
 	int path_len;
 
-	path_len = snprintf(NULL, 0, "%llu", ino);
+	path_len = snprintf(nullptr, 0, "%llu", ino);
 	if (path_len < 0)
 		return 1;
 	if (path_len >= (PATH_MAX - 1))
@@ -413,7 +413,7 @@ emuxfs_lfile_ancestors_recompute(uint8_t *root_sum, int lfile_fd,
 
 	if (emuxfs_lfile_open(&fd, lfile_fd, ino, O_RDWR))
 		goto out;
-	if ((lfile = mmap(NULL, lfilesz, PROT_READ|PROT_WRITE, MAP_SHARED, fd,
+	if ((lfile = mmap(nullptr, lfilesz, PROT_READ|PROT_WRITE, MAP_SHARED, fd,
 	    0)) == MAP_FAILED)
 		goto out;
 
@@ -453,7 +453,7 @@ emuxfs_lfile_ancestors_recompute(uint8_t *root_sum, int lfile_fd,
 		iend = (iend + (EMUXFS_LEVEL_FACTOR - 1)) / EMUXFS_LEVEL_FACTOR;
 	}
 
-	if (root_sum != NULL) {
+	if (root_sum != nullptr) {
 		memcpy(root_sum, &lfile[chksz *
 		    emuxfs_lfile_root_abs_index(blk_count)], chksz);
 	}
@@ -540,7 +540,7 @@ emuxfs_lfile_readback(uint8_t *root_sum, dind dev_index, const char *path,
 		goto out;
 	if (emuxfs_lfile_open(&lfd, dev->lfile_fd, ino, O_RDONLY))
 		goto out;
-	if ((lfile = mmap(NULL, lfilesz, PROT_READ, MAP_SHARED, lfd, 0)) ==
+	if ((lfile = mmap(nullptr, lfilesz, PROT_READ, MAP_SHARED, lfd, 0)) ==
 	    MAP_FAILED)
 		goto out;
 
@@ -598,11 +598,11 @@ emuxfs_lfile_readback(uint8_t *root_sum, dind dev_index, const char *path,
 		iend = (iend + (EMUXFS_LEVEL_FACTOR - 1)) / EMUXFS_LEVEL_FACTOR;
 	}
 
-	if ((expected != NULL) && (bcmp(expected, &lfile[chksz * pli], chksz) !=
+	if ((expected != nullptr) && (bcmp(expected, &lfile[chksz * pli], chksz) !=
 	    0))
 		goto out;
 
-	if (root_sum != NULL)
+	if (root_sum != nullptr)
 		memcpy(root_sum, &lfile[chksz * pli], chksz);
 	rc = 0;
 out:

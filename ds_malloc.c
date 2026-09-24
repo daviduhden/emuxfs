@@ -56,7 +56,7 @@ emuxfs_dspush(void **p_out, size_t s)
 	if (s > SIZE_MAX - EMUXFS_DS_HDR_SIZE)
 		exit(-1);
 	h = malloc(EMUXFS_DS_HDR_SIZE + s);
-	if (h == NULL)
+	if (h == nullptr)
 		exit(-1);
 
 	h->size = s;
@@ -69,7 +69,7 @@ emuxfs_dspop(void *p)
 {
 	struct emuxfs_ds_hdr *h;
 
-	if (p == NULL)
+	if (p == nullptr)
 		exit(-1); /* Programming error. */
 	h = (struct emuxfs_ds_hdr *)((uint8_t *)p - EMUXFS_DS_HDR_SIZE);
 	free(h);
@@ -82,7 +82,7 @@ emuxfs_dsgrow(void **p_inout, size_t s)
 	struct emuxfs_ds_hdr *h;
 	size_t newsz;
 
-	if (*p_inout == NULL)
+	if (*p_inout == nullptr)
 		exit(-1); /* Programming error. */
 	h = (struct emuxfs_ds_hdr *)
 	    ((uint8_t *)*p_inout - EMUXFS_DS_HDR_SIZE);
@@ -91,7 +91,7 @@ emuxfs_dsgrow(void **p_inout, size_t s)
 	newsz = h->size + s;
 
 	h = realloc(h, EMUXFS_DS_HDR_SIZE + newsz);
-	if (h == NULL)
+	if (h == nullptr)
 		exit(-1);
 
 	h->size = newsz;

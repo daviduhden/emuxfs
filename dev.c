@@ -255,7 +255,7 @@ emuxfs_dev_append(dind *dev_index_out, const char *path)
 	strlcpy(emuxfs_dev_roots[i], path, PATH_MAX);
 	dev->root_path = emuxfs_dev_roots[i];
 	dev->attached_now = 1;
-	if (dev_index_out != NULL)
+	if (dev_index_out != nullptr)
 		*dev_index_out = i;
 	++emuxfs_dev_array_count;
 
@@ -303,7 +303,7 @@ emuxfs_dev_open(dind dev_index, int force, int readonly)
 	conf_fd = -1;
 
 	if (emuxfs_dev_array_mounted_count > 0) {
-		first = NULL;
+		first = nullptr;
 		dev_count = emuxfs_dev_count();
 		for (i = 0; i < dev_count; ++i) {
 			if (i == dev_index)
@@ -311,7 +311,7 @@ emuxfs_dev_open(dind dev_index, int force, int readonly)
 			if (!emuxfs_dev_get(&first, i, 0))
 				break;
 		}
-		if ((first == NULL) ||
+		if ((first == nullptr) ||
 		    (bcmp(dev->conf.array_uuid, first->conf.array_uuid,
 		     EMUXFS_UUID_SIZE) != 0))
 			goto fail;
@@ -482,7 +482,7 @@ emuxfs_working_push(size_t index)
 }
 
 EMUXFS int
-emuxfs_working_pop(size_t index, time_t now)
+emuxfs_working_pop(size_t index, [[maybe_unused]] time_t now)
 {
 	EMUXFS_TRACE("enter");
 	struct emuxfs_dev *dev;
@@ -492,8 +492,6 @@ emuxfs_working_pop(size_t index, time_t now)
 
 	if (dev->state.working == 0)
 		exit(-1);
-
-	(void)now;
 
 	/*
 	 * Seq exhaustion fails closed: the device is marked degraded rather
@@ -880,9 +878,9 @@ emuxfs_dev_seq_check(void)
 		    (dev->state.seq != seq)) {
 			memset(tbuf1, 0, 26);
 			memset(tbuf2, 0, 26);
-			if (ctime_r(&seq_zero_time, tbuf1) == NULL)
+			if (ctime_r(&seq_zero_time, tbuf1) == nullptr)
 				return 1;
-			if (ctime_r(&dev->conf.seq_zero_time, tbuf2) == NULL)
+			if (ctime_r(&dev->conf.seq_zero_time, tbuf2) == nullptr)
 				return 1;
 			dprintf(2, "Error: Sequence number mismatch.\n");
 			dprintf(2, "Index 0:\n");

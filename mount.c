@@ -59,8 +59,8 @@ emuxfs_mount_absolutize(struct emuxfs_args *args)
 	char *rp;
 
 	for (i = 0; i < args->dev_count; ++i) {
-		rp = realpath(args->dev_paths[i], NULL);
-		if (rp == NULL)
+		rp = realpath(args->dev_paths[i], nullptr);
+		if (rp == nullptr)
 			return 1;
 		if (strlcpy(args->dev_paths[i], rp, PATH_MAX) >= PATH_MAX) {
 			free(rp);
@@ -129,11 +129,11 @@ emuxfs_mount_main(int argc, char *argv[])
 	fuse_argv[n++] = "-oallow_other";
 	fuse_argv[n++] = emuxfs_cmdline.mp_path;
 
-	mp = NULL;
+	mp = nullptr;
 	fuse = fuse_setup(n, fuse_argv, &emuxfs_fuse_ops,
-	    sizeof(emuxfs_fuse_ops), &mp, NULL, NULL);
-	EMUXFS_TRACE("fuse_setup %s", fuse == NULL ? "NULL" : "ok");
-	if (fuse == NULL) {
+	    sizeof(emuxfs_fuse_ops), &mp, nullptr, nullptr);
+	EMUXFS_TRACE("fuse_setup %s", fuse == nullptr ? "nullptr" : "ok");
+	if (fuse == nullptr) {
 		fprintf(stderr, "Error: Unable to mount %s.\n",
 		    emuxfs_cmdline.mp_path);
 		emuxfs_final();

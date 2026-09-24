@@ -32,7 +32,7 @@
 #include "sandbox.h"
 
 /* See conf.c: uuid_enc_le() moves sizeof(uuid_t) bytes. */
-_Static_assert(sizeof(uuid_t) == EMUXFS_UUID_SIZE,
+static_assert(sizeof(uuid_t) == EMUXFS_UUID_SIZE,
     "uuid_t must be EMUXFS_UUID_SIZE bytes for uuid_enc_le");
 
 static const char *sepdotemuxfs = "/.muxfs";
@@ -304,7 +304,7 @@ emuxfs_format_main(int argc, char *argv[])
 	if (emuxfs_sandbox_pledge(EMUXFS_PLEDGE_FORMAT))
 		goto out;
 
-	now = time(NULL);
+	now = time(nullptr);
 	uuid_create(&uuid, &uuid_status);
 	if (uuid_status != uuid_s_ok)
 		goto out;

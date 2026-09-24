@@ -1,9 +1,9 @@
 # Makefile for emuxfs (The Enhanced Multiplexed File System).
 #
-# Toolchain policy: clang(1) only, C17 only.  The warning policy matches the
+# Toolchain policy: clang(1) only, C23 only.  The warning policy matches the
 # other projects (openbar, openutils, wip-openbsd-src):
 #
-#   default:  -std=c17 -Wall -Wextra -Wpedantic
+#   default:  -std=c23 -Wall -Wextra -Wpedantic
 #   check:    the above plus -Wshadow -Wformat=2 -Wundef
 #             -Wstrict-prototypes -Wmissing-prototypes -Wconversion
 #             -Wsign-conversion, and -Werror
@@ -15,7 +15,7 @@
 
 CC = clang
 DEBUGGER = lldb
-CSTD = -std=c17
+CSTD = -std=c23
 
 CFLAGS ?= -O2 -pipe
 WARNINGS ?= -Wall -Wextra -Wpedantic

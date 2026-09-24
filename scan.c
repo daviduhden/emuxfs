@@ -103,7 +103,7 @@ emuxfs_scan_impl(enum emuxfs_scan_mode mode, dind dev_index, char *path,
 				goto dirout2;
 			path[len] = '\0';
 		}
-		if (emuxfs_readback(dev_index, epath, 0, NULL)) {
+		if (emuxfs_readback(dev_index, epath, 0, nullptr)) {
 			printf("%s/%s\n", dev->root_path, epath);
 			if ((mode == EMUXFS_SCAN_HEAL) &&
 			    emuxfs_state_restore_push_back(dev_index, epath))
@@ -124,7 +124,7 @@ dirout:
 		    dev->root_path, epath, (unsigned)st.st_mode);
 		return 1;
 	}
-	if (emuxfs_readback(dev_index, epath, 0, NULL)) {
+	if (emuxfs_readback(dev_index, epath, 0, nullptr)) {
 		printf("%s/%s\n", dev->root_path, epath);
 		if ((mode == EMUXFS_SCAN_HEAL) &&
 		    emuxfs_state_restore_push_back(dev_index, epath))

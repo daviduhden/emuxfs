@@ -10,9 +10,9 @@ The complex test suites are written in Perl (using Perl's string handling) and
 run with the base-system `perl(1)`.  Any remaining shell code targets **ksh**,
 not POSIX `sh`; the Makefile executes recipes with `/bin/ksh`.
 
-## Build policy (Clang, C17, strict warnings)
+## Build policy (Clang, C23, strict warnings)
 
-The supported toolchain is `clang` with `-std=c17`.  The default warning set is
+The supported toolchain is `clang` with `-std=c23`.  The default warning set is
 `-Wall -Wextra -Wpedantic`; `make check` rebuilds with the full strict set used
 by the other projects (`-Wshadow -Wformat=2 -Wundef -Wstrict-prototypes
 -Wmissing-prototypes -Wconversion -Wsign-conversion`) and `-Werror`.  No
@@ -206,7 +206,7 @@ described as Tested or Hardened on the strength of static analysis alone.
 `.github/workflows/ci.yml` runs on `ubuntu-latest` but executes inside a real
 OpenBSD virtual machine through `vmactions/openbsd-vm@v1`.  The target is
 **OpenBSD 7.9**, on two architectures: **amd64** and **arm64**
-(`arch: aarch64`).  Both run the same full sequence: build (clang, C17),
+(`arch: aarch64`).  Both run the same full sequence: build (clang, C23),
 strict warnings (`make check`, `-Werror`), unit tests, FUSE integration tests,
 fault-injection tests, bounded parser fuzzing, install, manual page
 (`mandoc -T lint`), linkage, and a final clean rebuild.  The FUSE integration

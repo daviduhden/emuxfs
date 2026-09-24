@@ -110,7 +110,7 @@ provenance.
 The CI matrix is OpenBSD **7.9**, using `vmactions/openbsd-vm@v1` on
 `ubuntu-latest`; the 7.9 image is the only one used.  The same full test set
 runs on two architectures, **amd64** and **arm64** (`arch: aarch64`): build
-with clang and C17, the strict warning build (`make check`), the unit tests,
+with clang and C23, the strict warning build (`make check`), the unit tests,
 the FUSE integration tests, the fault-injection tests, install, `mandoc`, and a
 clean rebuild.  No external FUSE package is needed
 because the native implementation is part of the base system.  On an

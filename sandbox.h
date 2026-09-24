@@ -59,7 +59,7 @@ EMUXFS int emuxfs_sandbox_unveil_path(const char *);
  */
 EMUXFS int emuxfs_sandbox_unveil_mirrors(const struct emuxfs_args *);
 
-/* unveil(NULL, NULL): no further changes to the filesystem view are allowed. */
+/* unveil(nullptr, nullptr): no further changes to the filesystem view are allowed. */
 EMUXFS int emuxfs_sandbox_unveil_lock(void);
 
 /* pledge(2) with the given promise string. */

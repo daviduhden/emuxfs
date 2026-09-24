@@ -56,7 +56,7 @@ jobs:
             set -eu
             cd "$GITHUB_WORKSPACE"
 
-            echo "== Build (clang, C17) =="
+            echo "== Build (clang, C23) =="
             make clean
             make
             ./emuxfs version
@@ -161,7 +161,7 @@ jobs:
             set -eu
             cd "$GITHUB_WORKSPACE"
 
-            echo "== Build (clang, C17) =="
+            echo "== Build (clang, C23) =="
             make clean
             make
             ./emuxfs version

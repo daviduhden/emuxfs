@@ -34,7 +34,7 @@ static void
 emuxfs_crc32_init(struct emuxfs_chk *chk, struct emuxfs_chk_alg *alg)
 {
 	chk->alg = alg;
-	chk->impl.ulong = crc32_z(0L, NULL, 0);
+	chk->impl.ulong = crc32_z(0L, nullptr, 0);
 }
 
 static void
@@ -97,8 +97,8 @@ static struct emuxfs_chk_alg emuxfs_chk_alg_tab[] = {
 	  emuxfs_md5_final, "md5"   },
 	{ CAT_SHA1, 20, emuxfs_sha1_init, emuxfs_sha1_update,
 	  emuxfs_sha1_final, "sha1"  },
-	{ CAT_NONE,  0, NULL, NULL,
-	  NULL, "none"  }
+	{ CAT_NONE,  0, nullptr, nullptr,
+	  nullptr, "none"  }
 };
 
 EMUXFS int

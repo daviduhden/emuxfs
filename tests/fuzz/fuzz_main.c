@@ -69,9 +69,9 @@ main(int argc, char *argv[])
 	if (argc > 1) {
 		char *end;
 
-		end = NULL;
+		end = nullptr;
 		runs = strtoul(argv[1], &end, 10);
-		if ((end == NULL) || (*end != '\0'))
+		if ((end == nullptr) || (*end != '\0'))
 			runs = 20000;
 	}
 

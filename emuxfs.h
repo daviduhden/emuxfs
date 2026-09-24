@@ -160,7 +160,7 @@ EMUXFS int emuxfs_dev_state_is_valid(const struct emuxfs_dev_state *);
 EMUXFS int emuxfs_dev_unmount(dind);
 EMUXFS int emuxfs_dev_is_mounted(dind);
 EMUXFS dind emuxfs_dev_count(void);
-EMUXFS int emuxfs_dev_get(struct emuxfs_dev **, dind, int);
+[[nodiscard]] EMUXFS int emuxfs_dev_get(struct emuxfs_dev **, dind, int);
 EMUXFS int emuxfs_dev_seq_check(void);
 
 enum emuxfs_meta_flag {
@@ -184,15 +184,15 @@ struct emuxfs_meta {
 	 */
 	uint8_t				checksums[2 * EMUXFS_CHKSZ_MAX];
 };
-_Static_assert(sizeof(struct emuxfs_meta) ==
+static_assert(sizeof(struct emuxfs_meta) ==
     sizeof(struct emuxfs_meta_header) + 2 * EMUXFS_CHKSZ_MAX,
     "meta.db entry buffer must not contain padding");
-_Static_assert(offsetof(struct emuxfs_meta, checksums) ==
+static_assert(offsetof(struct emuxfs_meta, checksums) ==
     sizeof(struct emuxfs_meta_header),
     "meta.db header and checksums must be adjacent (see ON_DISK_FORMAT.md)");
 EMUXFS int emuxfs_meta_size(size_t *, dind);
 EMUXFS int emuxfs_meta_size_raw(size_t *, enum emuxfs_chk_alg_type);
-EMUXFS int emuxfs_meta_read(struct emuxfs_meta *, dind, uint64_t);
+[[nodiscard]] EMUXFS int emuxfs_meta_read(struct emuxfs_meta *, dind, uint64_t);
 EMUXFS int emuxfs_meta_write(const struct emuxfs_meta *, dind, uint64_t);
 EMUXFS int emuxfs_meta_write_fd(int, const struct emuxfs_meta *, uint64_t,
     size_t);
@@ -211,17 +211,18 @@ struct emuxfs_assign {
  * must match the documented on-disk record sizes exactly.  A failure here
  * means the format changed; see ON_DISK_FORMAT.md.
  */
-_Static_assert(sizeof(struct emuxfs_dev_state) == 5 * sizeof(uint64_t),
+static_assert(sizeof(struct emuxfs_dev_state) == 5 * sizeof(uint64_t),
     "state.db record must be five 64-bit fields");
-_Static_assert(sizeof(struct emuxfs_meta_header) == 2 * sizeof(uint64_t),
+static_assert(sizeof(struct emuxfs_meta_header) == 2 * sizeof(uint64_t),
     "meta.db header must be two 64-bit fields");
-_Static_assert(sizeof(struct emuxfs_assign) == 2 * sizeof(uint64_t),
+static_assert(sizeof(struct emuxfs_assign) == 2 * sizeof(uint64_t),
     "assign.db record must be two 64-bit fields");
-_Static_assert(EMUXFS_CHKSZ_MAX == 20,
+static_assert(EMUXFS_CHKSZ_MAX == 20,
     "the reference checksum size is SHA-1 and drives lfile geometry");
 
 EMUXFS int emuxfs_assign_peek_next_eno(uint64_t *, dind);
-EMUXFS int emuxfs_assign_read(struct emuxfs_assign *, dind, uint64_t);
+[[nodiscard]] EMUXFS int emuxfs_assign_read(struct emuxfs_assign *, dind,
+    uint64_t);
 EMUXFS int emuxfs_assign_write(const struct emuxfs_assign *, dind, uint64_t);
 EMUXFS int emuxfs_assign_validate(dind, uint64_t, uint64_t);
 EMUXFS int emuxfs_meta_assign_check(dind, size_t *);
@@ -405,7 +406,8 @@ EMUXFS int emuxfs_path_sanitize(const char **);
 EMUXFS int emuxfs_path_pop(const char **, char *, size_t *);
 EMUXFS int emuxfs_pushdir(struct emuxfs_dir *, int, const char *);
 EMUXFS int emuxfs_popdir(struct emuxfs_dir *);
-EMUXFS int emuxfs_readback(dind, const char *, int, const struct emuxfs_meta *);
+[[nodiscard]] EMUXFS int emuxfs_readback(dind, const char *, int,
+    const struct emuxfs_meta *);
 EMUXFS int emuxfs_parent_readback(dind, const char *);
 EMUXFS int emuxfs_ancestors_meta_recompute(dind, struct emuxfs_cud *);
 EMUXFS int emuxfs_dir_meta_recompute(struct emuxfs_cud *, dind,

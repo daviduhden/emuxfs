@@ -84,11 +84,9 @@ sandbox_path(char *buf, size_t bufsz, const char *name)
 }
 
 static int
-rm_cb(const char *path, const struct stat *st, int type, struct FTW *ftw)
+rm_cb(const char *path, [[maybe_unused]] const struct stat *st,
+    [[maybe_unused]] int type, [[maybe_unused]] struct FTW *ftw)
 {
-	(void)st;
-	(void)type;
-	(void)ftw;
 	if (remove(path))
 		return -1;
 	return 0;
@@ -101,7 +99,7 @@ sandbox_create(void)
 	char tmpl[PATH_MAX];
 
 	base = getenv("TMPDIR");
-	if ((base == NULL) || (base[0] == '\0'))
+	if ((base == nullptr) || (base[0] == '\0'))
 		base = "/tmp";
 
 	if (snprintf(tmpl, sizeof(tmpl), "%s/emuxfs-unit.XXXXXX", base) >=
@@ -109,7 +107,7 @@ sandbox_create(void)
 		fprintf(stderr, "FAIL: TMPDIR too long\n");
 		exit(2);
 	}
-	if (mkdtemp(tmpl) == NULL) {
+	if (mkdtemp(tmpl) == nullptr) {
 		perror("mkdtemp");
 		exit(2);
 	}
@@ -507,7 +505,7 @@ test_dev_format_mount(void)
 		return;
 	}
 	memset(uuid, 0x5a, sizeof(uuid));
-	now = time(NULL);
+	now = time(nullptr);
 	if (emuxfs_dev_format(root, CAT_SHA1, chksz, metasz, now, uuid)) {
 		fprintf(stderr, "FAIL: emuxfs_dev_format\n");
 		++failures;
@@ -807,7 +805,7 @@ test_assign_crosscheck(void)
 		return;
 	}
 	memset(uuid, 0x44, sizeof(uuid));
-	now = time(NULL);
+	now = time(nullptr);
 	if (emuxfs_dev_format(root, CAT_MD5, chksz, metasz, now, uuid)) {
 		CHECK(0);
 		return;
@@ -831,7 +829,7 @@ test_assign_crosscheck(void)
 
 	/* Consistent mapping. */
 	CHECK(emuxfs_meta_assign_check(0, &bad) == 0 && bad == 0);
-	CHECK(emuxfs_readback(0, "x", 0, NULL) == 0);
+	CHECK(emuxfs_readback(0, "x", 0, nullptr) == 0);
 
 	/* Out-of-range indices must fail cleanly, not overflow. */
 	CHECK(emuxfs_meta_read(&meta, 0, UINT64_MAX) != 0);
@@ -843,20 +841,20 @@ test_assign_crosscheck(void)
 	assign.ino = st.st_ino + 1;
 	CHECK(emuxfs_assign_write(&assign, 0, 1000) == 0);
 	CHECK(emuxfs_meta_assign_check(0, &bad) == 0 && bad >= 1);
-	CHECK(emuxfs_readback(0, "x", 0, NULL) != 0);
+	CHECK(emuxfs_readback(0, "x", 0, nullptr) != 0);
 
 	/* Clear the mapping entirely: readback must fail. */
 	assign.flags = 0;
 	assign.ino = 0;
 	CHECK(emuxfs_assign_write(&assign, 0, 1000) == 0);
-	CHECK(emuxfs_readback(0, "x", 0, NULL) != 0);
+	CHECK(emuxfs_readback(0, "x", 0, nullptr) != 0);
 
 	/* Repair it: both checks recover. */
 	assign.flags = AF_ASSIGNED;
 	assign.ino = st.st_ino;
 	CHECK(emuxfs_assign_write(&assign, 0, 1000) == 0);
 	CHECK(emuxfs_meta_assign_check(0, &bad) == 0 && bad == 0);
-	CHECK(emuxfs_readback(0, "x", 0, NULL) == 0);
+	CHECK(emuxfs_readback(0, "x", 0, nullptr) == 0);
 
 	emuxfs_dev_unmount(0);
 }
@@ -888,7 +886,7 @@ test_recovery_ambiguity(void)
 		return;
 	}
 	memset(uuid, 0x33, sizeof(uuid));
-	now = time(NULL);
+	now = time(nullptr);
 
 	emuxfs_dev_module_init();
 	for (i = 0; i < 3; ++i) {
@@ -977,7 +975,7 @@ test_dynamic_stack(void)
 	uint8_t *p, *q, *r;
 	size_t i, j, oldsz;
 
-	p = q = r = NULL;
+	p = q = r = nullptr;
 	if (emuxfs_dspush((void **)&p, 64))
 		exit(-1);
 	for (i = 0; i < 64; ++i)
@@ -1008,11 +1006,8 @@ test_dynamic_stack(void)
 }
 
 int
-main(int argc, char *argv[])
+main(int, char *[])
 {
-	(void)argc;
-	(void)argv;
-
 	if (emuxfs_state_syslog_init())
 		return 2;
 	/*

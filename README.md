@@ -64,7 +64,7 @@ the bounded parser fuzz run.  The on-disk format is frozen at version 1.
 # make install
 ```
 
-Build requirements: OpenBSD, `clang`, C17 and zlib.  The FUSE
+Build requirements: OpenBSD, `clang`, C23 and zlib.  The FUSE
 implementation is the one shipped in the OpenBSD base system (FUSE 2.6
 high-level API); there is no external FUSE dependency.  `make` builds one
 translation unit per `.c` file; `make check` rebuilds with the project's strict
