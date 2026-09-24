@@ -34,6 +34,13 @@
 
 struct emuxfs_args emuxfs_cmdline;
 
+/*
+ * emuxfs_pushdir() stores a struct dirent * array in an allocation obtained
+ * from the dynamic stack, whose alignment is EMUXFS_MEM_ALIGN.
+ */
+_Static_assert(EMUXFS_MEM_ALIGN >= _Alignof(struct dirent *),
+    "the dynamic stack must align the dirent pointer arrays it stores");
+
 static int emuxfs_restore_reg(dind, dind, const char *, int, struct stat *,
     struct emuxfs_meta *);
 static int emuxfs_restore_symlink(dind, dind, const char *, struct stat *,

@@ -43,6 +43,13 @@
 #include "emuxfs.h"
 
 /*
+ * The configuration stores UUIDs as 16 raw bytes and both uuid_enc_le() and
+ * uuid_dec_le() move sizeof(uuid_t) bytes, so the sizes must agree.
+ */
+_Static_assert(sizeof(uuid_t) == EMUXFS_UUID_SIZE,
+    "uuid_t must be EMUXFS_UUID_SIZE bytes for uuid_enc_le/uuid_dec_le");
+
+/*
  * 2 decimals at most 10 digits long (the string length of the decimal
  * representation of UINT32_MAX), plus 2 dots, plus the length of "release".
  */

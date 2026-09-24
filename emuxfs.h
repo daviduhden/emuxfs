@@ -21,6 +21,7 @@
 #include <sys/syslimits.h>
 #include <sys/types.h>
 
+#include <stddef.h>
 #include <stdint.h>
 
 struct dirent;
@@ -186,6 +187,9 @@ struct emuxfs_meta {
 _Static_assert(sizeof(struct emuxfs_meta) ==
     sizeof(struct emuxfs_meta_header) + 2 * EMUXFS_CHKSZ_MAX,
     "meta.db entry buffer must not contain padding");
+_Static_assert(offsetof(struct emuxfs_meta, checksums) ==
+    sizeof(struct emuxfs_meta_header),
+    "meta.db header and checksums must be adjacent (see ON_DISK_FORMAT.md)");
 EMUXFS int emuxfs_meta_size(size_t *, dind);
 EMUXFS int emuxfs_meta_size_raw(size_t *, enum emuxfs_chk_alg_type);
 EMUXFS int emuxfs_meta_read(struct emuxfs_meta *, dind, uint64_t);

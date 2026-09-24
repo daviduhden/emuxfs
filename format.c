@@ -31,6 +31,10 @@
 #include "emuxfs.h"
 #include "sandbox.h"
 
+/* See conf.c: uuid_enc_le() moves sizeof(uuid_t) bytes. */
+_Static_assert(sizeof(uuid_t) == EMUXFS_UUID_SIZE,
+    "uuid_t must be EMUXFS_UUID_SIZE bytes for uuid_enc_le");
+
 static const char *sepdotemuxfs = "/.muxfs";
 static const char *sepemuxfsdotconf = "/muxfs.conf";
 static const char *sepstatedotdb = "/state.db";

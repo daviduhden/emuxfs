@@ -30,6 +30,13 @@
 
 #define EMUXFS_LEVEL_FACTOR (EMUXFS_BLOCK_SIZE / EMUXFS_CHKSZ_MAX)
 
+/*
+ * The tree fans in by EMUXFS_LEVEL_FACTOR entries per level; a zero factor
+ * would make emuxfs_lfile_root_level() and friends loop forever.
+ */
+_Static_assert(EMUXFS_BLOCK_SIZE >= EMUXFS_CHKSZ_MAX,
+    "lfile level factor must be at least one");
+
 EMUXFS void
 emuxfs_range_compute(struct emuxfs_range *range_inout, size_t chksz)
 {

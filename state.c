@@ -35,6 +35,14 @@ struct emuxfs_restore_item {
 	char path[];
 };
 
+/*
+ * Queue items are stored in a byte buffer returned by reallocarray(3) and
+ * their offsets are rounded up to sizeof(size_t); that rounding only keeps
+ * each item aligned if the struct's alignment is no larger than that.
+ */
+_Static_assert(_Alignof(struct emuxfs_restore_item) <= sizeof(size_t),
+    "restore queue item alignment must not exceed the offset rounding");
+
 struct emuxfs_state {
 	/*
 	 * The restore queue is a byte buffer holding a sequence of
