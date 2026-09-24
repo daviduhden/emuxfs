@@ -41,7 +41,10 @@ These are deliberately not conflated:
   attacker can forge them.  Likewise a device that is modified coherently (data
   and metadata together) is indistinguishable from a legitimate older or newer
   history; emuxfs refuses to choose in ambiguous repair situations rather than
-  pretend to authenticate.
+  pretend to authenticate.  One thing that *is* defended against is
+  redirection: the private directory and each private object are opened with
+  `O_NOFOLLOW`, so replacing `.muxfs` (or a database) with a symlink causes a
+  loud failure rather than a read or write to an attacker-chosen object.
 * **An untrusted user of the mounted filesystem**: constrained by path
   sanitisation, `*at` operations relative to directory descriptors,
   `O_NOFOLLOW`, and the empty/`.`/`..`/`.muxfs` component checks.
@@ -57,8 +60,21 @@ emuxfs runs as root.  It needs root to:
 FUSE callbacks do **not** run with root's effective identity.  The callbacks
 switch the effective uid/gid to the requesting user (`emuxfs_eids_set`) around
 each operation that touches the underlying filesystem, so the ordinary
-permission checks of the mirror filesystem are enforced for that user.  This
-is the same model as the original Multiplexed File System.
+permission checks of the mirror filesystem are enforced for that user.  The
+daemon also drops root's supplementary groups before lowering its effective
+uid (it keeps none of its own: its privileged work runs with euid 0), so a
+callback cannot pass a group check that the requesting user's own credentials
+would fail.  The requesting user's *supplementary* group list is not
+reconstructed, so a group shared through a supplementary group may be
+conservatively denied; this is deliberate (deny rather than over-grant) and
+does not require reading `/etc/group` inside the sandbox.  This is otherwise
+the same model as the original Multiplexed File System.
+
+FUSE callbacks are executed serially: the native libfuse event loop
+(`fuse_loop(3)`) is used, not `fuse_loop_mt(3)`, so no two callbacks can race
+while the process's effective credentials are lowered, and no callback can
+observe another callback's identity.  `fuse_setup(3)` is invoked with a null
+multithreaded flag, which selects the single-threaded loop.
 
 No privilege separation (privsep) was added.  A split would require passing
 open directory descriptors, paths and results between privileged and
@@ -94,7 +110,7 @@ Rationale:
 * `fattr` — `fchmodat`, `utimensat`.
 * `chown` — `fchownat` with an arbitrary owner, used only by restore and by
   the `chown` operation.
-* `id` — `seteuid`/`setegid`, used by the FUSE callbacks.
+* `id` — `seteuid`/`setegid`/`setgroups`, used by the FUSE callbacks.
 * `unix` — `syslog(3)`, which uses an `AF_UNIX` socket.
 
 `mount(2)` and `unmount(2)` are privileged and are not covered by any
@@ -122,12 +138,22 @@ last one, `unveil(NULL, NULL)` locks the policy.  The result:
   created, renamed or removed.
 * Nothing else is unveiled.  The FUSE device and the mount point are opened
   by `fuse_setup()` before the lock, so they do not need to remain visible.
-* Relative paths are made absolute before mounting (libfuse daemonizes and
-  changes the working directory).
+* The mount point and every array directory are canonicalised (with
+  `realpath(3)`) before the sandbox is configured.  A topology in which the
+  mount point and a mirror directory contain one another is refused (see
+  below): otherwise the serving process could traverse the mount it is
+  serving and deadlock, and the mounted filesystem would become part of its
+  own backing storage.
 
 `mount` unveils the device directories after `fuse_setup()` has mounted the
 filesystem, but before serving any request.  `format`, `audit`, `heal` and
 `sync` unveil before they touch the devices.
+
+`mount` refuses a self-referential topology: if the canonical mount point is
+equal to, contains, or is contained in any canonical array directory, it
+exits with an explicit diagnostic instead of mounting.  This is a
+configuration error, not an untrusted-user attack; it is rejected because the
+resulting deadlock or recursion would be silent and hard to diagnose.
 
 ## Path handling
 
@@ -138,9 +164,18 @@ filesystem, but before serving any request.  `format`, `audit`, `heal` and
 * Operations are relative to an already-open directory descriptor
   (`openat`/`fstatat`/`mkdirat`/`unlinkat`/`renameat`/`symlinkat`/
   `readlinkat`/`faccessat`), which removes most path-based TOCTOU windows.
-* `muxfs.conf`, `state.db`, `meta.db`, `assign.db` and `lfile/` are opened
-  with `O_NOFOLLOW`, so a symlink planted at one of those names cannot
-  redirect the operation.  Long-lived descriptors use `O_CLOEXEC`.
+* The private directory `.muxfs` is opened once with
+  `O_RDONLY|O_DIRECTORY|O_NOFOLLOW`, and `muxfs.conf`, `state.db`, `meta.db`,
+  `assign.db` and `lfile/` are then opened relative to that descriptor with
+  `O_NOFOLLOW`.  A symlink planted at `.muxfs` itself (for example by an
+  external tool or a mistakenly modified device) therefore cannot redirect a
+  metadata read or write: the descriptor is pinned to the directory that was
+  checked.  Long-lived descriptors use `O_CLOEXEC`.
+* Opening a file with `O_TRUNC` is turned into the normal truncate operation
+  before the file is opened, so the truncation updates `meta.db` and the
+  content checksum.  `O_TRUNC` is never passed to `openat(2)` directly, which
+  would truncate the backing file behind emuxfs's back and leave `meta.db`
+  describing the old contents.
 * Restoring a regular file refuses to follow a symlink (`O_NOFOLLOW`) and
   removes a pre-existing node of the wrong type first.
 
@@ -157,8 +192,13 @@ propagating an error to the caller.
 
 * No cryptographic integrity: a malicious writer with device access can forge
   checksums.
-* Automatic healing with three or more disagreeing copies picks the first
-  valid source rather than a quorum; see RECOVERY.md.
+* Automatic healing refuses to repair a node when two or more mounted devices
+  hold internally valid but *different* copies of it: a checksum proves a copy
+  matches its own metadata, not that it is the newest or the authoritative
+  one, so emuxfs does not pick a "first valid" source.  `sync`, where the
+  operator designates the source, is the explicit override; see RECOVERY.md.
+  A single internally valid copy is still used even if it might be stale,
+  because no metadata distinguishes "stale but coherent" from "current".
 * No encryption, no quotas, no file locking (`flock` is rejected with
   `EOPNOTSUPP`), and no hard links.
 * Timestamps are not checksummed, so timestamp corruption is not detected.

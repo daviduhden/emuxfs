@@ -114,10 +114,10 @@ emuxfs_sync_main(int argc, char *argv[])
 	if (emuxfs_dev_state_write_fd(ddev->state_fd, &ddev->state))
 		exit(-1);
 
-	if (emuxfs_existsat(&exists, ddev->root_fd, ".muxfs/rename.tmp"))
+	if (emuxfs_existsat(&exists, ddev->muxfs_fd, "rename.tmp"))
 		exit(-1);
 	if (exists) {
-		if (emuxfs_removeat(ddev->root_fd, ".muxfs/rename.tmp"))
+		if (emuxfs_removeat(ddev->muxfs_fd, "rename.tmp"))
 			exit(-1);
 	}
 

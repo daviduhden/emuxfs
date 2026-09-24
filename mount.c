@@ -47,10 +47,39 @@ emuxfs_mount_usage(void)
 }
 
 /*
- * Replace each array directory with its canonical absolute path.  The native
- * libfuse daemonizes and changes the working directory to "/", after which a
- * relative path would resolve incorrectly; the sandbox is configured only
- * after that point, so the paths must be absolute by then.
+ * Return 1 if 'child' is 'parent' itself or lies beneath it.  Both paths must
+ * be canonical absolute paths without a trailing slash (except for "/").  The
+ * comparison is component-wise so that "/a/bc" is not treated as being under
+ * "/a/b".
+ */
+static int
+emuxfs_path_within(const char *parent, const char *child)
+{
+	size_t plen;
+
+	plen = strlen(parent);
+	if (plen == 0)
+		return 0;
+	if (strncmp(parent, child, plen) != 0)
+		return 0;
+	if (child[plen] == '\0')
+		return 1; /* Equal. */
+	if (parent[plen - 1] == '/')
+		return 1; /* Parent is the root directory. */
+	return child[plen] == '/';
+}
+
+/*
+ * Replace the mount point and each array directory with its canonical
+ * absolute path, then refuse a topology in which the mount point and a mirror
+ * directory contain one another.  The native libfuse daemonizes and changes
+ * the working directory to "/", after which a relative path would resolve
+ * incorrectly, so the paths must be absolute before the sandbox is
+ * configured.  A self-referential topology (the mounted filesystem inside its
+ * own backing storage or vice versa) would make the serving process traverse
+ * the mount it is serving and deadlock, so it is rejected here.
+ *
+ * Returns 0 on success, 2 for an unsafe topology, 1 otherwise.
  */
 static int
 emuxfs_mount_absolutize(struct emuxfs_args *args)
@@ -58,6 +87,15 @@ emuxfs_mount_absolutize(struct emuxfs_args *args)
 	EMUXFS_TRACE("enter");
 	size_t i;
 	char *rp;
+
+	rp = realpath(args->mp_path, nullptr);
+	if (rp == nullptr)
+		return 1;
+	if (strlcpy(args->mp_path, rp, PATH_MAX) >= PATH_MAX) {
+		free(rp);
+		return 1;
+	}
+	free(rp);
 
 	for (i = 0; i < args->dev_count; ++i) {
 		rp = realpath(args->dev_paths[i], nullptr);
@@ -68,6 +106,12 @@ emuxfs_mount_absolutize(struct emuxfs_args *args)
 			return 1;
 		}
 		free(rp);
+	}
+
+	for (i = 0; i < args->dev_count; ++i) {
+		if (emuxfs_path_within(args->mp_path, args->dev_paths[i]) ||
+		    emuxfs_path_within(args->dev_paths[i], args->mp_path))
+			return 2;
 	}
 
 	return 0;
@@ -102,7 +146,14 @@ emuxfs_mount_main(int argc, char *argv[])
 		emuxfs_mount_usage();
 		exit(1);
 	}
-	if (emuxfs_mount_absolutize(&emuxfs_cmdline)) {
+	switch (emuxfs_mount_absolutize(&emuxfs_cmdline)) {
+	case 0:
+		break;
+	case 2:
+		fprintf(stderr, "Error: the mount point and a mirror directory "
+		    "must not contain one another.\n");
+		exit(1);
+	default:
 		fprintf(stderr,
 		    "Error: Unable to resolve array directories.\n");
 		exit(1);

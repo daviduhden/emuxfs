@@ -141,6 +141,7 @@ EMUXFS int emuxfs_dev_state_write_fd(int, struct emuxfs_dev_state *);
 struct emuxfs_dev {
 	struct emuxfs_dev_state	 state;
 	int			 root_fd,
+				 muxfs_fd,
 				 state_fd,
 				 meta_fd,
 				 assign_fd,

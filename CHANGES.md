@@ -1,5 +1,40 @@
 # Change log
 
+## Security-model audit (2026-09-24)
+
+Focused hardening of the documented security model; no new external
+dependencies and no change to the persistent format (`format_version` stays
+1).
+
+* **Root's supplementary groups leaked into impersonated operations.**  FUSE
+  callbacks switched only the effective uid/gid to the requesting user, so an
+  operation attributed to that user still carried root's supplementary groups
+  and could pass a group permission check the user's own credentials would
+  fail.  `emuxfs_eids_set` and `emuxfs_eids_wrctx_set` now call
+  `setgroups(0, nullptr)` before lowering the effective uid.  The daemon needs
+  no supplementary groups of its own (its privileged work runs with euid 0),
+  and clearing them fails closed for group access.  No privilege separation
+  was introduced: the FUSE event loop is already single-threaded
+  (`fuse_loop`, null multithreaded flag), so credentials cannot race between
+  callbacks.
+* **`O_TRUNC` could bypass metadata.**  `emuxfs_open` passed the caller's
+  `O_TRUNC` straight to `openat(2)`, which truncates the backing file without
+  updating `meta.db` and the content checksum.  An open with `O_TRUNC` now
+  runs the normal truncate operation first and the flag is cleared, so the
+  truncation is always recorded.  This removes any dependence on how the
+  kernel delivers `O_TRUNC`.
+* **The private directory is now a pinned descriptor.**  `.muxfs` is opened
+  once with `O_RDONLY|O_DIRECTORY|O_NOFOLLOW` and every private object
+  (`muxfs.conf`, `state.db`, `meta.db`, `assign.db`, `lfile`) is opened
+  relative to that descriptor.  The rename temporary is addressed the same
+  way (`renameat` against the private directory descriptor instead of the
+  literal path `.muxfs/rename.tmp`).  A symlink planted at `.muxfs` can no
+  longer redirect a metadata read, write or rename.
+* **Self-referential mount topology is refused.**  `mount` canonicalises the
+  mount point and every array directory and exits with an explicit diagnostic
+  if the mount point and a mirror directory contain one another; otherwise the
+  serving process could traverse the mount it is serving and deadlock.
+
 ## C23 migration (2026-09-24)
 
 The required standard is now **C23** (`-std=c23`); the OpenBSD 7.9 base clang

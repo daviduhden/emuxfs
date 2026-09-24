@@ -31,7 +31,8 @@
  *   cpath   mkdirat, unlinkat, renameat, symlinkat
  *   fattr   fchmodat, utimensat
  *   chown   fchownat with an arbitrary uid/gid (used only when restoring)
- *   id      seteuid/setegid (the FUSE callbacks impersonate the caller)
+ *   id      seteuid/setegid/setgroups (the FUSE callbacks impersonate the
+ *           caller and drop root's supplementary groups)
  *   unix    syslog(3) AF_UNIX socket operations
  *
  * mount(2)/unmount(2) are performed by libfuse before any pledge is taken.

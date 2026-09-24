@@ -28,12 +28,19 @@
 
 #include "emuxfs.h"
 
-#define EMUXFS_PATH_DIR	EMUXFS_PRIVATE_DIR
-#define EMUXFS_PATH_CONF		EMUXFS_PATH_DIR"/"EMUXFS_CONF_FILE
-#define EMUXFS_PATH_STATE_DB	EMUXFS_PATH_DIR"/state.db"
-#define EMUXFS_PATH_META_DB	EMUXFS_PATH_DIR"/meta.db"
-#define EMUXFS_PATH_ASSIGN_DB	EMUXFS_PATH_DIR"/assign.db"
-#define EMUXFS_PATH_LFILE	EMUXFS_PATH_DIR"/lfile"
+/*
+ * The private directory is opened once with O_DIRECTORY|O_NOFOLLOW and every
+ * private object is addressed relative to that descriptor, so only leaf
+ * names are needed here.  This keeps a symlink planted at ".muxfs" (for
+ * example by an external tool or a mistakenly modified device) from
+ * redirecting the metadata reads and writes elsewhere.
+ */
+#define EMUXFS_PATH_DIR		EMUXFS_PRIVATE_DIR
+#define EMUXFS_PATH_CONF	EMUXFS_CONF_FILE
+#define EMUXFS_PATH_STATE_DB	"state.db"
+#define EMUXFS_PATH_META_DB	"meta.db"
+#define EMUXFS_PATH_ASSIGN_DB	"assign.db"
+#define EMUXFS_PATH_LFILE	"lfile"
 
 /*
  * We store the roots here instead of struct emuxfs_dev so files that include
@@ -208,6 +215,7 @@ emuxfs_dev_init(dind dev_index)
 	dev = &emuxfs_dev_array[dev_index];
 	memset(dev, 0, sizeof(*dev));
 	dev->root_fd =
+	    dev->muxfs_fd =
 	    dev->state_fd =
 	    dev->meta_fd =
 	    dev->assign_fd =
@@ -267,12 +275,14 @@ EMUXFS int
 emuxfs_dev_open(dind dev_index, int force, int readonly)
 {
 	EMUXFS_TRACE("enter");
-	int rc, root_fd, conf_fd, state_fd, meta_fd, assign_fd, lfile_fd;
+	int rc, root_fd, muxfs_fd, conf_fd, state_fd, meta_fd, assign_fd;
+	int lfile_fd;
 	int file_flags;
 	struct emuxfs_dev *dev, *first;
 	dind i, dev_count;
 
 	root_fd =
+	    muxfs_fd =
 	    conf_fd =
 	    state_fd =
 	    meta_fd =
@@ -289,7 +299,11 @@ emuxfs_dev_open(dind dev_index, int force, int readonly)
 	    -1)
 		goto fail;
 
-	if ((conf_fd = openat(root_fd, EMUXFS_PATH_CONF,
+	if ((muxfs_fd = openat(root_fd, EMUXFS_PATH_DIR,
+	    O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC)) == -1)
+		goto fail;
+
+	if ((conf_fd = openat(muxfs_fd, EMUXFS_PATH_CONF,
 	    O_RDONLY|O_NOFOLLOW|O_CLOEXEC)) == -1)
 		goto fail;
 	rc = emuxfs_conf_parse(&dev->conf, conf_fd);
@@ -322,7 +336,7 @@ emuxfs_dev_open(dind dev_index, int force, int readonly)
 	    (O_RDONLY|O_NOFOLLOW|O_CLOEXEC) :
 	    (O_RDWR|O_NOFOLLOW|O_CLOEXEC);
 
-	if ((state_fd = openat(root_fd, EMUXFS_PATH_STATE_DB, file_flags)) ==
+	if ((state_fd = openat(muxfs_fd, EMUXFS_PATH_STATE_DB, file_flags)) ==
 	    -1)
 		goto fail;
 	rc = emuxfs_dev_state_read(&dev->state, state_fd);
@@ -349,10 +363,10 @@ emuxfs_dev_open(dind dev_index, int force, int readonly)
 	if (!force && !emuxfs_dev_state_is_clean(&dev->state))
 		goto fail;
 
-	if ((meta_fd = openat(root_fd, EMUXFS_PATH_META_DB, file_flags)) == -1)
+	if ((meta_fd = openat(muxfs_fd, EMUXFS_PATH_META_DB, file_flags)) == -1)
 		goto fail;
 
-	if ((assign_fd = openat(root_fd, EMUXFS_PATH_ASSIGN_DB, file_flags)) ==
+	if ((assign_fd = openat(muxfs_fd, EMUXFS_PATH_ASSIGN_DB, file_flags)) ==
 	    -1)
 		goto fail;
 
@@ -362,14 +376,21 @@ emuxfs_dev_open(dind dev_index, int force, int readonly)
 	 * transient failure (for example EMFILE) would refuse all subsequent
 	 * mounts until an explicit recovery.
 	 */
-	if ((lfile_fd = openat(root_fd, EMUXFS_PATH_LFILE,
+	if ((lfile_fd = openat(muxfs_fd, EMUXFS_PATH_LFILE,
 	    O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC)) == -1)
 		goto fail;
 
 	if (!readonly && emuxfs_dev_state_mount(&dev->state, state_fd))
 		goto fail;
 
+	/*
+	 * Keep the private directory descriptor open for the lifetime of the
+	 * mount: internal operations that need a scratch node (the rename
+	 * temporary) address it relative to the same checked directory rather
+	 * than re-resolving ".muxfs".
+	 */
 	dev->root_fd = root_fd;
+	dev->muxfs_fd = muxfs_fd;
 	dev->state_fd = state_fd;
 	dev->meta_fd = meta_fd;
 	dev->assign_fd = assign_fd;
@@ -390,6 +411,8 @@ fail:
 		close(state_fd);
 	if (conf_fd != -1)
 		close(conf_fd);
+	if (muxfs_fd != -1)
+		close(muxfs_fd);
 	if (root_fd != -1)
 		close(root_fd);
 	return 1;
@@ -443,6 +466,11 @@ emuxfs_dev_unmount(size_t index)
 		if (close(dev->state_fd))
 			exit(-1);
 		dev->state_fd = -1;
+	}
+	if (dev->muxfs_fd != -1) {
+		if (close(dev->muxfs_fd))
+			exit(-1);
+		dev->muxfs_fd = -1;
 	}
 	if (dev->root_fd != -1) {
 		if (close(dev->root_fd))

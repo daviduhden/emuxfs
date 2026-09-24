@@ -35,6 +35,7 @@
 #include "ops.h"
 
 static void emuxfs_wrbuf_flush(void);
+static int emuxfs_truncate(const char *, off_t);
 
 static void
 emuxfs_eids_set(void)
@@ -43,6 +44,15 @@ emuxfs_eids_set(void)
 	struct fuse_context *fc;
 
 	fc = fuse_get_context();
+	/*
+	 * Drop the supplementary groups before dropping euid.  Otherwise an
+	 * operation attributed to the requesting user would still carry
+	 * root's groups and could pass a group check that the user's own
+	 * credentials would fail.  The daemon needs no supplementary groups
+	 * of its own: its privileged work runs with euid 0.
+	 */
+	if (setgroups(0, nullptr))
+		exit(-1);
 	if (setegid(fc->gid))
 		exit(-1);
 	if (seteuid(fc->uid))
@@ -53,6 +63,8 @@ static void
 emuxfs_eids_wrctx_set(const struct emuxfs_wrctx *wc)
 {
 	EMUXFS_TRACE("enter");
+	if (setgroups(0, nullptr))
+		exit(-1);
 	if (setegid(wc->group))
 		exit(-1);
 	if (seteuid(wc->user))
@@ -209,8 +221,21 @@ emuxfs_open(const char *path, struct fuse_file_info *ffi)
 	 * O_CREAT through would create a node that emuxfs does not track (no
 	 * metadata) and would also be undefined behaviour, because openat(2)
 	 * then requires a mode argument that FUSE does not supply.
+	 *
+	 * Truncation is performed by the update path so that metadata stays
+	 * consistent; passing O_TRUNC to openat(2) would truncate the backing
+	 * file behind emuxfs's back and leave meta.db describing the old
+	 * contents.
 	 */
 	oflags = ffi->flags & ~(O_CREAT | O_EXCL);
+	if (oflags & O_TRUNC) {
+		int trc;
+
+		trc = emuxfs_truncate(path, 0);
+		if (trc)
+			return trc;
+		oflags &= ~O_TRUNC;
+	}
 
 	if ((dev_count = emuxfs_dev_count()) == 0)
 		return -EIO;
@@ -2160,7 +2185,7 @@ emuxfs_rename(const char *from, const char *to)
 		 * without colliding with 'to', its ancestors, and their
 		 * meta entries.
 		 */
-		if (renameat(fd, to, fd, ".muxfs/rename.tmp"))
+		if (renameat(fd, to, dev->muxfs_fd, "rename.tmp"))
 			goto fail;
 		if (fstatat(fd, from, &postwr_st, AT_SYMLINK_NOFOLLOW) != -1)
 			goto fail;
@@ -2176,7 +2201,7 @@ emuxfs_rename(const char *from, const char *to)
 		 * The third rename moves the file back to its destination; at
 		 * this point the ancestors of 'to' can be recomputed.
 		 */
-		if (renameat(fd, ".muxfs/rename.tmp", fd, to))
+		if (renameat(dev->muxfs_fd, "rename.tmp", fd, to))
 			goto fail;
 		if (emuxfs_fsync_parent(fd, from))
 			goto fail;
