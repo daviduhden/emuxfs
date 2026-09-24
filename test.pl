@@ -1,5 +1,7 @@
 #!/usr/bin/env perl
 #
+# Copyright (c) 2026 David Uhden Collado <daviduhden@gmail.com>
+#
 # Legacy end-to-end test suite for emuxfs, ported from the original shell
 # script to Perl.
 #

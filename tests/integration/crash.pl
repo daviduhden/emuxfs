@@ -1,5 +1,7 @@
 #!/usr/bin/env perl
 #
+# Copyright (c) 2026 David Uhden Collado <daviduhden@gmail.com>
+#
 # Crash-consistency / fault-injection tests for emuxfs.
 #
 # Requires two binaries:

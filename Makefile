@@ -1,5 +1,7 @@
 # Makefile for emuxfs (The Enhanced Multiplexed File System).
 #
+# Copyright (c) 2026 David Uhden Collado <daviduhden@gmail.com>
+#
 # Toolchain policy: clang(1) only, C23 only.  The warning policy matches the
 # other projects (openbar, openutils, wip-openbsd-src):
 #

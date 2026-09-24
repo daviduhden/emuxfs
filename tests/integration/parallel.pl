@@ -1,5 +1,7 @@
 #!/usr/bin/env perl
 #
+# Copyright (c) 2026 David Uhden Collado <daviduhden@gmail.com>
+#
 # Parallel-load stress test for emuxfs.
 #
 # Formats and mounts a two-device array, then runs 32 concurrent client

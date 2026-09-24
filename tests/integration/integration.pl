@@ -1,5 +1,7 @@
 #!/usr/bin/env perl
 #
+# Copyright (c) 2026 David Uhden Collado <daviduhden@gmail.com>
+#
 # Integration tests for emuxfs.
 #
 # These tests mount a real FUSE filesystem, so they require root and a working
