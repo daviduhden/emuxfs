@@ -965,6 +965,48 @@ test_recovery_ambiguity(void)
 	emuxfs_state_restore_queue_final();
 }
 
+/*
+ * The dynamic stack contract (ds.h) is that emuxfs_dsgrow() *adds* the
+ * requested number of bytes to an allocation; ds_malloc.c used to set the
+ * size with realloc(3) instead, which this exercises past the first
+ * allocation so that both implementations must agree.
+ */
+static void
+test_dynamic_stack(void)
+{
+	uint8_t *p, *q, *r;
+	size_t i, j, oldsz;
+
+	p = q = r = NULL;
+	if (emuxfs_dspush((void **)&p, 64))
+		exit(-1);
+	for (i = 0; i < 64; ++i)
+		p[i] = (uint8_t)i;
+
+	for (i = 1; i <= 16; ++i) {
+		oldsz = 64 * i;
+		if (emuxfs_dsgrow((void **)&p, 64))
+			exit(-1);
+		for (j = 0; j < oldsz; ++j)
+			CHECK(p[j] == (uint8_t)j);
+		for (j = oldsz; j < oldsz + 64; ++j)
+			p[j] = (uint8_t)j;
+	}
+	for (i = 0; i < 64 * 17; ++i)
+		CHECK(p[i] == (uint8_t)i);
+	if (emuxfs_dspop(p))
+		exit(-1);
+
+	/* Two live allocations must pop in reverse order. */
+	if (emuxfs_dspush((void **)&q, 32) ||
+	    emuxfs_dspush((void **)&r, 32))
+		exit(-1);
+	if (emuxfs_dspop(r))
+		exit(-1);
+	if (emuxfs_dspop(q))
+		exit(-1);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -997,6 +1039,7 @@ main(int argc, char *argv[])
 	RUN(test_assign_crosscheck);
 	RUN(test_hardlink_predicate);
 	RUN(test_recovery_ambiguity);
+	RUN(test_dynamic_stack);
 #undef RUN
 
 	sandbox_destroy();

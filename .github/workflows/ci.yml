@@ -109,6 +109,11 @@ jobs:
             echo "== Linkage =="
             ldd ./emuxfs
 
+            echo "== Fallback allocator build and unit tests =="
+            make clean
+            make EMUXFS_DS_MALLOC=1 unittest
+            ./tests/unit/test_core
+
             echo "== Clean rebuild =="
             make clean
             make
@@ -208,6 +213,11 @@ jobs:
 
             echo "== Linkage =="
             ldd ./emuxfs
+
+            echo "== Fallback allocator build and unit tests =="
+            make clean
+            make EMUXFS_DS_MALLOC=1 unittest
+            ./tests/unit/test_core
 
             echo "== Clean rebuild =="
             make clean

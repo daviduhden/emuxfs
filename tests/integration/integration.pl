@@ -325,6 +325,44 @@ foreach my $sz ( 0, 1, 4095, 4096, 4097, 8191, 8192, 8193, 65537 ) {
     must_run( "remove size $sz", "rm", "-f", "$mp/sz" );
 }
 
+print "== in-place write at a non-block-aligned offset\n";
+{
+    my $in  = "$work/unaligned.in";
+    my $exp = "$work/unaligned.exp";
+
+    # Deterministic 10000-byte content (three blocks, the last partial).
+    open( my $ifh, ">", $in ) or fail("create unaligned.in: $!");
+    for ( my $i = 0 ; $i < 10000 ; $i += 100 ) {
+        printf $ifh "%0100d", $i;
+    }
+    close($ifh);
+
+    must_run( "copy unaligned in",  "cp", $in, "$mp/unaligned" );
+    must_run( "copy unaligned exp", "cp", $in, $exp );
+
+    # Overwrite [4000, 4100) in place, both through the mount and in the
+    # local expected copy.  sysseek/syswrite use exactly that offset, which
+    # exercises the write path for a block it starts inside.
+    my $patch = "Z" x 100;
+    foreach my $path ( "$mp/unaligned", $exp ) {
+        open( my $fh, "+<", $path ) or do {
+            fail("open $path: $!");
+            next;
+        };
+        sysseek( $fh, 4000, 0 ) or fail("seek $path: $!");
+        syswrite( $fh, $patch ) == 100 or fail("write $path: $!");
+        close($fh);
+    }
+
+    run("sync");
+    fail("unaligned write lost through the mount")
+      if compare( "$mp/unaligned", $exp ) != 0;
+    fail("unaligned write not mirrored to a")
+      if compare( "$dev_a/unaligned", $exp ) != 0;
+    fail("unaligned write not mirrored to b")
+      if compare( "$dev_b/unaligned", $exp ) != 0;
+}
+
 print "== deep tree\n";
 my $deep = $mp;
 for ( my $i = 0 ; $i < 40 ; $i++ ) {
