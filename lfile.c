@@ -426,8 +426,16 @@ emuxfs_lfile_ancestors_recompute(uint8_t *root_sum, int lfile_fd,
 		for (i = ibegin; i < iend; i += EMUXFS_LEVEL_FACTOR) {
 			emuxfs_chk_init(&chk, alg);
 			j = i + EMUXFS_LEVEL_FACTOR;
-			if (j > iend)
-				j = iend;
+			/*
+			 * A tree entry covers a full LEVEL_FACTOR range (the
+			 * last one may be short), so hash up to the level's
+			 * entry count rather than up to the modified range:
+			 * the unmodified entries in the same tree entry are
+			 * part of it.  Using iend here made the ancestor of a
+			 * partial range omit the leaves after it.
+			 */
+			if (j > ln)
+				j = ln;
 			emuxfs_chk_update(&chk, &lfile[chksz * (li + i)],
 			    (j - i) * chksz);
 			pi = i / EMUXFS_LEVEL_FACTOR;
@@ -561,8 +569,16 @@ emuxfs_lfile_readback(uint8_t *root_sum, dind dev_index, const char *path,
 		for (i = ibegin; i < iend; i += EMUXFS_LEVEL_FACTOR) {
 			emuxfs_chk_init(&chk, alg);
 			j = i + EMUXFS_LEVEL_FACTOR;
-			if (j > iend)
-				j = iend;
+			/*
+			 * A tree entry covers a full LEVEL_FACTOR range (the
+			 * last one may be short), so hash up to the level's
+			 * entry count rather than up to the modified range:
+			 * the unmodified entries in the same tree entry are
+			 * part of it.  Using iend here made the ancestor of a
+			 * partial range omit the leaves after it.
+			 */
+			if (j > ln)
+				j = ln;
 			emuxfs_chk_update(&chk, &lfile[chksz * (li + i)],
 			    (j - i) * chksz);
 			pi = i / EMUXFS_LEVEL_FACTOR;
