@@ -277,6 +277,12 @@ sub worker {
 
             die "unlink $name2: $!\n" unless unlink($name2);
             die "rmdir $dir: $!\n"    unless rmdir($dir);
+
+            # Best-effort progress for the parent (sandbox, not the mount).
+            if ( open( my $pf, ">", "$sandbox/progress/$tag" ) ) {
+                print $pf "$i\n";
+                close($pf);
+            }
         }
 
         open( my $fh, ">", "$mp/final_$tag" )
@@ -285,6 +291,11 @@ sub worker {
           or die "write final_$tag: $!\n";
         close($fh)
           or die "close final_$tag: $!\n";
+
+        if ( open( my $pf, ">", "$sandbox/progress/$tag" ) ) {
+            print $pf "done\n";
+            close($pf);
+        }
 
         1;
     } or $err = ( $@ // "unknown failure\n" );
@@ -299,6 +310,30 @@ sub worker {
     }
 
     return 0;
+}
+
+# Read the per-worker progress markers written by worker().  The daemon is
+# single-threaded, so all workers advance in lockstep and the number of
+# *finished workers* stays at zero until the very end; counting completed
+# iterations gives useful progress instead.
+sub progress_line {
+    my $done  = 0;
+    my $iters = 0;
+    for my $id ( 0 .. $WORKERS - 1 ) {
+        my $tag = sprintf( "w%02d", $id );
+        my $v   = slurp("$sandbox/progress/$tag");
+        next unless defined $v;
+        chomp $v;
+        if ( $v eq "done" ) {
+            ++$done;
+            $iters += $ITERS;
+        }
+        elsif ( $v =~ /\A[0-9]+\z/ ) {
+            $iters += $v;
+        }
+    }
+    my $total = $WORKERS * $ITERS;
+    return "  $done/$WORKERS workers, $iters/$total iterations";
 }
 
 # A comparable description of a device tree, excluding the .muxfs directory.
@@ -346,6 +381,7 @@ sub manifest {
 # ---------------------------------------------------------------------------
 
 make_path( $dev_a, $dev_b, $mp );
+make_path("$sandbox/progress");
 
 print "== format\n";
 must_run( "format", $EMUXFS, "format", "-a", "sha1", $dev_a, $dev_b )
@@ -391,13 +427,13 @@ while (%alive) {
         %alive = ();
         last;
     }
-    if ( time() >= $last + 5 ) {
+    if ( time() >= $last + 2 ) {
         $last = time();
-        my $done = scalar(@pids) - scalar(keys %alive);
-        print "  $done/" . scalar(@pids) . " workers finished\n";
+        print progress_line(), "\n";
     }
     select( undef, undef, undef, 0.05 );
 }
+print progress_line(), "\n";
 
 my $bad = 0;
 for my $st ( values %status ) {
