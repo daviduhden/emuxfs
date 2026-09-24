@@ -8,7 +8,15 @@
   the offset unchanged and placed the new bytes at the wrong position (and,
   when the write ended inside the same block, the length computation
   underflowed).  The copy now stops at the write offset, which is inert for
-  block-aligned writes.
+  block-aligned writes.  Found by a new integration test that writes in place
+  at offset 4000 of a 10000-byte file.
+* **Partial lfile tree entries.**  The ancestor recomputation and the
+  ancestor verification in the large-file checksum tree hashed
+  `min(i + LEVEL_FACTOR, iend)` leaves, where `iend` is the end of the
+  modified block range, so a partial range omitted the unmodified leaves that
+  share a tree entry: the content was correct but the root checksum was not,
+  and `audit`/`heal` then reported the file as corrupt (found by the same
+  test).  Full-range recomputations are unaffected.
 * **Bounds on fixed-size path buffers.**  `emuxfs_removeat`,
   `emuxfs_parent_readback` and `emuxfs_state_restore_push_back` now reject
   paths that do not fit in the `PATH_MAX` buffer they are copied into
