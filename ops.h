@@ -17,7 +17,8 @@
  */
 
 /*
- * This file belongs to emuxfs, The Enhanced Multiplexed File System (see NOTICE.md).
+ * This file belongs to emuxfs, The Enhanced Multiplexed File System (see
+ * NOTICE.md).
  *
  * emuxfs uses the FUSE implementation shipped with OpenBSD (libfuse in the
  * base system), which provides the FUSE 2.6 high-level API.  This header is

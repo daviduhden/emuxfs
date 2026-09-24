@@ -17,7 +17,8 @@
  */
 
 /*
- * This file belongs to emuxfs, The Enhanced Multiplexed File System (see NOTICE.md).
+ * This file belongs to emuxfs, The Enhanced Multiplexed File System (see
+ * NOTICE.md).
  *
  * emuxfs uses the FUSE implementation shipped with OpenBSD, through its
  * FUSE 2.6 high-level API.  fuse_setup(3) mounts and daemonizes;
@@ -86,7 +87,7 @@ emuxfs_mount_absolutize(struct emuxfs_args *args)
 {
 	EMUXFS_TRACE("enter");
 	size_t i;
-	char *rp;
+	char  *rp;
 
 	rp = realpath(args->mp_path, nullptr);
 	if (rp == nullptr)
@@ -137,9 +138,9 @@ EMUXFS int
 emuxfs_mount_main(int argc, char *argv[])
 {
 	EMUXFS_TRACE("enter");
-	int n, rc;
-	char *fuse_argv[8];
-	char *mp;
+	int	     n, rc;
+	char	    *fuse_argv[8];
+	char	    *mp;
 	struct fuse *fuse;
 
 	if (emuxfs_parse_args(argc, argv, 0)) {
@@ -150,12 +151,13 @@ emuxfs_mount_main(int argc, char *argv[])
 	case 0:
 		break;
 	case 2:
-		fprintf(stderr, "Error: the mount point and a mirror directory "
+		fprintf(stderr,
+		    "Error: the mount point and a mirror directory "
 		    "must not contain one another.\n");
 		exit(1);
 	default:
-		fprintf(stderr,
-		    "Error: Unable to resolve array directories.\n");
+		fprintf(
+		    stderr, "Error: Unable to resolve array directories.\n");
 		exit(1);
 	}
 
@@ -199,7 +201,8 @@ emuxfs_mount_main(int argc, char *argv[])
 	 */
 	if (emuxfs_sandbox_unveil_mirrors(&emuxfs_cmdline)) {
 		EMUXFS_TRACE("unveil mirrors failed");
-		fprintf(stderr, "Error: Unable to restrict filesystem "
+		fprintf(stderr,
+		    "Error: Unable to restrict filesystem "
 		    "visibility.\n");
 		emuxfs_mount_teardown(fuse, mp);
 		exit(1);

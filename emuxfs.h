@@ -19,8 +19,8 @@
 #ifndef _EMUXFS_H_
 #define _EMUXFS_H_
 
-#include <sys/syslimits.h>
 #include <sys/types.h>
+#include <sys/syslimits.h>
 
 #include <stddef.h>
 #include <stdint.h>
@@ -37,10 +37,10 @@ struct stat;
 
 #define EMUXFS_DEV_COUNT_MAX 64
 #define EMUXFS_CHKSZ_MAX 20
-#define EMUXFS_BLOCK_SIZE (4*1024)
+#define EMUXFS_BLOCK_SIZE (4 * 1024)
 #define EMUXFS_MEM_ALIGN (sizeof(uint64_t))
 #define EMUXFS_UUID_SIZE 16
-#define EMUXFS_WRBUF_SIZE (1024*1024)
+#define EMUXFS_WRBUF_SIZE (1024 * 1024)
 
 /*
  * The private on-disk directory and its configuration file keep their
@@ -71,9 +71,9 @@ struct stat;
  * Return values of emuxfs_conf_parse().  Callers use these to distinguish a
  * malformed configuration from a well-formed but unsupported format.
  */
-#define EMUXFS_CONF_OK		 0
-#define EMUXFS_CONF_EPARSE	 1
-#define EMUXFS_CONF_EBADVERSION	 2
+#define EMUXFS_CONF_OK 0
+#define EMUXFS_CONF_EPARSE 1
+#define EMUXFS_CONF_EBADVERSION 2
 
 #define EMUXFS_DT_REG 1u
 #define EMUXFS_DT_DIR 2u
@@ -81,42 +81,32 @@ struct stat;
 
 /* chk.c */
 struct emuxfs_chk;
-enum emuxfs_chk_alg_type {
-	CAT_CRC32,
-	CAT_MD5,
-	CAT_SHA1,
-	CAT_NONE
-};
+enum emuxfs_chk_alg_type { CAT_CRC32, CAT_MD5, CAT_SHA1, CAT_NONE };
 EMUXFS size_t emuxfs_chk_size(enum emuxfs_chk_alg_type);
-EMUXFS void emuxfs_chk_init(struct emuxfs_chk *, enum emuxfs_chk_alg_type);
-EMUXFS void emuxfs_chk_update(struct emuxfs_chk *, const uint8_t *, size_t);
-EMUXFS void emuxfs_chk_final(uint8_t *, struct emuxfs_chk *);
-EMUXFS int emuxfs_chk_str_to_type(enum emuxfs_chk_alg_type *, const char *,
-    size_t);
+EMUXFS void   emuxfs_chk_init(struct emuxfs_chk *, enum emuxfs_chk_alg_type);
+EMUXFS void   emuxfs_chk_update(struct emuxfs_chk *, const uint8_t *, size_t);
+EMUXFS void   emuxfs_chk_final(uint8_t *, struct emuxfs_chk *);
+EMUXFS int    emuxfs_chk_str_to_type(
+    enum emuxfs_chk_alg_type *, const char *, size_t);
 EMUXFS const char *emuxfs_chk_type_to_str(enum emuxfs_chk_alg_type);
 
 /* conf.c */
-enum emuxfs_version_flavor {
-	VF_CURRENT,
-	VF_RELEASE,
-	VF_STABLE
-};
+enum emuxfs_version_flavor { VF_CURRENT, VF_RELEASE, VF_STABLE };
 struct emuxfs_version {
-	uint32_t			number,
-					revision;
-	enum emuxfs_version_flavor	flavor;
+	uint32_t		   number, revision;
+	enum emuxfs_version_flavor flavor;
 };
 struct emuxfs_dev_conf {
-	struct emuxfs_version		version;
-	uint32_t			format_version;
-	enum emuxfs_chk_alg_type	chk_alg_type;
+	struct emuxfs_version	 version;
+	uint32_t		 format_version;
+	enum emuxfs_chk_alg_type chk_alg_type;
 
 	/* UUIDs are encoded as binary, little-endian. */
-	uint8_t				array_uuid[EMUXFS_UUID_SIZE];
-	uint8_t				dev_uuid[EMUXFS_UUID_SIZE];
+	uint8_t array_uuid[EMUXFS_UUID_SIZE];
+	uint8_t dev_uuid[EMUXFS_UUID_SIZE];
 
 	/* The epoch time at which the sequence number was last at value 0. */
-	time_t				seq_zero_time;
+	time_t seq_zero_time;
 };
 /* Returns one of EMUXFS_CONF_*. */
 EMUXFS int emuxfs_conf_parse(struct emuxfs_dev_conf *, int);
@@ -130,50 +120,41 @@ EMUXFS int emuxfs_conf_write(struct emuxfs_dev_conf *, int);
  * filesystem.
  */
 struct emuxfs_dev_state {
-	uint64_t	seq; /* Sequence number. */
-	uint64_t	mounted;
-	uint64_t	working;
-	uint64_t	restoring;
-	uint64_t	degraded;
+	uint64_t seq; /* Sequence number. */
+	uint64_t mounted;
+	uint64_t working;
+	uint64_t restoring;
+	uint64_t degraded;
 };
 EMUXFS int emuxfs_dev_state_write_fd(int, struct emuxfs_dev_state *);
 
 struct emuxfs_dev {
-	struct emuxfs_dev_state	 state;
-	int			 root_fd,
-				 muxfs_fd,
-				 state_fd,
-				 meta_fd,
-				 assign_fd,
-				 lfile_fd;
-	const char		*root_path;
-	struct emuxfs_dev_conf	 conf;
-	int			 attached_now,
-				 mounted_now,
-				 readonly_now;
+	struct emuxfs_dev_state state;
+	int	    root_fd, muxfs_fd, state_fd, meta_fd, assign_fd, lfile_fd;
+	const char *root_path;
+	struct emuxfs_dev_conf conf;
+	int		       attached_now, mounted_now, readonly_now;
 };
 
 typedef size_t dind;
-EMUXFS void emuxfs_dev_module_init(void);
-EMUXFS int emuxfs_dev_append(dind *dev_index_out, const char *);
-EMUXFS int emuxfs_dev_open(dind, int, int);
-EMUXFS int emuxfs_dev_mount(dind, int);
-EMUXFS int emuxfs_dev_state_is_valid(const struct emuxfs_dev_state *);
-EMUXFS int emuxfs_dev_unmount(dind);
-EMUXFS int emuxfs_dev_is_mounted(dind);
-EMUXFS dind emuxfs_dev_count(void);
+EMUXFS void    emuxfs_dev_module_init(void);
+EMUXFS int     emuxfs_dev_append(dind *dev_index_out, const char *);
+EMUXFS int     emuxfs_dev_open(dind, int, int);
+EMUXFS int     emuxfs_dev_mount(dind, int);
+EMUXFS int     emuxfs_dev_state_is_valid(const struct emuxfs_dev_state *);
+EMUXFS int     emuxfs_dev_unmount(dind);
+EMUXFS int     emuxfs_dev_is_mounted(dind);
+EMUXFS dind    emuxfs_dev_count(void);
 [[nodiscard]] EMUXFS int emuxfs_dev_get(struct emuxfs_dev **, dind, int);
-EMUXFS int emuxfs_dev_seq_check(void);
+EMUXFS int		 emuxfs_dev_seq_check(void);
 
-enum emuxfs_meta_flag {
-	MF_ASSIGNED = 0x1
-};
+enum emuxfs_meta_flag { MF_ASSIGNED = 0x1 };
 struct emuxfs_meta_header {
-	uint64_t	flags;
-	uint64_t	eno;
+	uint64_t flags;
+	uint64_t eno;
 };
 struct emuxfs_meta {
-	struct emuxfs_meta_header	header;
+	struct emuxfs_meta_header header;
 	/*
 	 * When stack-allocated this buffer guarantees enough space for the
 	 * sums.  If the content of the metadata file is loaded and cast via
@@ -184,27 +165,25 @@ struct emuxfs_meta {
 	 * struct, and emuxfs_chk_size() to compute the offset of the content
 	 * checksum.
 	 */
-	uint8_t				checksums[2 * EMUXFS_CHKSZ_MAX];
+	uint8_t checksums[2 * EMUXFS_CHKSZ_MAX];
 };
 static_assert(sizeof(struct emuxfs_meta) ==
-    sizeof(struct emuxfs_meta_header) + 2 * EMUXFS_CHKSZ_MAX,
+	sizeof(struct emuxfs_meta_header) + 2 * EMUXFS_CHKSZ_MAX,
     "meta.db entry buffer must not contain padding");
 static_assert(offsetof(struct emuxfs_meta, checksums) ==
-    sizeof(struct emuxfs_meta_header),
+	sizeof(struct emuxfs_meta_header),
     "meta.db header and checksums must be adjacent (see ON_DISK_FORMAT.md)");
 EMUXFS int emuxfs_meta_size(size_t *, dind);
 EMUXFS int emuxfs_meta_size_raw(size_t *, enum emuxfs_chk_alg_type);
 [[nodiscard]] EMUXFS int emuxfs_meta_read(struct emuxfs_meta *, dind, uint64_t);
 EMUXFS int emuxfs_meta_write(const struct emuxfs_meta *, dind, uint64_t);
-EMUXFS int emuxfs_meta_write_fd(int, const struct emuxfs_meta *, uint64_t,
-    size_t);
+EMUXFS int emuxfs_meta_write_fd(
+    int, const struct emuxfs_meta *, uint64_t, size_t);
 
-enum emuxfs_assign_flag {
-	AF_ASSIGNED = 0x1
-};
+enum emuxfs_assign_flag { AF_ASSIGNED = 0x1 };
 struct emuxfs_assign {
-	uint64_t	flags;
-	uint64_t	ino;
+	uint64_t flags;
+	uint64_t ino;
 };
 
 /*
@@ -222,9 +201,9 @@ static_assert(sizeof(struct emuxfs_assign) == 2 * sizeof(uint64_t),
 static_assert(EMUXFS_CHKSZ_MAX == 20,
     "the reference checksum size is SHA-1 and drives lfile geometry");
 
-EMUXFS int emuxfs_assign_peek_next_eno(uint64_t *, dind);
-[[nodiscard]] EMUXFS int emuxfs_assign_read(struct emuxfs_assign *, dind,
-    uint64_t);
+EMUXFS int		 emuxfs_assign_peek_next_eno(uint64_t *, dind);
+[[nodiscard]] EMUXFS int emuxfs_assign_read(
+    struct emuxfs_assign *, dind, uint64_t);
 EMUXFS int emuxfs_assign_write(const struct emuxfs_assign *, dind, uint64_t);
 EMUXFS int emuxfs_assign_validate(dind, uint64_t, uint64_t);
 EMUXFS int emuxfs_meta_assign_check(dind, size_t *);
@@ -242,28 +221,27 @@ EMUXFS int emuxfs_degraded_clear(dind);
 /* desc.c */
 typedef uint64_t emuxfs_desc_type;
 struct emuxfs_desc {
-	uint64_t		eno;
-	emuxfs_desc_type	type;
-	uint64_t		owner;
-	uint64_t		group;
-	uint64_t		mode;
-	uint64_t		size;
-	uint8_t			content_checksum[EMUXFS_CHKSZ_MAX];
+	uint64_t	 eno;
+	emuxfs_desc_type type;
+	uint64_t	 owner;
+	uint64_t	 group;
+	uint64_t	 mode;
+	uint64_t	 size;
+	uint8_t		 content_checksum[EMUXFS_CHKSZ_MAX];
 };
 EMUXFS int emuxfs_desc_type_from_mode(emuxfs_desc_type *, mode_t);
-EMUXFS int emuxfs_desc_init_from_stat(struct emuxfs_desc *, struct stat *,
-    uint64_t);
-EMUXFS void emuxfs_desc_chk_provided_content(struct emuxfs_desc *,
-    const uint8_t *,
-    size_t, enum emuxfs_chk_alg_type);
-EMUXFS int emuxfs_desc_chk_reg_content(struct emuxfs_desc *, dind,
-    const char *);
-EMUXFS int emuxfs_desc_chk_symlink_content(struct emuxfs_desc *, dind,
-    const char *);
-EMUXFS int emuxfs_desc_chk_node_content(struct emuxfs_desc *, dind,
-    const char *);
-EMUXFS void emuxfs_desc_chk_meta(uint8_t *, const struct emuxfs_desc *,
-    enum emuxfs_chk_alg_type);
+EMUXFS int emuxfs_desc_init_from_stat(
+    struct emuxfs_desc *, struct stat *, uint64_t);
+EMUXFS void emuxfs_desc_chk_provided_content(
+    struct emuxfs_desc *, const uint8_t *, size_t, enum emuxfs_chk_alg_type);
+EMUXFS int emuxfs_desc_chk_reg_content(
+    struct emuxfs_desc *, dind, const char *);
+EMUXFS int emuxfs_desc_chk_symlink_content(
+    struct emuxfs_desc *, dind, const char *);
+EMUXFS int emuxfs_desc_chk_node_content(
+    struct emuxfs_desc *, dind, const char *);
+EMUXFS void emuxfs_desc_chk_meta(
+    uint8_t *, const struct emuxfs_desc *, enum emuxfs_chk_alg_type);
 
 /* format.c */
 EMUXFS int emuxfs_dev_format(const char *, enum emuxfs_chk_alg_type, size_t,
@@ -272,25 +250,19 @@ EMUXFS int emuxfs_format_main(int, char *[]);
 
 /* lfile.c */
 struct emuxfs_range {
-	size_t		byte_begin,
-			byte_end,
-			blk_begin,
-			blk_end,
-			lfilesz,
-			lfileoff;
-	uint64_t	blk_index_begin,
-			blk_index_end;
+	size_t	 byte_begin, byte_end, blk_begin, blk_end, lfilesz, lfileoff;
+	uint64_t blk_index_begin, blk_index_end;
 };
 EMUXFS void emuxfs_range_compute(struct emuxfs_range *, size_t);
-EMUXFS int emuxfs_lfile_open(int *, int, ino_t, int);
-EMUXFS int emuxfs_lfile_create(int, size_t, ino_t, size_t);
-EMUXFS int emuxfs_lfile_resize(int, size_t, ino_t, size_t, size_t);
-EMUXFS int emuxfs_lfile_exists(int *, int, ino_t);
-EMUXFS int emuxfs_lfile_delete(int, ino_t);
-EMUXFS int emuxfs_lfile_ancestors_recompute(uint8_t *, int,
+EMUXFS int  emuxfs_lfile_open(int *, int, ino_t, int);
+EMUXFS int  emuxfs_lfile_create(int, size_t, ino_t, size_t);
+EMUXFS int  emuxfs_lfile_resize(int, size_t, ino_t, size_t, size_t);
+EMUXFS int  emuxfs_lfile_exists(int *, int, ino_t);
+EMUXFS int  emuxfs_lfile_delete(int, ino_t);
+EMUXFS int  emuxfs_lfile_ancestors_recompute(uint8_t *, int,
     enum emuxfs_chk_alg_type, ino_t, size_t, uint64_t, uint64_t);
-EMUXFS int emuxfs_lfile_readback(uint8_t *, dind, const char *, size_t, size_t,
-    const uint8_t *);
+EMUXFS int  emuxfs_lfile_readback(
+    uint8_t *, dind, const char *, size_t, size_t, const uint8_t *);
 
 /* mount.c */
 EMUXFS int emuxfs_mount_main(int, char *[]);
@@ -308,29 +280,29 @@ struct emuxfs_wrctx {
 	gid_t group;
 };
 struct emuxfs_wrbuf {
-	char path[PATH_MAX];
+	char		    path[PATH_MAX];
 	struct emuxfs_wrctx wc;
-	size_t sz;
-	size_t off;
-	uint8_t buf[EMUXFS_WRBUF_SIZE];
+	size_t		    sz;
+	size_t		    off;
+	uint8_t		    buf[EMUXFS_WRBUF_SIZE];
 };
-EMUXFS int  emuxfs_init(int, int);
-EMUXFS int  emuxfs_final(void);
-EMUXFS int  emuxfs_state_syslog_init(void);
-EMUXFS int  emuxfs_state_syslog_final(void);
+EMUXFS int emuxfs_init(int, int);
+EMUXFS int emuxfs_final(void);
+EMUXFS int emuxfs_state_syslog_init(void);
+EMUXFS int emuxfs_state_syslog_final(void);
 /*
  * OpenBSD does not provide the __printflike() convenience macro, so the
  * format attribute is written out; this matches how its own headers (for
  * example stdio.h and syslog.h) declare printf-like functions.
  */
 EMUXFS void emuxfs_debug(const char *, ...)
-	__attribute__((__format__(printf, 1, 2)));
+    __attribute__((__format__(printf, 1, 2)));
 EMUXFS void emuxfs_info(const char *, ...)
-	__attribute__((__format__(printf, 1, 2)));
+    __attribute__((__format__(printf, 1, 2)));
 EMUXFS void emuxfs_warn(const char *, ...)
-	__attribute__((__format__(printf, 1, 2)));
+    __attribute__((__format__(printf, 1, 2)));
 EMUXFS void emuxfs_alert(const char *, ...)
-	__attribute__((__format__(printf, 1, 2)));
+    __attribute__((__format__(printf, 1, 2)));
 
 /*
  * Debug tracing.  It is always compiled in and is inert unless enabled at run
@@ -340,8 +312,8 @@ EMUXFS void emuxfs_alert(const char *, ...)
  * file:line prefix identifies the call site.
  */
 EMUXFS void emuxfs_trace(const char *, int, const char *, ...)
-	__attribute__((__format__(printf, 3, 4)));
-#define EMUXFS_TRACE(...)	emuxfs_trace(__FILE__, __LINE__, __VA_ARGS__)
+    __attribute__((__format__(printf, 3, 4)));
+#define EMUXFS_TRACE(...) emuxfs_trace(__FILE__, __LINE__, __VA_ARGS__)
 
 EMUXFS int  emuxfs_state_restore_queue_init(void);
 EMUXFS void emuxfs_state_restore_queue_final(void);
@@ -366,10 +338,10 @@ EMUXFS int emuxfs_state_eno_next_return(uint64_t);
 
 EMUXFS int emuxfs_state_wrbuf_is_set(void);
 EMUXFS int emuxfs_state_wrbuf_reset(void);
-EMUXFS int emuxfs_state_wrbuf_set(const char *, uid_t, gid_t, size_t,
-    size_t, const uint8_t *);
-EMUXFS int emuxfs_state_wrbuf_append(size_t *, const char *, uid_t, gid_t,
-    size_t, size_t, const uint8_t *);
+EMUXFS int emuxfs_state_wrbuf_set(
+    const char *, uid_t, gid_t, size_t, size_t, const uint8_t *);
+EMUXFS int emuxfs_state_wrbuf_append(
+    size_t *, const char *, uid_t, gid_t, size_t, size_t, const uint8_t *);
 EMUXFS int emuxfs_state_wrbuf_get(const struct emuxfs_wrbuf **);
 
 /* sync.c */
@@ -382,43 +354,42 @@ enum emuxfs_cud_type {
 	EMUXFS_CUD_DELETE
 };
 struct emuxfs_cud {
-	enum emuxfs_cud_type	 type;
-	const char		*path,
-				*fname;
-	struct emuxfs_meta	 pre_meta;
+	enum emuxfs_cud_type type;
+	const char	    *path, *fname;
+	struct emuxfs_meta   pre_meta;
 };
 struct emuxfs_dir {
-	void *base;
+	void	       *base;
 	struct dirent **ent_array;
-	size_t ent_count;
+	size_t		ent_count;
 };
 struct emuxfs_args {
-	char	mp_path[PATH_MAX];
-	char	dev_paths[EMUXFS_DEV_COUNT_MAX][PATH_MAX];
-	size_t	dev_count;
-	int	f;
-	int	readonly;
+	char   mp_path[PATH_MAX];
+	char   dev_paths[EMUXFS_DEV_COUNT_MAX][PATH_MAX];
+	size_t dev_count;
+	int    f;
+	int    readonly;
 };
 extern struct emuxfs_args emuxfs_cmdline;
-EMUXFS int emuxfs_parse_args(int, char **, int);
-EMUXFS int emuxfs_existsat(int *, int, const char *);
-EMUXFS int emuxfs_removeat(int, const char *);
-EMUXFS int emuxfs_dir_is_empty(int *, char const *);
-EMUXFS int emuxfs_path_sanitize(const char **);
-EMUXFS int emuxfs_path_pop(const char **, char *, size_t *);
-EMUXFS int emuxfs_pushdir(struct emuxfs_dir *, int, const char *);
-EMUXFS int emuxfs_popdir(struct emuxfs_dir *);
-[[nodiscard]] EMUXFS int emuxfs_readback(dind, const char *, int,
-    const struct emuxfs_meta *);
+EMUXFS int		  emuxfs_parse_args(int, char **, int);
+EMUXFS int		  emuxfs_existsat(int *, int, const char *);
+EMUXFS int		  emuxfs_removeat(int, const char *);
+EMUXFS int		  emuxfs_dir_is_empty(int *, char const *);
+EMUXFS int		  emuxfs_path_sanitize(const char **);
+EMUXFS int		  emuxfs_path_pop(const char **, char *, size_t *);
+EMUXFS int		 emuxfs_pushdir(struct emuxfs_dir *, int, const char *);
+EMUXFS int		 emuxfs_popdir(struct emuxfs_dir *);
+[[nodiscard]] EMUXFS int emuxfs_readback(
+    dind, const char *, int, const struct emuxfs_meta *);
 EMUXFS int emuxfs_parent_readback(dind, const char *);
 EMUXFS int emuxfs_ancestors_meta_recompute(dind, struct emuxfs_cud *);
-EMUXFS int emuxfs_dir_meta_recompute(struct emuxfs_cud *, dind,
-    const struct emuxfs_cud *);
-EMUXFS int emuxfs_parent_gid(gid_t *, const char *);
-EMUXFS int emuxfs_dir_content_chk(uint8_t *, dind, struct emuxfs_dir *);
+EMUXFS int emuxfs_dir_meta_recompute(
+    struct emuxfs_cud *, dind, const struct emuxfs_cud *);
+EMUXFS int    emuxfs_parent_gid(gid_t *, const char *);
+EMUXFS int    emuxfs_dir_content_chk(uint8_t *, dind, struct emuxfs_dir *);
 EMUXFS size_t emuxfs_align_up(size_t, size_t);
 EMUXFS size_t emuxfs_align_down(size_t, size_t);
-EMUXFS void emuxfs_restore_now(void);
+EMUXFS void   emuxfs_restore_now(void);
 
 /*
  * True when 'st' describes a regular file with more than one hard link.
@@ -446,6 +417,6 @@ EMUXFS int emuxfs_fsync_parent(int, const char *);
 
 /* version.c */
 extern struct emuxfs_version emuxfs_program_version;
-EMUXFS void emuxfs_version_print(void);
+EMUXFS void		     emuxfs_version_print(void);
 
 #endif /* _EMUXFS_H_ */

@@ -17,7 +17,8 @@
  */
 
 /*
- * This file is part of emuxfs, The Enhanced Multiplexed File System (see NOTICE.md).
+ * This file is part of emuxfs, The Enhanced Multiplexed File System (see
+ * NOTICE.md).
  *
  * Headless unit tests.  They link the non-FUSE part of emuxfs and
  * exercise checksums, metadata serialisation, configuration parsing, the
@@ -28,12 +29,12 @@
  * cannot be created the tests abort rather than touch anything else.
  */
 
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/types.h>
 
-#include <errno.h>
 #include <endian.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <ftw.h>
 #include <stdint.h>
@@ -47,16 +48,16 @@
 #include "ds.h"
 #include "emuxfs.h"
 
-static int failures;
+static int  failures;
 static char sandbox[PATH_MAX];
 
-#define CHECK(cond)							\
-	do {								\
-		if (!(cond)) {						\
-			fprintf(stderr, "FAIL %s:%d: %s\n",		\
-			    __FILE__, __LINE__, #cond);			\
-			++failures;					\
-		}							\
+#define CHECK(cond)                                                            \
+	do {                                                                   \
+		if (!(cond)) {                                                 \
+			fprintf(stderr, "FAIL %s:%d: %s\n", __FILE__,          \
+			    __LINE__, #cond);                                  \
+			++failures;                                            \
+		}                                                              \
 	} while (0)
 
 static void
@@ -97,7 +98,7 @@ static void
 sandbox_create(void)
 {
 	const char *base;
-	char tmpl[PATH_MAX];
+	char	    tmpl[PATH_MAX];
 
 	base = getenv("TMPDIR");
 	if ((base == nullptr) || (base[0] == '\0'))
@@ -126,23 +127,24 @@ sandbox_create(void)
 static void
 sandbox_destroy(void)
 {
-	if (nftw(sandbox, rm_cb, 32, FTW_DEPTH|FTW_PHYS) != 0)
+	if (nftw(sandbox, rm_cb, 32, FTW_DEPTH | FTW_PHYS) != 0)
 		perror("nftw");
 }
 
 static void
 test_checksums(void)
 {
-	static const uint8_t abc[] = { 'a', 'b', 'c' };
+	static const uint8_t abc[] = {'a', 'b', 'c'};
 	static const uint8_t digits[] = "123456789";
-	static const uint8_t crc32_expect[] = { 0x26, 0x39, 0xf4, 0xcb }; /* 0xcbf43926, little-endian */
-	static const uint8_t md5_expect[] = { 0x90, 0x01, 0x50, 0x98, 0x3c, 0xd2, 0x4f, 0xb0,
-		0xd6, 0x96, 0x3f, 0x7d, 0x28, 0xe1, 0x7f, 0x72 };
-	static const uint8_t sha1_expect[] = { 0xa9, 0x99, 0x3e, 0x36, 0x47, 0x06, 0x81, 0x6a,
-		0xba, 0x3e, 0x25, 0x71, 0x78, 0x50, 0xc2, 0x6c,
-		0x9c, 0xd0, 0xd8, 0x9d };
-	struct emuxfs_chk chk;
-	uint8_t got[EMUXFS_CHKSZ_MAX];
+	static const uint8_t crc32_expect[] = {
+	    0x26, 0x39, 0xf4, 0xcb}; /* 0xcbf43926, little-endian */
+	static const uint8_t md5_expect[] = {0x90, 0x01, 0x50, 0x98, 0x3c, 0xd2,
+	    0x4f, 0xb0, 0xd6, 0x96, 0x3f, 0x7d, 0x28, 0xe1, 0x7f, 0x72};
+	static const uint8_t sha1_expect[] = {0xa9, 0x99, 0x3e, 0x36, 0x47,
+	    0x06, 0x81, 0x6a, 0xba, 0x3e, 0x25, 0x71, 0x78, 0x50, 0xc2, 0x6c,
+	    0x9c, 0xd0, 0xd8, 0x9d};
+	struct emuxfs_chk    chk;
+	uint8_t		     got[EMUXFS_CHKSZ_MAX];
 	enum emuxfs_chk_alg_type type;
 
 	CHECK(emuxfs_chk_size(CAT_CRC32) == 4);
@@ -170,8 +172,7 @@ test_checksums(void)
 	if (memcmp(got, sha1_expect, sizeof(sha1_expect)) != 0)
 		fail_hex("sha1", got, sha1_expect, sizeof(sha1_expect));
 
-	CHECK(emuxfs_chk_str_to_type(&type, "md5", 3) == 0 &&
-	    type == CAT_MD5);
+	CHECK(emuxfs_chk_str_to_type(&type, "md5", 3) == 0 && type == CAT_MD5);
 	CHECK(strcmp(emuxfs_chk_type_to_str(CAT_SHA1), "sha1") == 0);
 }
 
@@ -207,7 +208,7 @@ static void
 test_desc_meta(void)
 {
 	struct emuxfs_desc a, b;
-	uint8_t sum_a[EMUXFS_CHKSZ_MAX], sum_b[EMUXFS_CHKSZ_MAX];
+	uint8_t		   sum_a[EMUXFS_CHKSZ_MAX], sum_b[EMUXFS_CHKSZ_MAX];
 
 	memset(&a, 0, sizeof(a));
 	a.eno = 7;
@@ -243,11 +244,11 @@ static void
 test_conf_roundtrip(void)
 {
 	struct emuxfs_dev_conf out, in;
-	char path[PATH_MAX];
-	int fd, rc, i;
+	char		       path[PATH_MAX];
+	int		       fd, rc, i;
 
 	sandbox_path(path, sizeof(path), "muxfs.conf");
-	if ((fd = open(path, O_RDWR|O_CREAT|O_TRUNC, 0600)) == -1) {
+	if ((fd = open(path, O_RDWR | O_CREAT | O_TRUNC, 0600)) == -1) {
 		perror(path);
 		++failures;
 		return;
@@ -300,12 +301,12 @@ test_conf_legacy_and_errors(void)
 	    "array_uuid=00112233-4455-6677-8899-aabbccddeeff\n"
 	    "dev_uuid=ffeeddcc-bbaa-9988-7766-554433221100\n"
 	    "seq_zero_time=1600000000\n";
-	char path[PATH_MAX];
+	char		       path[PATH_MAX];
 	struct emuxfs_dev_conf conf;
-	int fd, rc;
+	int		       fd, rc;
 
 	sandbox_path(path, sizeof(path), "legacy.conf");
-	if ((fd = open(path, O_RDWR|O_CREAT|O_TRUNC, 0600)) == -1) {
+	if ((fd = open(path, O_RDWR | O_CREAT | O_TRUNC, 0600)) == -1) {
 		perror(path);
 		++failures;
 		return;
@@ -322,7 +323,7 @@ test_conf_legacy_and_errors(void)
 	close(fd);
 
 	sandbox_path(path, sizeof(path), "badver.conf");
-	if ((fd = open(path, O_RDWR|O_CREAT|O_TRUNC, 0600)) == -1) {
+	if ((fd = open(path, O_RDWR | O_CREAT | O_TRUNC, 0600)) == -1) {
 		perror(path);
 		++failures;
 		return;
@@ -335,7 +336,7 @@ test_conf_legacy_and_errors(void)
 	close(fd);
 
 	sandbox_path(path, sizeof(path), "garbage.conf");
-	if ((fd = open(path, O_RDWR|O_CREAT|O_TRUNC, 0600)) == -1) {
+	if ((fd = open(path, O_RDWR | O_CREAT | O_TRUNC, 0600)) == -1) {
 		perror(path);
 		++failures;
 		return;
@@ -380,16 +381,16 @@ static void
 test_serialisation_endianness(void)
 {
 	struct emuxfs_dev_state st;
-	struct emuxfs_meta meta;
-	struct emuxfs_assign assign;
-	uint8_t buf[64];
-	char path[PATH_MAX];
-	uint64_t u64;
-	size_t msz;
-	int fd;
+	struct emuxfs_meta	meta;
+	struct emuxfs_assign	assign;
+	uint8_t			buf[64];
+	char			path[PATH_MAX];
+	uint64_t		u64;
+	size_t			msz;
+	int			fd;
 
 	sandbox_path(path, sizeof(path), "ser.bin");
-	if ((fd = open(path, O_RDWR|O_CREAT|O_TRUNC, 0600)) == -1) {
+	if ((fd = open(path, O_RDWR | O_CREAT | O_TRUNC, 0600)) == -1) {
 		perror(path);
 		++failures;
 		return;
@@ -434,10 +435,10 @@ test_serialisation_endianness(void)
 static void
 test_restore_queue(void)
 {
-	char path[512], got[512];
-	dind dev;
+	char   path[512], got[512];
+	dind   dev;
 	size_t len;
-	int i;
+	int    i;
 
 	if (emuxfs_state_restore_queue_init())
 		exit(2);
@@ -473,20 +474,20 @@ test_restore_queue(void)
 static void
 test_dev_format_mount(void)
 {
-	struct emuxfs_dev *dev;
-	struct emuxfs_meta meta;
+	struct emuxfs_dev   *dev;
+	struct emuxfs_meta   meta;
 	struct emuxfs_assign assign;
-	struct emuxfs_range range;
-	struct stat st;
-	char root[PATH_MAX];
-	uint8_t uuid[EMUXFS_UUID_SIZE];
-	size_t chksz, metasz;
-	dind i;
-	uint64_t next;
-	time_t now;
-	int exists;
-	ino_t root_ino;
-	int have_root_ino;
+	struct emuxfs_range  range;
+	struct stat	     st;
+	char		     root[PATH_MAX];
+	uint8_t		     uuid[EMUXFS_UUID_SIZE];
+	size_t		     chksz, metasz;
+	dind		     i;
+	uint64_t	     next;
+	time_t		     now;
+	int		     exists;
+	ino_t		     root_ino;
+	int		     have_root_ino;
 
 	if (geteuid() != 0) {
 		printf("SKIP: device tests require root\n");
@@ -559,15 +560,17 @@ test_dev_format_mount(void)
 	if (emuxfs_lfile_create(dev->lfile_fd, chksz, (ino_t)4242, 10000)) {
 		CHECK(0);
 	} else {
-		CHECK(emuxfs_lfile_exists(&exists, dev->lfile_fd,
-		    (ino_t)4242) == 0 && exists == 1);
+		CHECK(emuxfs_lfile_exists(
+			  &exists, dev->lfile_fd, (ino_t)4242) == 0 &&
+		    exists == 1);
 		CHECK(emuxfs_lfile_resize(dev->lfile_fd, chksz, (ino_t)4242,
-		    10000, 40000) == 0);
-		CHECK(emuxfs_lfile_resize(dev->lfile_fd, chksz, (ino_t)4242,
-		    40000, 5000) == 0);
+			  10000, 40000) == 0);
+		CHECK(emuxfs_lfile_resize(
+			  dev->lfile_fd, chksz, (ino_t)4242, 40000, 5000) == 0);
 		CHECK(emuxfs_lfile_delete(dev->lfile_fd, (ino_t)4242) == 0);
-		CHECK(emuxfs_lfile_exists(&exists, dev->lfile_fd,
-		    (ino_t)4242) == 0 && exists == 0);
+		CHECK(emuxfs_lfile_exists(
+			  &exists, dev->lfile_fd, (ino_t)4242) == 0 &&
+		    exists == 0);
 	}
 	fprintf(stderr, "  lfile ok\n");
 
@@ -607,15 +610,15 @@ test_dev_format_mount(void)
 static int
 emuxfs_test_fabricate(dind idx, const char *name, const char *content)
 {
-	char			 pbuf[PATH_MAX];
-	struct emuxfs_dev	*dev;
-	struct emuxfs_desc	 desc;
-	struct emuxfs_meta	 meta;
-	struct emuxfs_assign	 assign;
-	struct stat		 st;
-	size_t			 chksz, len;
-	uint64_t		 eno;
-	int			 fd;
+	char		     pbuf[PATH_MAX];
+	struct emuxfs_dev   *dev;
+	struct emuxfs_desc   desc;
+	struct emuxfs_meta   meta;
+	struct emuxfs_assign assign;
+	struct stat	     st;
+	size_t		     chksz, len;
+	uint64_t	     eno;
+	int		     fd;
 
 	if (emuxfs_dev_get(&dev, idx, 0))
 		return 1;
@@ -623,7 +626,7 @@ emuxfs_test_fabricate(dind idx, const char *name, const char *content)
 	    (int)sizeof(pbuf))
 		return 1;
 
-	if ((fd = open(pbuf, O_RDWR|O_CREAT|O_TRUNC, 0600)) == -1)
+	if ((fd = open(pbuf, O_RDWR | O_CREAT | O_TRUNC, 0600)) == -1)
 		return 1;
 	len = strlen(content);
 	if (write(fd, content, len) != (ssize_t)len) {
@@ -646,8 +649,7 @@ emuxfs_test_fabricate(dind idx, const char *name, const char *content)
 	memset(&meta, 0, sizeof(meta));
 	meta.header.flags = MF_ASSIGNED;
 	meta.header.eno = eno;
-	emuxfs_desc_chk_meta(&meta.checksums[0], &desc,
-	    dev->conf.chk_alg_type);
+	emuxfs_desc_chk_meta(&meta.checksums[0], &desc, dev->conf.chk_alg_type);
 	memcpy(&meta.checksums[chksz], desc.content_checksum, chksz);
 	if (emuxfs_meta_write(&meta, idx, st.st_ino))
 		return 1;
@@ -665,9 +667,9 @@ emuxfs_test_fabricate(dind idx, const char *name, const char *content)
 static int
 emuxfs_test_file_has_prefix(const char *path, const char *prefix)
 {
-	char buf[64];
-	size_t len;
-	int fd;
+	char	buf[64];
+	size_t	len;
+	int	fd;
 	ssize_t r;
 
 	len = strlen(prefix);
@@ -685,14 +687,14 @@ emuxfs_test_file_has_prefix(const char *path, const char *prefix)
 static void
 test_hardlink_predicate(void)
 {
-	char a[PATH_MAX], b[PATH_MAX];
+	char	    a[PATH_MAX], b[PATH_MAX];
 	struct stat st;
-	int fd;
+	int	    fd;
 
 	sandbox_path(a, sizeof(a), "hl-a");
 	sandbox_path(b, sizeof(b), "hl-b");
 
-	if ((fd = open(a, O_RDWR|O_CREAT|O_TRUNC, 0600)) == -1) {
+	if ((fd = open(a, O_RDWR | O_CREAT | O_TRUNC, 0600)) == -1) {
 		CHECK(0);
 		return;
 	}
@@ -780,15 +782,15 @@ test_state_validation(void)
 static void
 test_assign_crosscheck(void)
 {
-	char			 root[PATH_MAX];
-	struct emuxfs_dev	*dev;
-	struct emuxfs_assign	 assign;
-	struct emuxfs_meta	 meta;
-	struct stat		 st;
-	uint8_t			 uuid[EMUXFS_UUID_SIZE];
-	size_t			 chksz, metasz, bad;
-	time_t			 now;
-	dind			 i;
+	char		     root[PATH_MAX];
+	struct emuxfs_dev   *dev;
+	struct emuxfs_assign assign;
+	struct emuxfs_meta   meta;
+	struct stat	     st;
+	uint8_t		     uuid[EMUXFS_UUID_SIZE];
+	size_t		     chksz, metasz, bad;
+	time_t		     now;
+	dind		     i;
 
 	if (geteuid() != 0) {
 		printf("SKIP: assign cross-check test requires root\n");
@@ -863,18 +865,16 @@ test_assign_crosscheck(void)
 static void
 test_recovery_ambiguity(void)
 {
-	char			 roots[3][PATH_MAX];
-	char			 name[16];
-	char			 pbuf[PATH_MAX];
-	static const char	*contents[3] = {
-		"alpha\n", "beta\n", "gamma\n"
-	};
-	struct emuxfs_dev	*ddev;
-	uint8_t			 uuid[EMUXFS_UUID_SIZE];
-	size_t			 chksz, metasz;
-	time_t			 now;
-	dind			 i, j, k;
-	int			 fd;
+	char		   roots[3][PATH_MAX];
+	char		   name[16];
+	char		   pbuf[PATH_MAX];
+	static const char *contents[3] = {"alpha\n", "beta\n", "gamma\n"};
+	struct emuxfs_dev *ddev;
+	uint8_t		   uuid[EMUXFS_UUID_SIZE];
+	size_t		   chksz, metasz;
+	time_t		   now;
+	dind		   i, j, k;
+	int		   fd;
 
 	if (geteuid() != 0) {
 		printf("SKIP: ambiguity test requires root\n");
@@ -897,8 +897,8 @@ test_recovery_ambiguity(void)
 			CHECK(0);
 			return;
 		}
-		if (emuxfs_dev_format(roots[i], CAT_MD5, chksz, metasz, now,
-		    uuid)) {
+		if (emuxfs_dev_format(
+			roots[i], CAT_MD5, chksz, metasz, now, uuid)) {
 			CHECK(0);
 			return;
 		}
@@ -929,7 +929,7 @@ test_recovery_ambiguity(void)
 		return;
 	}
 	snprintf(pbuf, sizeof(pbuf), "%s/%s", ddev->root_path, "f");
-	if ((fd = open(pbuf, O_WRONLY|O_TRUNC)) == -1) {
+	if ((fd = open(pbuf, O_WRONLY | O_TRUNC)) == -1) {
 		CHECK(0);
 		return;
 	}
@@ -974,7 +974,7 @@ static void
 test_dynamic_stack(void)
 {
 	uint8_t *p, *q, *r;
-	size_t i, j, oldsz;
+	size_t	 i, j, oldsz;
 
 	p = q = r = nullptr;
 	if (emuxfs_dspush((void **)&p, 64))
@@ -997,8 +997,7 @@ test_dynamic_stack(void)
 		exit(-1);
 
 	/* Two live allocations must pop in reverse order. */
-	if (emuxfs_dspush((void **)&q, 32) ||
-	    emuxfs_dspush((void **)&r, 32))
+	if (emuxfs_dspush((void **)&q, 32) || emuxfs_dspush((void **)&r, 32))
 		exit(-1);
 	if (emuxfs_dspop(r))
 		exit(-1);
@@ -1021,7 +1020,11 @@ main(int, char *[])
 
 	sandbox_create();
 
-#define RUN(fn) do { fprintf(stderr, "[%s]\n", #fn); fn(); } while (0)
+#define RUN(fn)                                                                \
+	do {                                                                   \
+		fprintf(stderr, "[%s]\n", #fn);                                \
+		fn();                                                          \
+	} while (0)
 	RUN(test_checksums);
 	RUN(test_meta_size_and_align);
 	RUN(test_desc_meta);

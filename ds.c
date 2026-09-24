@@ -54,12 +54,12 @@ static size_t emuxfs_ds_max_pagecount;
 static SLIST_HEAD(dshead, ds) emuxfs_ds_head;
 
 struct ds {
-	SLIST_ENTRY(ds)	 ent;
-	size_t		 pagecount;
-	uint8_t		*begin;
-	uint8_t		*end;
-	uint8_t		*allocend;
-	uint8_t		 data[];
+	SLIST_ENTRY(ds) ent;
+	size_t	 pagecount;
+	uint8_t *begin;
+	uint8_t *end;
+	uint8_t *allocend;
+	uint8_t	 data[];
 };
 
 static int emuxfs_ds_add_pages(size_t);
@@ -69,7 +69,7 @@ emuxfs_dspush(void **p, size_t sz)
 {
 	EMUXFS_TRACE("enter");
 	struct ds *n;
-	size_t s;
+	size_t	   s;
 
 	sz = emuxfs_align_up(sz, emuxfs_ds_memalign);
 	EMUXFS_TRACE("dspush sz=%zu total=%zu max=%zu", sz,
@@ -116,16 +116,16 @@ emuxfs_dspop(void *p)
 		if ((p < (void *)n->begin) || (p >= (void *)n->end))
 			emuxfs_ds_free_head(n);
 		else {
-			emuxfs_ds_total_allocated -= (size_t)(n->allocend -
-			    (uint8_t *)p);
+			emuxfs_ds_total_allocated -=
+			    (size_t)(n->allocend - (uint8_t *)p);
 			n->allocend = p;
 			if ((emuxfs_ds_total_allocated == 0) &&
 			    (emuxfs_ds_total_pagecount <
-			     emuxfs_ds_max_pagecount)) {
+				emuxfs_ds_max_pagecount)) {
 				emuxfs_ds_free_head(n);
 				if (emuxfs_ds_add_pages(
-				    emuxfs_ds_max_pagecount -
-				    emuxfs_ds_total_pagecount))
+					emuxfs_ds_max_pagecount -
+					emuxfs_ds_total_pagecount))
 					return 1;
 			}
 			return 0;
@@ -139,8 +139,8 @@ emuxfs_dsgrow(void **p_inout, size_t sz)
 {
 	EMUXFS_TRACE("enter");
 	struct ds *n;
-	uint8_t *sp, *dp;
-	size_t ssz, dsz;
+	uint8_t	  *sp, *dp;
+	size_t	   ssz, dsz;
 
 	sp = (uint8_t *)*p_inout;
 	sz = emuxfs_align_up(sz, emuxfs_ds_memalign);
@@ -174,9 +174,9 @@ static int
 emuxfs_ds_add_pages(size_t pagecount)
 {
 	EMUXFS_TRACE("enter");
-	uint8_t *d;
+	uint8_t	  *d;
 	struct ds *n;
-	size_t sz;
+	size_t	   sz;
 
 	sz = pagecount * emuxfs_ds_pagesz;
 
@@ -203,8 +203,8 @@ emuxfs_dsinit(void)
 	EMUXFS_TRACE("enter");
 	long pagesz;
 
-	emuxfs_ds_offset = emuxfs_align_up(sizeof(struct ds),
-	    emuxfs_ds_memalign);
+	emuxfs_ds_offset =
+	    emuxfs_align_up(sizeof(struct ds), emuxfs_ds_memalign);
 	pagesz = sysconf(_SC_PAGESIZE);
 	if (pagesz < 1)
 		return 1;

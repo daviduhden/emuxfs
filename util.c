@@ -16,12 +16,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/syslimits.h>
-#include <sys/types.h>
 
-#include <errno.h>
 #include <dirent.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,8 +30,8 @@
 
 #include "chk.h"
 #include "ds.h"
-#include "fault.h"
 #include "emuxfs.h"
+#include "fault.h"
 
 struct emuxfs_args emuxfs_cmdline;
 
@@ -42,10 +42,10 @@ struct emuxfs_args emuxfs_cmdline;
 static_assert(EMUXFS_MEM_ALIGN >= alignof(struct dirent *),
     "the dynamic stack must align the dirent pointer arrays it stores");
 
-static int emuxfs_restore_reg(dind, dind, const char *, int, struct stat *,
-    struct emuxfs_meta *);
-static int emuxfs_restore_symlink(dind, dind, const char *, struct stat *,
-    struct emuxfs_meta *);
+static int emuxfs_restore_reg(
+    dind, dind, const char *, int, struct stat *, struct emuxfs_meta *);
+static int emuxfs_restore_symlink(
+    dind, dind, const char *, struct stat *, struct emuxfs_meta *);
 
 /*
  * This enum classifies the difference of a directory's content with respect to
@@ -53,13 +53,13 @@ static int emuxfs_restore_symlink(dind, dind, const char *, struct stat *,
  */
 enum emuxfs_dir_patch_type {
 	EMUXFS_SUBSTITUTE, /* The content of the file is different. */
-	EMUXFS_PLUS, /* The filename is not listed in the base directory. */
+	EMUXFS_PLUS,  /* The filename is not listed in the base directory. */
 	EMUXFS_MINUS, /* The filename is not listed in the patched directory. */
 };
 struct emuxfs_dir_patch {
 	enum emuxfs_dir_patch_type type;
-	const char *fname;
-	const uint8_t *sum;
+	const char		  *fname;
+	const uint8_t		  *sum;
 };
 static int
 emuxfs_dir_patch_sums(uint8_t *as_is_out, uint8_t *with_patch_out,
@@ -67,20 +67,20 @@ emuxfs_dir_patch_sums(uint8_t *as_is_out, uint8_t *with_patch_out,
     struct emuxfs_dir *dir, struct emuxfs_dir_patch *patch)
 {
 	EMUXFS_TRACE("enter");
-	int rc;
-	size_t chksz;
-	struct stat subst;
-	struct dirent *dirent;
-	size_t i, dnamelen, fnamelen, entind1, entind2;
-	const char *dname;
-	int match;
-	ino_t subino;
+	int		   rc;
+	size_t		   chksz;
+	struct stat	   subst;
+	struct dirent	  *dirent;
+	size_t		   i, dnamelen, fnamelen, entind1, entind2;
+	const char	  *dname;
+	int		   match;
+	ino_t		   subino;
 	struct emuxfs_meta submeta;
-	struct emuxfs_chk as_is_content_chk, with_patch_content_chk;
-	int patched;
-	const char *pstage;
-	const char *pbadname;
-	int pbadidx, pbaderrno;
+	struct emuxfs_chk  as_is_content_chk, with_patch_content_chk;
+	int		   patched;
+	const char	  *pstage;
+	const char	  *pbadname;
+	int		   pbadidx, pbaderrno;
 
 	rc = 1;
 	pstage = "start";
@@ -103,8 +103,7 @@ emuxfs_dir_patch_sums(uint8_t *as_is_out, uint8_t *with_patch_out,
 			continue;
 		if ((dnamelen == 2) && (strncmp("..", dname, 2) == 0))
 			continue;
-		if ((dnamelen == 6) && (strncmp(".muxfs", dname, 6) ==
-		    0))
+		if ((dnamelen == 6) && (strncmp(".muxfs", dname, 6) == 0))
 			continue;
 		if (strcmp(dname, patch->fname) >= 0)
 			break;
@@ -138,10 +137,10 @@ emuxfs_dir_patch_sums(uint8_t *as_is_out, uint8_t *with_patch_out,
 			pbaderrno = errno;
 			goto out;
 		}
-		emuxfs_chk_update(&as_is_content_chk, (uint8_t *)dname,
-		    dnamelen);
-		emuxfs_chk_update(&as_is_content_chk, &submeta.checksums[0],
-		    chksz);
+		emuxfs_chk_update(
+		    &as_is_content_chk, (uint8_t *)dname, dnamelen);
+		emuxfs_chk_update(
+		    &as_is_content_chk, &submeta.checksums[0], chksz);
 		if (entind2 == entind1) {
 			patched = 1;
 			match = ((dnamelen == fnamelen) &&
@@ -156,8 +155,8 @@ emuxfs_dir_patch_sums(uint8_t *as_is_out, uint8_t *with_patch_out,
 			}
 			emuxfs_chk_update(&with_patch_content_chk,
 			    (uint8_t *)patch->fname, fnamelen);
-			emuxfs_chk_update(&with_patch_content_chk, patch->sum,
-			    chksz);
+			emuxfs_chk_update(
+			    &with_patch_content_chk, patch->sum, chksz);
 			switch (patch->type) {
 			case EMUXFS_SUBSTITUTE:
 				if (!match) {
@@ -177,10 +176,10 @@ emuxfs_dir_patch_sums(uint8_t *as_is_out, uint8_t *with_patch_out,
 				exit(-1); /* Programming error. */
 			}
 		}
-		emuxfs_chk_update(&with_patch_content_chk, (uint8_t *)dname,
-		    dnamelen);
-		emuxfs_chk_update(&with_patch_content_chk,
-		    &submeta.checksums[0], chksz);
+		emuxfs_chk_update(
+		    &with_patch_content_chk, (uint8_t *)dname, dnamelen);
+		emuxfs_chk_update(
+		    &with_patch_content_chk, &submeta.checksums[0], chksz);
 		++entind2;
 	}
 	if (!patched) {
@@ -188,8 +187,8 @@ emuxfs_dir_patch_sums(uint8_t *as_is_out, uint8_t *with_patch_out,
 			pstage = "unpatched";
 			goto out;
 		}
-		emuxfs_chk_update(&with_patch_content_chk,
-		    (uint8_t *)patch->fname, fnamelen);
+		emuxfs_chk_update(
+		    &with_patch_content_chk, (uint8_t *)patch->fname, fnamelen);
 		emuxfs_chk_update(&with_patch_content_chk, patch->sum, chksz);
 	}
 	emuxfs_chk_final(as_is_out, &as_is_content_chk);
@@ -199,7 +198,7 @@ emuxfs_dir_patch_sums(uint8_t *as_is_out, uint8_t *with_patch_out,
 out:
 	if (rc != 0)
 		EMUXFS_TRACE("dir_patch_sums: fail type=%d fname=%s stage=%s "
-		    "badidx=%d badname=%s errno=%d\n",
+			     "badidx=%d badname=%s errno=%d\n",
 		    (int)patch->type, patch->fname, pstage, pbadidx, pbadname,
 		    pbaderrno);
 	return rc;
@@ -238,7 +237,8 @@ emuxfs_dir_meta_recompute(struct emuxfs_cud *pcud_out, dind dev_index,
 		goto out;
 
 	dstage = "openat";
-	if ((dirfd = openat(root_fd, ccud_in->path, O_RDONLY|O_NOFOLLOW)) == -1)
+	if ((dirfd = openat(root_fd, ccud_in->path, O_RDONLY | O_NOFOLLOW)) ==
+	    -1)
 		goto out2;
 	dstage = "fstat";
 	if (fstat(dirfd, &st))
@@ -280,8 +280,7 @@ emuxfs_dir_meta_recompute(struct emuxfs_cud *pcud_out, dind dev_index,
 
 	dstage = "patch_sums";
 	if (emuxfs_dir_patch_sums(post_desc.content_checksum,
-	    pre_desc.content_checksum, alg, dev_index, dirfd, &dir,
-	    &patch))
+		pre_desc.content_checksum, alg, dev_index, dirfd, &dir, &patch))
 		goto out3;
 
 	pre_meta.header = post_meta.header = (struct emuxfs_meta_header){
@@ -293,17 +292,18 @@ emuxfs_dir_meta_recompute(struct emuxfs_cud *pcud_out, dind dev_index,
 	memcpy(&pre_meta.checksums[chksz], pre_desc.content_checksum, chksz);
 	memcpy(&post_meta.checksums[chksz], post_desc.content_checksum, chksz);
 
-	if (bcmp(&pre_meta.checksums[0], &db_pre_meta.checksums[0], chksz) != 0) {
+	if (bcmp(&pre_meta.checksums[0], &db_pre_meta.checksums[0], chksz) !=
+	    0) {
 		EMUXFS_TRACE("dir_meta_recompute: pre meta checksum "
-		    "dev=%lu path=%s\n", (unsigned long)dev_index,
-		    ccud_in->path);
+			     "dev=%lu path=%s\n",
+		    (unsigned long)dev_index, ccud_in->path);
 		goto out3;
 	}
 	if (bcmp(&pre_meta.checksums[chksz], &db_pre_meta.checksums[chksz],
-	    chksz) != 0) {
+		chksz) != 0) {
 		EMUXFS_TRACE("dir_meta_recompute: pre content checksum "
-		    "dev=%lu path=%s\n", (unsigned long)dev_index,
-		    ccud_in->path);
+			     "dev=%lu path=%s\n",
+		    (unsigned long)dev_index, ccud_in->path);
 		goto out3;
 	}
 
@@ -355,8 +355,8 @@ emuxfs_path_is_root(const char *path)
  * 'expected' then 1 is returned.
  */
 EMUXFS int
-emuxfs_readback(dind i, const char *path, int shallow,
-    const struct emuxfs_meta *expected)
+emuxfs_readback(
+    dind i, const char *path, int shallow, const struct emuxfs_meta *expected)
 {
 	EMUXFS_TRACE("enter");
 	struct emuxfs_dev	*dev;
@@ -397,16 +397,16 @@ emuxfs_readback(dind i, const char *path, int shallow,
 	else {
 		if (emuxfs_desc_chk_node_content(&desc, i, path)) {
 			EMUXFS_TRACE("readback: content dev=%lu ino=%llu "
-			    "path=%s\n", (unsigned long)i,
-			    (unsigned long long)ino, path);
+				     "path=%s\n",
+			    (unsigned long)i, (unsigned long long)ino, path);
 			goto fail;
 		}
 	}
 	emuxfs_desc_chk_meta(meta_chk_buf, &desc, alg);
 	if (bcmp(meta_chk_buf, &meta.checksums[0], chksz) != 0) {
 		EMUXFS_TRACE("readback: meta checksum dev=%lu ino=%llu "
-		    "path=%s\n", (unsigned long)i, (unsigned long long)ino,
-		    path);
+			     "path=%s\n",
+		    (unsigned long)i, (unsigned long long)ino, path);
 		goto fail;
 	}
 	/*
@@ -416,15 +416,16 @@ emuxfs_readback(dind i, const char *path, int shallow,
 	 */
 	if (emuxfs_assign_validate(i, ino, eno)) {
 		EMUXFS_TRACE("readback: assign dev=%lu ino=%llu eno=%llu "
-		    "path=%s\n", (unsigned long)i, (unsigned long long)ino,
+			     "path=%s\n",
+		    (unsigned long)i, (unsigned long long)ino,
 		    (unsigned long long)eno, path);
 		goto fail;
 	}
 	if ((expected != nullptr) &&
 	    (bcmp(meta_chk_buf, &expected->checksums[0], chksz) != 0)) {
 		EMUXFS_TRACE("readback: expected mismatch dev=%lu ino=%llu "
-		    "path=%s\n", (unsigned long)i, (unsigned long long)ino,
-		    path);
+			     "path=%s\n",
+		    (unsigned long)i, (unsigned long long)ino, path);
 		goto fail;
 	}
 	return 0;
@@ -436,8 +437,8 @@ EMUXFS int
 emuxfs_parent_readback(dind i, const char *path)
 {
 	EMUXFS_TRACE("enter");
-	char	 ppath[PATH_MAX];
-	size_t	 path_len;
+	char   ppath[PATH_MAX];
+	size_t path_len;
 
 	if (emuxfs_path_is_root(path))
 		return 1;
@@ -486,8 +487,8 @@ EMUXFS int
 emuxfs_path_pop(const char **fname_out, char *path, size_t *path_len_inout)
 {
 	EMUXFS_TRACE("enter");
-	char	*sep, *fname;
-	size_t	 path_len;
+	char  *sep, *fname;
+	size_t path_len;
 
 	if (path_len_inout != nullptr)
 		path_len = *path_len_inout;
@@ -535,8 +536,8 @@ EMUXFS int
 emuxfs_path_sanitize(const char **path_inout)
 {
 	EMUXFS_TRACE("enter");
-	const char	*path, *comp, *p;
-	size_t		 len;
+	const char *path, *comp, *p;
+	size_t	    len;
 
 	path = *path_inout;
 	while (path[0] == '/')
@@ -576,10 +577,10 @@ EMUXFS int
 emuxfs_ancestors_meta_recompute(dind dev_index, struct emuxfs_cud *cud)
 {
 	EMUXFS_TRACE("enter");
-	char			 path[PATH_MAX];
-	const char		*fname;
-	size_t			 path_len;
-	struct emuxfs_cud	 pcud, ccud;
+	char		  path[PATH_MAX];
+	const char	 *fname;
+	size_t		  path_len;
+	struct emuxfs_cud pcud, ccud;
 
 	/* There are no ancestors of the root path. */
 	if (emuxfs_path_is_root(cud->path))
@@ -638,10 +639,10 @@ emuxfs_dir_is_empty(int *empty_out, char const *path)
 {
 	EMUXFS_TRACE("enter");
 	struct emuxfs_dir dir;
-	size_t i, dnamelen;
-	const char *dname;
-	struct dirent *dirent;
-	int empty;
+	size_t		  i, dnamelen;
+	const char	 *dname;
+	struct dirent	 *dirent;
+	int		  empty;
 
 	if (emuxfs_pushdir(&dir, AT_FDCWD, path))
 		return 1;
@@ -685,14 +686,14 @@ EMUXFS int
 emuxfs_pushdir(struct emuxfs_dir *dir_out, int fd, const char *path)
 {
 	EMUXFS_TRACE("enter");
-	struct stat	  st;
-	size_t		  blksz;
-	uint8_t		 *dirbuf;
-	int		  dirfd;
-	struct dirent	 *dirent;
-	ssize_t		  rdsz, i, rdend;
-	struct dirent	**ent_array;
-	size_t		  ent_count, j;
+	struct stat	st;
+	size_t		blksz;
+	uint8_t	       *dirbuf;
+	int		dirfd;
+	struct dirent  *dirent;
+	ssize_t		rdsz, i, rdend;
+	struct dirent **ent_array;
+	size_t		ent_count, j;
 
 	if (fstatat(fd, path, &st, AT_SYMLINK_NOFOLLOW))
 		return 1;
@@ -706,7 +707,8 @@ emuxfs_pushdir(struct emuxfs_dir *dir_out, int fd, const char *path)
 		exit(-1);
 	}
 
-	if ((dirfd = openat(fd, path, O_RDONLY|O_DIRECTORY|O_NOFOLLOW)) == -1)
+	if ((dirfd = openat(fd, path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW)) ==
+	    -1)
 		goto fail;
 
 	rdend = 0;
@@ -727,8 +729,8 @@ emuxfs_pushdir(struct emuxfs_dir *dir_out, int fd, const char *path)
 				++ent_count;
 		}
 		rdend += i;
-		EMUXFS_TRACE("pushdir: path=%s dirbuf=%p\n", path,
-		    (void *)dirbuf);
+		EMUXFS_TRACE(
+		    "pushdir: path=%s dirbuf=%p\n", path, (void *)dirbuf);
 		if (emuxfs_dsgrow((void **)&dirbuf, blksz)) {
 			EMUXFS_TRACE("pushdir: dsgrow failed\n");
 			exit(-1);
@@ -739,8 +741,8 @@ emuxfs_pushdir(struct emuxfs_dir *dir_out, int fd, const char *path)
 	if (close(dirfd))
 		exit(-1);
 
-	if (emuxfs_dspush((void **)&ent_array,
-	    ent_count * sizeof(struct dirent *))) {
+	if (emuxfs_dspush(
+		(void **)&ent_array, ent_count * sizeof(struct dirent *))) {
 		EMUXFS_TRACE("pushdir: dspush ent_array failed\n");
 		exit(-1);
 	}
@@ -792,12 +794,12 @@ static int
 emuxfs_removeat_impl(int fd, char *path, size_t len)
 {
 	EMUXFS_TRACE("enter");
-	int			 rc;
-	struct stat		 st;
-	struct emuxfs_dir	 dir;
-	struct dirent		*dirent;
-	size_t			 i, sublen, dnamelen;
-	const char		*dname;
+	int		  rc;
+	struct stat	  st;
+	struct emuxfs_dir dir;
+	struct dirent	 *dirent;
+	size_t		  i, sublen, dnamelen;
+	const char	 *dname;
 
 	if (fstatat(fd, path, &st, AT_SYMLINK_NOFOLLOW))
 		return 1;
@@ -813,8 +815,8 @@ emuxfs_removeat_impl(int fd, char *path, size_t len)
 				continue;
 			if ((dnamelen == 2) && (strncmp("..", dname, 2) == 0))
 				continue;
-			if ((dnamelen == 6) && (strncmp(".muxfs", dname, 6) ==
-			    0))
+			if ((dnamelen == 6) &&
+			    (strncmp(".muxfs", dname, 6) == 0))
 				goto dirout2;
 			sublen = len + 1 + dnamelen;
 			if (sublen >= PATH_MAX)
@@ -828,10 +830,10 @@ emuxfs_removeat_impl(int fd, char *path, size_t len)
 		if (unlinkat(fd, path, AT_REMOVEDIR))
 			goto dirout2;
 		rc = 0;
-dirout2:
+	dirout2:
 		if (emuxfs_popdir(&dir))
 			exit(-1);
-dirout:
+	dirout:
 		return rc;
 	}
 	if (!(S_ISREG(st.st_mode) || S_ISLNK(st.st_mode)))
@@ -845,8 +847,8 @@ EMUXFS int
 emuxfs_removeat(int fd, const char *_path)
 {
 	EMUXFS_TRACE("enter");
-	char	 path[PATH_MAX];
-	size_t	 len;
+	char   path[PATH_MAX];
+	size_t len;
 
 	len = strlen(_path);
 	if (len >= PATH_MAX)
@@ -858,17 +860,15 @@ emuxfs_removeat(int fd, const char *_path)
 }
 
 static int
-emuxfs_restore_dir(dind ddev_index, dind sdev_index, const char *path,
-    int sfd, struct stat *sst, struct emuxfs_meta *expected)
+emuxfs_restore_dir(dind ddev_index, dind sdev_index, const char *path, int sfd,
+    struct stat *sst, struct emuxfs_meta *expected)
 {
 	EMUXFS_TRACE("enter");
 	int			 rc;
-	struct emuxfs_dev	*sdev,
-				*ddev;
+	struct emuxfs_dev	*sdev, *ddev;
 	struct stat		 dst;
 	char			 pathbuf[PATH_MAX];
-	size_t			 pathlen,
-				 dnamelen;
+	size_t			 pathlen, dnamelen;
 	const char		*dname;
 	struct emuxfs_dir	 dir;
 	struct dirent		*dirent;
@@ -922,7 +922,7 @@ emuxfs_restore_dir(dind ddev_index, dind sdev_index, const char *path,
 	if (fchmodat(ddev->root_fd, path, sst->st_mode, AT_SYMLINK_NOFOLLOW))
 		goto out;
 	if (fchownat(ddev->root_fd, path, sst->st_uid, sst->st_gid,
-	    AT_SYMLINK_NOFOLLOW))
+		AT_SYMLINK_NOFOLLOW))
 		goto out;
 	/* Chmod again since chown can unset suid/sgid bits. */
 	if (fchmodat(ddev->root_fd, path, sst->st_mode, AT_SYMLINK_NOFOLLOW))
@@ -995,23 +995,23 @@ emuxfs_restore_dir(dind ddev_index, dind sdev_index, const char *path,
 			goto out2;
 		if (S_ISLNK(subst.st_mode)) {
 			if (emuxfs_restore_symlink(ddev_index, sdev_index,
-			    pathbuf, &subst, &submeta))
+				pathbuf, &subst, &submeta))
 				goto subout;
 		} else {
 			if ((subfd = openat(sdev->root_fd, pathbuf,
-			    O_RDONLY|O_NOFOLLOW)) == -1)
+				 O_RDONLY | O_NOFOLLOW)) == -1)
 				goto out2;
 			if (S_ISDIR(subst.st_mode)) {
 				if (emuxfs_restore_dir(ddev_index, sdev_index,
-				    pathbuf, subfd, &subst, &submeta))
+					pathbuf, subfd, &subst, &submeta))
 					goto subout;
 			} else if (S_ISREG(subst.st_mode)) {
 				if (emuxfs_restore_reg(ddev_index, sdev_index,
-				    pathbuf, subfd, &subst, &submeta))
+					pathbuf, subfd, &subst, &submeta))
 					goto subout;
 			} else {
-				if (emuxfs_state_restore_push_back(sdev_index,
-				    pathbuf))
+				if (emuxfs_state_restore_push_back(
+					sdev_index, pathbuf))
 					exit(-1);
 				goto subout;
 			}
@@ -1025,7 +1025,7 @@ emuxfs_restore_dir(dind ddev_index, dind sdev_index, const char *path,
 			subfd = -1;
 		}
 		continue;
-subout:
+	subout:
 		if (subfd != -1) {
 			if (close(subfd))
 				exit(-1);
@@ -1063,15 +1063,12 @@ subout:
 	}
 
 	if ((dfd = openat(ddev->root_fd, path,
-	    O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC)) == -1)
+		 O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC)) == -1)
 		goto out2;
 	if (fstat(dfd, &dst))
 		goto out3;
 	dino = dst.st_ino;
-	assign = (struct emuxfs_assign){
-	    .flags = AF_ASSIGNED,
-	    .ino = dino
-	};
+	assign = (struct emuxfs_assign){.flags = AF_ASSIGNED, .ino = dino};
 	if (emuxfs_meta_write(expected, ddev_index, dino))
 		goto out3;
 	if (emuxfs_assign_write(&assign, ddev_index, expected->header.eno))
@@ -1100,11 +1097,11 @@ static int
 emuxfs_copy_reg(int dfd, int sfd, size_t content_sz)
 {
 	EMUXFS_TRACE("enter");
-	int rc;
+	int		    rc;
 	struct emuxfs_range r;
-	size_t i_offset, txsz;
-	uint64_t i;
-	uint8_t content_buf[EMUXFS_BLOCK_SIZE];
+	size_t		    i_offset, txsz;
+	uint64_t	    i;
+	uint8_t		    content_buf[EMUXFS_BLOCK_SIZE];
 
 	rc = 1;
 
@@ -1119,8 +1116,8 @@ emuxfs_copy_reg(int dfd, int sfd, size_t content_sz)
 			txsz = content_sz - i_offset;
 		if (emuxfs_pread_exact(sfd, content_buf, txsz, (off_t)i_offset))
 			goto out;
-		if (emuxfs_pwrite_exact(dfd, content_buf, txsz,
-		    (off_t)i_offset))
+		if (emuxfs_pwrite_exact(
+			dfd, content_buf, txsz, (off_t)i_offset))
 			goto out;
 	}
 
@@ -1130,13 +1127,12 @@ out:
 }
 
 static int
-emuxfs_restore_reg(dind ddev_index, dind sdev_index, const char *path,
-    int sfd, struct stat *sst, struct emuxfs_meta *expected)
+emuxfs_restore_reg(dind ddev_index, dind sdev_index, const char *path, int sfd,
+    struct stat *sst, struct emuxfs_meta *expected)
 {
 	EMUXFS_TRACE("enter");
 	int			 rc;
-	struct emuxfs_dev	*sdev,
-				*ddev;
+	struct emuxfs_dev	*sdev, *ddev;
 	enum emuxfs_chk_alg_type alg;
 	size_t			 chksz;
 	uint64_t		 eno;
@@ -1146,8 +1142,7 @@ emuxfs_restore_reg(dind ddev_index, dind sdev_index, const char *path,
 	ino_t			 dino;
 	struct emuxfs_assign	 assign;
 	struct stat		 slfile_st;
-	int			 dlfd,
-				 slfd;
+	int			 dlfd, slfd;
 	int			 exists;
 
 	rc = 1;
@@ -1189,7 +1184,8 @@ emuxfs_restore_reg(dind ddev_index, dind sdev_index, const char *path,
 	if (fstatat(ddev->root_fd, path, &dst, AT_SYMLINK_NOFOLLOW) == 0) {
 		if (emuxfs_is_hardlink(&dst)) {
 			emuxfs_alert("Refusing to overwrite hard link: "
-			    "%lu:/%s\n", (dind)ddev_index, path);
+				     "%lu:/%s\n",
+			    (dind)ddev_index, path);
 			goto out;
 		}
 		if (!S_ISREG(dst.st_mode)) {
@@ -1199,8 +1195,8 @@ emuxfs_restore_reg(dind ddev_index, dind sdev_index, const char *path,
 	}
 
 	if ((dfd = openat(ddev->root_fd, path,
-	    O_WRONLY|O_CREAT|O_TRUNC|O_NOFOLLOW|O_CLOEXEC,
-	    sst->st_mode)) == -1)
+		 O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW | O_CLOEXEC,
+		 sst->st_mode)) == -1)
 		goto out;
 	if (emuxfs_copy_reg(dfd, sfd, content_sz))
 		goto out;
@@ -1229,13 +1225,13 @@ emuxfs_restore_reg(dind ddev_index, dind sdev_index, const char *path,
 	if (exists && emuxfs_lfile_delete(ddev->lfile_fd, dino))
 		goto out;
 	if (content_sz > EMUXFS_BLOCK_SIZE) {
-		if (emuxfs_lfile_create(ddev->lfile_fd, chksz, dino,
-		    content_sz))
+		if (emuxfs_lfile_create(
+			ddev->lfile_fd, chksz, dino, content_sz))
 			goto out;
 		if (emuxfs_lfile_open(&dlfd, ddev->lfile_fd, dino, O_WRONLY))
 			goto out;
-		if (emuxfs_lfile_open(&slfd, sdev->lfile_fd, sst->st_ino,
-		    O_RDONLY))
+		if (emuxfs_lfile_open(
+			&slfd, sdev->lfile_fd, sst->st_ino, O_RDONLY))
 			goto out;
 		if (fstat(slfd, &slfile_st))
 			goto out;
@@ -1245,10 +1241,7 @@ emuxfs_restore_reg(dind ddev_index, dind sdev_index, const char *path,
 	if (emuxfs_meta_write(expected, ddev_index, dino))
 		goto out;
 	emuxfs_fault_point("restore/after_meta");
-	assign = (struct emuxfs_assign){
-	    .flags = AF_ASSIGNED,
-	    .ino = dino
-	};
+	assign = (struct emuxfs_assign){.flags = AF_ASSIGNED, .ino = dino};
 	if (emuxfs_assign_write(&assign, ddev_index, eno))
 		goto out;
 
@@ -1284,8 +1277,7 @@ emuxfs_restore_symlink(dind ddev_index, dind sdev_index, const char *path,
 {
 	EMUXFS_TRACE("enter");
 	int			 rc;
-	struct emuxfs_dev	*sdev,
-				*ddev;
+	struct emuxfs_dev	*sdev, *ddev;
 	enum emuxfs_chk_alg_type alg;
 	size_t			 chksz;
 	uint64_t		 eno;
@@ -1309,8 +1301,8 @@ emuxfs_restore_symlink(dind ddev_index, dind sdev_index, const char *path,
 	eno = expected->header.eno;
 
 	memset(content_buf, 0, PATH_MAX);
-	if ((content_sz = readlinkat(sdev->root_fd, path, content_buf,
-	    PATH_MAX - 1)) == -1)
+	if ((content_sz = readlinkat(
+		 sdev->root_fd, path, content_buf, PATH_MAX - 1)) == -1)
 		goto out;
 	if (content_sz >= PATH_MAX)
 		goto out;
@@ -1335,7 +1327,7 @@ emuxfs_restore_symlink(dind ddev_index, dind sdev_index, const char *path,
 	if (fchmodat(ddev->root_fd, path, sst->st_mode, AT_SYMLINK_NOFOLLOW))
 		goto out;
 	if (fchownat(ddev->root_fd, path, sst->st_uid, sst->st_gid,
-	    AT_SYMLINK_NOFOLLOW))
+		AT_SYMLINK_NOFOLLOW))
 		goto out;
 	{
 		struct timespec ts[2];
@@ -1349,10 +1341,7 @@ emuxfs_restore_symlink(dind ddev_index, dind sdev_index, const char *path,
 		goto out;
 	dino = dst.st_ino;
 
-	assign = (struct emuxfs_assign){
-	    .flags = AF_ASSIGNED,
-	    .ino = dino
-	};
+	assign = (struct emuxfs_assign){.flags = AF_ASSIGNED, .ino = dino};
 	if (emuxfs_meta_write(expected, ddev_index, dino))
 		goto out;
 	if (emuxfs_assign_write(&assign, ddev_index, eno))
@@ -1377,17 +1366,17 @@ emuxfs_restore_possible_inner(int *is_delete_out, dind ddev_index,
     const char *ppath, struct emuxfs_dir_patch *patch, int expect_substitute)
 {
 	EMUXFS_TRACE("enter");
-	int			 rc, err, is_delete, exists;
-	struct emuxfs_meta	 smeta, spmeta, dpmeta;
-	struct emuxfs_dir	 ddir;
-	int			 dpfd;
-	struct stat		 sst, spst, dst, dpst;
-	ino_t			 sino, spino, dpino;
-	uint8_t			 as_is_sum[EMUXFS_CHKSZ_MAX];
-	uint8_t			 with_patch_sum[EMUXFS_CHKSZ_MAX];
-	uint8_t			 as_is_meta_sum[EMUXFS_CHKSZ_MAX];
-	uint64_t		 dpeno;
-	struct emuxfs_desc	 dpdesc;
+	int		   rc, err, is_delete, exists;
+	struct emuxfs_meta smeta, spmeta, dpmeta;
+	struct emuxfs_dir  ddir;
+	int		   dpfd;
+	struct stat	   sst, spst, dst, dpst;
+	ino_t		   sino, spino, dpino;
+	uint8_t		   as_is_sum[EMUXFS_CHKSZ_MAX];
+	uint8_t		   with_patch_sum[EMUXFS_CHKSZ_MAX];
+	uint8_t		   as_is_meta_sum[EMUXFS_CHKSZ_MAX];
+	uint64_t	   dpeno;
+	struct emuxfs_desc dpdesc;
 
 	rc = 1;
 
@@ -1424,8 +1413,8 @@ emuxfs_restore_possible_inner(int *is_delete_out, dind ddev_index,
 	if (exists) {
 		if (!expect_substitute) {
 			if (emuxfs_readback(sdev_index, path, 0, nullptr)) {
-				if (emuxfs_state_restore_push_back(sdev_index,
-				    path))
+				if (emuxfs_state_restore_push_back(
+					sdev_index, path))
 					exit(-1);
 				rc = 3;
 				goto out;
@@ -1476,11 +1465,11 @@ emuxfs_restore_possible_inner(int *is_delete_out, dind ddev_index,
 
 	if (emuxfs_pushdir(&ddir, ddev->root_fd, ppath))
 		goto out;
-	if ((dpfd = openat(ddev->root_fd, ppath, O_RDONLY|O_NOFOLLOW)) == -1)
+	if ((dpfd = openat(ddev->root_fd, ppath, O_RDONLY | O_NOFOLLOW)) == -1)
 		goto out2;
 
-	if (emuxfs_dir_patch_sums(as_is_sum, with_patch_sum, alg, ddev_index,
-	    dpfd, &ddir, patch))
+	if (emuxfs_dir_patch_sums(
+		as_is_sum, with_patch_sum, alg, ddev_index, dpfd, &ddir, patch))
 		goto out3;
 	if (bcmp(with_patch_sum, &spmeta.checksums[chksz], chksz) != 0) {
 		if (emuxfs_state_restore_push_back(ddev_index, ppath))
@@ -1532,16 +1521,15 @@ out:
  * done).
  */
 static int
-emuxfs_restore_possible(int *is_delete_out, dind ddev_index, dind sdev_index,
-    const char *_path)
+emuxfs_restore_possible(
+    int *is_delete_out, dind ddev_index, dind sdev_index, const char *_path)
 {
 	EMUXFS_TRACE("enter");
-	int			 is_first, is_last, is_unnecessary, subrc,
-				 is_delete;
-	char			 path[PATH_MAX], ppathbuf[PATH_MAX];
-	const char		*ppath, *fname;
-	size_t			 ppathlen;
-	struct emuxfs_dev	*ddev, *sdev;
+	int		   is_first, is_last, is_unnecessary, subrc, is_delete;
+	char		   path[PATH_MAX], ppathbuf[PATH_MAX];
+	const char	  *ppath, *fname;
+	size_t		   ppathlen;
+	struct emuxfs_dev *ddev, *sdev;
 	enum emuxfs_chk_alg_type alg;
 	size_t			 chksz;
 	struct emuxfs_dir_patch	 patch;
@@ -1582,9 +1570,9 @@ emuxfs_restore_possible(int *is_delete_out, dind ddev_index, dind sdev_index,
 		} else
 			patch.fname = fname;
 
-		subrc = emuxfs_restore_possible_inner((is_first ? &is_delete :
-		    nullptr), ddev_index, sdev_index, path, ddev, sdev, alg, chksz,
-		    ppath, &patch, !is_first);
+		subrc = emuxfs_restore_possible_inner(
+		    (is_first ? &is_delete : nullptr), ddev_index, sdev_index,
+		    path, ddev, sdev, alg, chksz, ppath, &patch, !is_first);
 
 		switch (subrc) {
 		case 0:
@@ -1658,7 +1646,7 @@ emuxfs_restore_delete(dind ddev_index, dind sdev_index, const char *path)
 		goto out;
 
 	if ((dpfd = openat(ddev->root_fd, ppath,
-	    O_RDONLY|O_NOFOLLOW|O_CLOEXEC)) == -1)
+		 O_RDONLY | O_NOFOLLOW | O_CLOEXEC)) == -1)
 		goto out;
 	if (fstat(dpfd, &dpst))
 		goto out2;
@@ -1697,10 +1685,10 @@ static int
 emuxfs_dir_meta_restore(dind ddev_index, dind sdev_index, const char *path)
 {
 	EMUXFS_TRACE("enter");
-	struct emuxfs_dev	*ddev, *sdev;
-	struct stat		 dst, sst;
-	ino_t			 dino, sino;
-	struct emuxfs_meta	 meta;
+	struct emuxfs_dev *ddev, *sdev;
+	struct stat	   dst, sst;
+	ino_t		   dino, sino;
+	struct emuxfs_meta meta;
 
 	if (emuxfs_dev_get(&ddev, ddev_index, 0))
 		return 1;
@@ -1724,13 +1712,13 @@ emuxfs_dir_meta_restore(dind ddev_index, dind sdev_index, const char *path)
 }
 
 static int
-emuxfs_ancestors_meta_restore(dind ddev_index, dind sdev_index,
-    const char *_path)
+emuxfs_ancestors_meta_restore(
+    dind ddev_index, dind sdev_index, const char *_path)
 {
 	EMUXFS_TRACE("enter");
-	char		 path[PATH_MAX];
-	const char	*fname;
-	size_t		 path_len;
+	char	    path[PATH_MAX];
+	const char *fname;
+	size_t	    path_len;
 
 	/* There are no ancestors of the root path. */
 	if (emuxfs_path_is_root(_path))
@@ -1767,17 +1755,17 @@ emuxfs_ancestors_meta_restore(dind ddev_index, dind sdev_index,
  * Returns 0 on success (with *ambiguous_out set), 1 on internal error.
  */
 static int
-emuxfs_restore_source_ambiguous(int *ambiguous_out, dind ddev_index,
-    const char *path)
+emuxfs_restore_source_ambiguous(
+    int *ambiguous_out, dind ddev_index, const char *path)
 {
 	EMUXFS_TRACE("enter");
-	struct emuxfs_dev	*sdev;
-	struct emuxfs_meta	 meta;
-	struct stat		 st;
-	uint8_t			 first[EMUXFS_CHKSZ_MAX];
-	size_t			 chksz;
-	dind			 si, dev_count;
-	int			 have_first, ambiguous;
+	struct emuxfs_dev *sdev;
+	struct emuxfs_meta meta;
+	struct stat	   st;
+	uint8_t		   first[EMUXFS_CHKSZ_MAX];
+	size_t		   chksz;
+	dind		   si, dev_count;
+	int		   have_first, ambiguous;
 
 	*ambiguous_out = 0;
 	have_first = 0;
@@ -1815,14 +1803,14 @@ static int
 emuxfs_restore_impl(dind ddev_index, const char *path)
 {
 	EMUXFS_TRACE("enter");
-	struct emuxfs_dev	*ddev, *sdev;
-	int			 is_delete;
-	int			 ambiguous;
-	dind			 si, dev_count;
-	int			 sfd;
-	struct stat		 sst;
-	ino_t			 sino;
-	struct emuxfs_meta	 smeta;
+	struct emuxfs_dev *ddev, *sdev;
+	int		   is_delete;
+	int		   ambiguous;
+	dind		   si, dev_count;
+	int		   sfd;
+	struct stat	   sst;
+	ino_t		   sino;
+	struct emuxfs_meta smeta;
 
 	if ((dev_count = emuxfs_dev_count()) == 0)
 		return 1;
@@ -1837,8 +1825,8 @@ emuxfs_restore_impl(dind ddev_index, const char *path)
 	 * operator designates the source.
 	 */
 	if (!emuxfs_state_is_restore_only()) {
-		if (emuxfs_restore_source_ambiguous(&ambiguous, ddev_index,
-		    path))
+		if (emuxfs_restore_source_ambiguous(
+			&ambiguous, ddev_index, path))
 			return 1;
 		if (ambiguous)
 			return 5; /* Ambiguous: no repair performed. */
@@ -1852,8 +1840,8 @@ emuxfs_restore_impl(dind ddev_index, const char *path)
 
 		sfd = -1;
 
-		switch (emuxfs_restore_possible(&is_delete, ddev_index, si,
-		    path)) {
+		switch (
+		    emuxfs_restore_possible(&is_delete, ddev_index, si, path)) {
 		case 0:
 			break; /* Restore is possible. */
 		case 1:
@@ -1884,20 +1872,20 @@ emuxfs_restore_impl(dind ddev_index, const char *path)
 			goto fail2;
 
 		if (S_ISLNK(sst.st_mode)) {
-			if (emuxfs_restore_symlink(ddev_index, si, path, &sst,
-			    &smeta))
+			if (emuxfs_restore_symlink(
+				ddev_index, si, path, &sst, &smeta))
 				goto fail2;
 		} else {
 			if ((sfd = openat(sdev->root_fd, path,
-			    O_RDONLY|O_NOFOLLOW|O_CLOEXEC)) == -1)
+				 O_RDONLY | O_NOFOLLOW | O_CLOEXEC)) == -1)
 				goto fail;
 			if (S_ISDIR(sst.st_mode)) {
 				if (emuxfs_restore_dir(ddev_index, si, path,
-				    sfd, &sst, &smeta))
+					sfd, &sst, &smeta))
 					goto fail2;
 			} else if (S_ISREG(sst.st_mode)) {
 				if (emuxfs_restore_reg(ddev_index, si, path,
-				    sfd, &sst, &smeta))
+					sfd, &sst, &smeta))
 					goto fail2;
 			} else {
 				if (emuxfs_state_restore_push_back(si, path))
@@ -1917,13 +1905,13 @@ emuxfs_restore_impl(dind ddev_index, const char *path)
 
 		emuxfs_fault_point("restore/after");
 		return 0;
-fail2:
+	fail2:
 		if (sfd != -1) {
 			if (close(sfd))
 				exit(-1);
 			sfd = -1;
 		}
-fail:
+	fail:
 		continue;
 	}
 	return 1;
@@ -1943,12 +1931,11 @@ emuxfs_restore_now(void)
 			continue; /* Device unavailable; nothing pushed. */
 		switch (emuxfs_restore_impl(ddev_index, path)) {
 		case 0:
-			emuxfs_info("Restored: %lu:/%s\n",
-			    ddev_index, path);
+			emuxfs_info("Restored: %lu:/%s\n", ddev_index, path);
 			break;
 		case 1:
-			emuxfs_alert("Restoration Failure: %lu:/%s\n",
-			    ddev_index, path);
+			emuxfs_alert(
+			    "Restoration Failure: %lu:/%s\n", ddev_index, path);
 			goto fail;
 		case 2:
 			goto next;
@@ -1962,16 +1949,17 @@ emuxfs_restore_now(void)
 			 * 'emuxfs sync destination source').
 			 */
 			emuxfs_alert("Ambiguous copies, refusing to restore: "
-			    "%lu:/%s\n", ddev_index, path);
+				     "%lu:/%s\n",
+			    ddev_index, path);
 			emuxfs_state_ambiguity_note();
 			goto fail;
 		default:
 			exit(-1); /* Programming error. */
 		}
 		goto next;
-fail:
+	fail:
 		emuxfs_degraded_set(ddev_index);
-next:
+	next:
 		emuxfs_restoring_pop(ddev_index);
 		memset(path, 0, PATH_MAX);
 	}
@@ -1981,11 +1969,11 @@ EMUXFS int
 emuxfs_parent_gid(gid_t *parent_gid_out, const char *path)
 {
 	EMUXFS_TRACE("enter");
-	char			 pbuf[PATH_MAX], *ppath;
-	size_t			 ppathlen;
-	struct emuxfs_dev	*dev;
-	dind			 dev_count, i;
-	struct stat		 st;
+	char		   pbuf[PATH_MAX], *ppath;
+	size_t		   ppathlen;
+	struct emuxfs_dev *dev;
+	dind		   dev_count, i;
+	struct stat	   st;
 
 	ppathlen = strlen(path);
 	if (ppathlen >= PATH_MAX)
@@ -2043,14 +2031,14 @@ emuxfs_dir_content_chk(uint8_t *sum_out, dind dev_index, struct emuxfs_dir *dir)
 			continue;
 		if ((dnamelen == 2) && (strncmp("..", dname, 2) == 0))
 			continue;
-		if ((dnamelen == 6) && (strncmp(".muxfs", dname, 6) ==
-		    0))
+		if ((dnamelen == 6) && (strncmp(".muxfs", dname, 6) == 0))
 			continue;
 		ino = dirent->d_fileno;
 		if (emuxfs_meta_read(&meta, dev_index, ino)) {
 			EMUXFS_TRACE("dir_content_chk: meta_read dev=%lu "
-			    "dname=%s ino=%llu\n", (unsigned long)dev_index,
-			    dname, (unsigned long long)ino);
+				     "dname=%s ino=%llu\n",
+			    (unsigned long)dev_index, dname,
+			    (unsigned long long)ino);
 			goto out;
 		}
 		emuxfs_chk_update(&chk, (uint8_t *)dname, dnamelen);
@@ -2088,13 +2076,13 @@ EMUXFS int
 emuxfs_pread_exact(int fd, void *buf, size_t sz, off_t off)
 {
 	EMUXFS_TRACE("enter");
-	size_t done;
+	size_t	done;
 	ssize_t r;
 
 	done = 0;
 	while (done < sz) {
-		r = pread(fd, (uint8_t *)buf + done, sz - done,
-		    off + (off_t)done);
+		r = pread(
+		    fd, (uint8_t *)buf + done, sz - done, off + (off_t)done);
 		if (r == -1) {
 			if (errno == EINTR)
 				continue;
@@ -2111,7 +2099,7 @@ EMUXFS int
 emuxfs_pwrite_exact(int fd, const void *buf, size_t sz, off_t off)
 {
 	EMUXFS_TRACE("enter");
-	size_t done;
+	size_t	done;
 	ssize_t r;
 
 	done = 0;
@@ -2134,10 +2122,10 @@ EMUXFS int
 emuxfs_fsync_parent(int root_fd, const char *path)
 {
 	EMUXFS_TRACE("enter");
-	char		 pbuf[PATH_MAX];
-	const char	*ppath;
-	size_t		 len;
-	int		 fd, rc;
+	char	    pbuf[PATH_MAX];
+	const char *ppath;
+	size_t	    len;
+	int	    fd, rc;
 
 	len = strlen(path);
 	if (len >= PATH_MAX)
@@ -2150,7 +2138,7 @@ emuxfs_fsync_parent(int root_fd, const char *path)
 		ppath = pbuf;
 
 	if ((fd = openat(root_fd, ppath,
-	    O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC)) == -1)
+		 O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC)) == -1)
 		return 1;
 
 	rc = fsync(fd);
@@ -2164,10 +2152,10 @@ EMUXFS int
 emuxfs_parse_args(int argc, char **argv, int no_mp)
 {
 	EMUXFS_TRACE("enter");
-	int i, c;
-	size_t len;
+	int		    i, c;
+	size_t		    len;
 	struct emuxfs_args *args = &emuxfs_cmdline;
-	char *dest;
+	char		   *dest;
 
 	memset(args, 0, sizeof(*args));
 

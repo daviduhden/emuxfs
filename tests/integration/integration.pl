@@ -351,7 +351,7 @@ print "== in-place write at a non-block-aligned offset\n";
             fail("open $path: $!");
             next;
         };
-        sysseek( $fh, 4000, 0 ) or fail("seek $path: $!");
+        sysseek( $fh, 4000, 0 )        or fail("seek $path: $!");
         syswrite( $fh, $patch ) == 100 or fail("write $path: $!");
         close($fh);
     }

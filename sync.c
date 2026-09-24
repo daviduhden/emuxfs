@@ -33,13 +33,13 @@ EMUXFS int
 emuxfs_sync_main(int argc, char *argv[])
 {
 	EMUXFS_TRACE("enter");
-	int empty, exists;
-	struct emuxfs_dev *ddev, *sdev;
-	const char *ddev_path;
+	int			 empty, exists;
+	struct emuxfs_dev	*ddev, *sdev;
+	const char		*ddev_path;
 	enum emuxfs_chk_alg_type alg;
-	size_t chksz, metasz;
-	time_t seq_zero_time;
-	const uint8_t *array_uuid;
+	size_t			 chksz, metasz;
+	time_t			 seq_zero_time;
+	const uint8_t		*array_uuid;
 
 	static const dind ddev_index = 0, sdev_index = 1;
 
@@ -59,7 +59,8 @@ emuxfs_sync_main(int argc, char *argv[])
 		exit(-1);
 
 	if (emuxfs_dev_count() < 2) {
-		dprintf(2, "Error: There are less than 2 directories in the "
+		dprintf(2,
+		    "Error: There are less than 2 directories in the "
 		    "array.\n");
 		exit(1);
 	}
@@ -80,7 +81,7 @@ emuxfs_sync_main(int argc, char *argv[])
 		exit(-1);
 	if (empty) {
 		if (emuxfs_dev_format(ddev_path, alg, chksz, metasz,
-		    seq_zero_time, array_uuid))
+			seq_zero_time, array_uuid))
 			exit(-1);
 	}
 

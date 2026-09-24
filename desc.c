@@ -19,8 +19,8 @@
 #include <sys/stat.h>
 #include <sys/syslimits.h>
 
-#include <fcntl.h>
 #include <dirent.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -30,17 +30,17 @@
 #include "emuxfs.h"
 
 EMUXFS int
-emuxfs_desc_chk_reg_content(struct emuxfs_desc *desc, dind dev_index,
-    const char *path)
+emuxfs_desc_chk_reg_content(
+    struct emuxfs_desc *desc, dind dev_index, const char *path)
 {
 	EMUXFS_TRACE("enter");
-	int rc;
-	struct emuxfs_dev *dev;
-	struct stat st;
-	size_t fsz;
-	int fd;
-	struct emuxfs_chk chk;
-	uint8_t readbuf[EMUXFS_BLOCK_SIZE];
+	int			 rc;
+	struct emuxfs_dev	*dev;
+	struct stat		 st;
+	size_t			 fsz;
+	int			 fd;
+	struct emuxfs_chk	 chk;
+	uint8_t			 readbuf[EMUXFS_BLOCK_SIZE];
 	enum emuxfs_chk_alg_type alg;
 
 	rc = 1;
@@ -56,7 +56,7 @@ emuxfs_desc_chk_reg_content(struct emuxfs_desc *desc, dind dev_index,
 	fsz = (size_t)st.st_size;
 
 	if (fsz <= EMUXFS_BLOCK_SIZE) {
-		if ((fd = openat(dev->root_fd, path, O_RDONLY|O_NOFOLLOW)) ==
+		if ((fd = openat(dev->root_fd, path, O_RDONLY | O_NOFOLLOW)) ==
 		    -1)
 			goto out;
 		emuxfs_chk_init(&chk, alg);
@@ -68,10 +68,10 @@ emuxfs_desc_chk_reg_content(struct emuxfs_desc *desc, dind dev_index,
 		emuxfs_chk_final(desc->content_checksum, &chk);
 
 		rc = 0;
-out2:
+	out2:
 		if (close(fd))
 			exit(-1);
-out:
+	out:
 		return rc;
 	}
 
@@ -80,19 +80,18 @@ out:
 }
 
 static int
-emuxfs_desc_chk_dir_content(struct emuxfs_desc *desc, dind dev_index,
-    const char *path)
+emuxfs_desc_chk_dir_content(
+    struct emuxfs_desc *desc, dind dev_index, const char *path)
 {
 	EMUXFS_TRACE("enter");
-	int rc, fd;
+	int		   rc, fd;
 	struct emuxfs_dev *dev;
-	struct emuxfs_dir dir;
+	struct emuxfs_dir  dir;
 
 	if (emuxfs_dev_get(&dev, dev_index, 0))
 		return 1;
 
-	if ((fd = openat(dev->root_fd, path, O_RDONLY|O_NOFOLLOW)) ==
-	    -1)
+	if ((fd = openat(dev->root_fd, path, O_RDONLY | O_NOFOLLOW)) == -1)
 		return 1;
 	if (emuxfs_pushdir(&dir, fd, "."))
 		exit(-1);
@@ -105,15 +104,15 @@ emuxfs_desc_chk_dir_content(struct emuxfs_desc *desc, dind dev_index,
 }
 
 EMUXFS int
-emuxfs_desc_chk_symlink_content(struct emuxfs_desc *desc, dind dev_index,
-    const char *path)
+emuxfs_desc_chk_symlink_content(
+    struct emuxfs_desc *desc, dind dev_index, const char *path)
 {
 	EMUXFS_TRACE("enter");
-	struct emuxfs_dev *dev;
-	int fd;
+	struct emuxfs_dev	*dev;
+	int			 fd;
 	enum emuxfs_chk_alg_type alg;
-	ssize_t lnksz;
-	char lnkbuf[PATH_MAX];
+	ssize_t			 lnksz;
+	char			 lnkbuf[PATH_MAX];
 
 	if (emuxfs_dev_get(&dev, dev_index, 0))
 		return 1;
@@ -124,15 +123,14 @@ emuxfs_desc_chk_symlink_content(struct emuxfs_desc *desc, dind dev_index,
 	if ((lnksz = readlinkat(fd, path, lnkbuf, PATH_MAX - 1)) == -1)
 		return 1;
 
-	emuxfs_desc_chk_provided_content(desc, (uint8_t *)lnkbuf, (size_t)lnksz,
-	    alg);
+	emuxfs_desc_chk_provided_content(
+	    desc, (uint8_t *)lnkbuf, (size_t)lnksz, alg);
 	return 0;
 }
 
 EMUXFS void
 emuxfs_desc_chk_provided_content(struct emuxfs_desc *desc,
-    const uint8_t *content,
-    size_t contentsz, enum emuxfs_chk_alg_type alg_type)
+    const uint8_t *content, size_t contentsz, enum emuxfs_chk_alg_type alg_type)
 {
 	EMUXFS_TRACE("enter");
 	struct emuxfs_chk chk;
@@ -147,8 +145,8 @@ emuxfs_desc_chk_provided_content(struct emuxfs_desc *desc,
  * emuxfs_desc_init_from_stat().
  */
 EMUXFS int
-emuxfs_desc_chk_node_content(struct emuxfs_desc *desc, dind dev_index,
-    const char *path)
+emuxfs_desc_chk_node_content(
+    struct emuxfs_desc *desc, dind dev_index, const char *path)
 {
 	EMUXFS_TRACE("enter");
 	switch (desc->type) {
@@ -171,8 +169,8 @@ emuxfs_desc_chk_meta(uint8_t *sum_out, const struct emuxfs_desc *desc,
 {
 	EMUXFS_TRACE("enter");
 	struct emuxfs_chk chk;
-	size_t chksz;
-	uint64_t u64h, u64le;
+	size_t		  chksz;
+	uint64_t	  u64h, u64le;
 
 	chksz = emuxfs_chk_size(alg_type);
 
@@ -201,8 +199,8 @@ emuxfs_desc_chk_meta(uint8_t *sum_out, const struct emuxfs_desc *desc,
 }
 
 EMUXFS int
-emuxfs_desc_init_from_stat(struct emuxfs_desc *desc_out, struct stat *st,
-    uint64_t eno)
+emuxfs_desc_init_from_stat(
+    struct emuxfs_desc *desc_out, struct stat *st, uint64_t eno)
 {
 	EMUXFS_TRACE("enter");
 	emuxfs_desc_type desc_type;

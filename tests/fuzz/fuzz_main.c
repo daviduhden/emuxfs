@@ -17,7 +17,8 @@
  */
 
 /*
- * This file is part of emuxfs, The Enhanced Multiplexed File System (see NOTICE.md).
+ * This file is part of emuxfs, The Enhanced Multiplexed File System (see
+ * NOTICE.md).
  *
  * Standalone mutation driver for LLVMFuzzerTestOneInput().  It exists so that
  * 'make fuzz-smoke' still exercises the parser on toolchains whose clang has
@@ -61,10 +62,10 @@ main(int argc, char *argv[])
 	    "array_uuid=00112233-4455-6677-8899-aabbccddeeff\n"
 	    "chk_alg=md5\n"
 	    "seq_zero_time=0\n";
-	uint64_t state = 0x9e3779b97f4a7c15ULL;
-	uint8_t buf[4096];
+	uint64_t      state = 0x9e3779b97f4a7c15ULL;
+	uint8_t	      buf[4096];
 	unsigned long runs, i, muts;
-	size_t len, j;
+	size_t	      len, j;
 
 	runs = 20000;
 	if (argc > 1) {

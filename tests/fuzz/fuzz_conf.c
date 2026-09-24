@@ -17,7 +17,8 @@
  */
 
 /*
- * This file is part of emuxfs, The Enhanced Multiplexed File System (see NOTICE.md).
+ * This file is part of emuxfs, The Enhanced Multiplexed File System (see
+ * NOTICE.md).
  *
  * Optional libFuzzer entry point for the muxfs.conf parser.  It is not built
  * by the normal build; 'make fuzz-smoke' runs a bounded session as part of
@@ -37,8 +38,8 @@ int
 LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
 	struct emuxfs_dev_conf conf;
-	char path[] = "/tmp/emuxfs-fuzz-XXXXXX";
-	int fd;
+	char		       path[] = "/tmp/emuxfs-fuzz-XXXXXX";
+	int		       fd;
 
 	if (size == 0)
 		return 0;

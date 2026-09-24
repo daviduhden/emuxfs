@@ -16,8 +16,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -35,18 +36,18 @@
  * returned to its original state.
  */
 static int
-emuxfs_scan_impl(enum emuxfs_scan_mode mode, dind dev_index, char *path,
-    size_t len)
+emuxfs_scan_impl(
+    enum emuxfs_scan_mode mode, dind dev_index, char *path, size_t len)
 {
 	EMUXFS_TRACE("enter");
-	int			 rc;
-	struct emuxfs_dev	*dev;
-	struct stat		 st;
-	struct emuxfs_dir	 dir;
-	struct dirent		*dirent;
-	size_t			 i, sublen, dnamelen;
-	const char		*dname;
-	const char		*epath; /* Effective path. */
+	int		   rc;
+	struct emuxfs_dev *dev;
+	struct stat	   st;
+	struct emuxfs_dir  dir;
+	struct dirent	  *dirent;
+	size_t		   i, sublen, dnamelen;
+	const char	  *dname;
+	const char	  *epath; /* Effective path. */
 
 	epath = (len > 0) ? path : ".";
 
@@ -86,8 +87,8 @@ emuxfs_scan_impl(enum emuxfs_scan_mode mode, dind dev_index, char *path,
 				continue;
 			if ((dnamelen == 2) && (strncmp("..", dname, 2) == 0))
 				continue;
-			if ((dnamelen == 6) && (strncmp(".muxfs", dname, 6) ==
-			    0))
+			if ((dnamelen == 6) &&
+			    (strncmp(".muxfs", dname, 6) == 0))
 				continue;
 			sublen = dnamelen;
 			if (len > 0)
@@ -111,13 +112,13 @@ emuxfs_scan_impl(enum emuxfs_scan_mode mode, dind dev_index, char *path,
 				exit(-1);
 		}
 		rc = 0;
-dirout2:
+	dirout2:
 		if (emuxfs_popdir(&dir)) {
-			EMUXFS_TRACE("scan_impl: popdir failed for %s\n",
-			    epath);
+			EMUXFS_TRACE(
+			    "scan_impl: popdir failed for %s\n", epath);
 			exit(-1);
 		}
-dirout:
+	dirout:
 		return rc;
 	}
 	if (!(S_ISREG(st.st_mode) || S_ISLNK(st.st_mode))) {
@@ -138,9 +139,9 @@ static int
 emuxfs_scan(enum emuxfs_scan_mode mode, dind dev_index)
 {
 	EMUXFS_TRACE("enter");
-	char path[PATH_MAX];
+	char		   path[PATH_MAX];
 	struct emuxfs_dev *dev;
-	size_t bad;
+	size_t		   bad;
 
 	/*
 	 * Cross-check assign.db against meta.db before walking the tree.  A
@@ -151,13 +152,17 @@ emuxfs_scan(enum emuxfs_scan_mode mode, dind dev_index)
 	if (emuxfs_dev_get(&dev, dev_index, 0))
 		return 1;
 	if (emuxfs_meta_assign_check(dev_index, &bad)) {
-		dprintf(2, "Error: %s: cannot read the metadata/assign "
-		    "mappings\n", dev->root_path);
+		dprintf(2,
+		    "Error: %s: cannot read the metadata/assign "
+		    "mappings\n",
+		    dev->root_path);
 		return 1;
 	}
 	if (bad != 0) {
-		dprintf(2, "Error: %s: %lu metadata/assign mapping(s) are "
-		    "inconsistent\n", dev->root_path, (unsigned long)bad);
+		dprintf(2,
+		    "Error: %s: %lu metadata/assign mapping(s) are "
+		    "inconsistent\n",
+		    dev->root_path, (unsigned long)bad);
 		return 1;
 	}
 
@@ -260,7 +265,8 @@ emuxfs_scan_main(enum emuxfs_scan_mode scan_mode, int argc, char *argv[])
 
 	if ((scan_mode == EMUXFS_SCAN_HEAL) &&
 	    (emuxfs_state_ambiguity_count() > 0)) {
-		dprintf(2, "Error: ambiguous copies were found; nothing was "
+		dprintf(2,
+		    "Error: ambiguous copies were found; nothing was "
 		    "overwritten. Resolve them explicitly with "
 		    "'emuxfs sync destination source'.\n");
 		emuxfs_final();

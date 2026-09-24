@@ -17,7 +17,8 @@
  */
 
 /*
- * This file is part of emuxfs, The Enhanced Multiplexed File System (see NOTICE.md).
+ * This file is part of emuxfs, The Enhanced Multiplexed File System (see
+ * NOTICE.md).
  *
  * This module is the only place that calls pledge(2) and unveil(2).  Keeping
  * the policy in one file makes it auditable and keeps the rest of the program

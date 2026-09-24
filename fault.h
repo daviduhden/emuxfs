@@ -17,7 +17,8 @@
  */
 
 /*
- * This file is part of emuxfs, The Enhanced Multiplexed File System (see NOTICE.md).
+ * This file is part of emuxfs, The Enhanced Multiplexed File System (see
+ * NOTICE.md).
  *
  * Optional, compile-time-gated fault injection for crash-consistency tests.
  * It is inert unless EMUXFS_FAULT_INJECTION is defined, and is never enabled
@@ -28,9 +29,9 @@
 #ifndef _FAULT_H_
 #define _FAULT_H_
 
-#define EMUXFS_FAULT_ENV_POINT	"EMUXFS_FAULT_POINT"
-#define EMUXFS_FAULT_ENV_ACTION	"EMUXFS_FAULT_ACTION"
-#define EMUXFS_FAULT_EXIT_STATUS	70
+#define EMUXFS_FAULT_ENV_POINT "EMUXFS_FAULT_POINT"
+#define EMUXFS_FAULT_ENV_ACTION "EMUXFS_FAULT_ACTION"
+#define EMUXFS_FAULT_EXIT_STATUS 70
 
 /*
  * If the environment names 'name' as the active fault point, terminate the

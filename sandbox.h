@@ -17,7 +17,8 @@
  */
 
 /*
- * This file is part of emuxfs, The Enhanced Multiplexed File System (see NOTICE.md).
+ * This file is part of emuxfs, The Enhanced Multiplexed File System (see
+ * NOTICE.md).
  *
  * OpenBSD pledge(2) and unveil(2) policy.  The promise strings are derived
  * from the system calls actually reachable from each sub-command; see
@@ -43,11 +44,11 @@
 
 #include "emuxfs.h"
 
-#define EMUXFS_PLEDGE_VERSION	"stdio"
-#define EMUXFS_PLEDGE_FORMAT	"stdio rpath wpath cpath fattr chown"
-#define EMUXFS_PLEDGE_SCAN	"stdio rpath wpath cpath fattr chown unix"
-#define EMUXFS_PLEDGE_SYNC	"stdio rpath wpath cpath fattr chown unix"
-#define EMUXFS_PLEDGE_MOUNT	"stdio rpath wpath cpath fattr chown id unix"
+#define EMUXFS_PLEDGE_VERSION "stdio"
+#define EMUXFS_PLEDGE_FORMAT "stdio rpath wpath cpath fattr chown"
+#define EMUXFS_PLEDGE_SCAN "stdio rpath wpath cpath fattr chown unix"
+#define EMUXFS_PLEDGE_SYNC "stdio rpath wpath cpath fattr chown unix"
+#define EMUXFS_PLEDGE_MOUNT "stdio rpath wpath cpath fattr chown id unix"
 
 /*
  * unveil(2) the given directory with read/write/create access.  The path is
@@ -61,7 +62,8 @@ EMUXFS int emuxfs_sandbox_unveil_path(const char *);
  */
 EMUXFS int emuxfs_sandbox_unveil_mirrors(const struct emuxfs_args *);
 
-/* unveil(nullptr, nullptr): no further changes to the filesystem view are allowed. */
+/* unveil(nullptr, nullptr): no further changes to the filesystem view are
+ * allowed. */
 EMUXFS int emuxfs_sandbox_unveil_lock(void);
 
 /* pledge(2) with the given promise string. */

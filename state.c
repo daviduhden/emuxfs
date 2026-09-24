@@ -33,7 +33,7 @@
 struct emuxfs_restore_item {
 	size_t dev_index;
 	size_t path_len;
-	char path[];
+	char   path[];
 };
 
 /*
@@ -51,16 +51,16 @@ struct emuxfs_state {
 	 * NUL-terminated path.  It is addressed by byte offsets rather than by
 	 * pointers so that reallocarray(3) cannot invalidate anything.
 	 */
-	uint8_t			*restore_queue;
-	size_t			 restore_queue_size;
-	size_t			 restore_front;
-	size_t			 restore_back;
-	uint64_t		 next_eno;
-	size_t			 ambiguities;
-	struct syslog_data	 log;
-	int			 is_restore_only;
-	dind			 restore_only_dind;
-	struct emuxfs_wrbuf	 wr;
+	uint8_t		   *restore_queue;
+	size_t		    restore_queue_size;
+	size_t		    restore_front;
+	size_t		    restore_back;
+	uint64_t	    next_eno;
+	size_t		    ambiguities;
+	struct syslog_data  log;
+	int		    is_restore_only;
+	dind		    restore_only_dind;
+	struct emuxfs_wrbuf wr;
 };
 
 static struct emuxfs_state emuxfs_global_state;
@@ -92,8 +92,8 @@ emuxfs_restore_queue_reserve(size_t extra)
 {
 	EMUXFS_TRACE("enter");
 	struct emuxfs_state *st;
-	size_t used, newsz;
-	uint8_t *q;
+	size_t		     used, newsz;
+	uint8_t		    *q;
 
 	st = &emuxfs_global_state;
 	used = st->restore_back - st->restore_front;
@@ -139,9 +139,9 @@ EMUXFS int
 emuxfs_state_restore_push_back(dind dev_index, const char *path)
 {
 	EMUXFS_TRACE("enter");
-	struct emuxfs_state *st;
+	struct emuxfs_state	   *st;
 	struct emuxfs_restore_item *curr;
-	size_t item_offset, path_len;
+	size_t			    item_offset, path_len;
 
 	emuxfs_warn("Corrupted: %lu:/%s\n", dev_index, path);
 
@@ -163,8 +163,8 @@ emuxfs_state_restore_push_back(dind dev_index, const char *path)
 	if (emuxfs_restore_queue_reserve(item_offset))
 		return 1;
 
-	curr = (struct emuxfs_restore_item *)
-	    (st->restore_queue + st->restore_back);
+	curr = (struct emuxfs_restore_item *)(st->restore_queue +
+	    st->restore_back);
 	curr->dev_index = dev_index;
 	curr->path_len = path_len;
 	memcpy(curr->path, path, path_len + 1);
@@ -178,15 +178,15 @@ EMUXFS int
 emuxfs_state_restore_next_path_len(size_t *path_len_out)
 {
 	EMUXFS_TRACE("enter");
-	struct emuxfs_state *st;
+	struct emuxfs_state	   *st;
 	struct emuxfs_restore_item *curr;
 
 	st = &emuxfs_global_state;
 	if (st->restore_front == st->restore_back)
 		return 1;
 
-	curr = (struct emuxfs_restore_item *)
-	    (st->restore_queue + st->restore_front);
+	curr = (struct emuxfs_restore_item *)(st->restore_queue +
+	    st->restore_front);
 	*path_len_out = curr->path_len;
 	return 0;
 }
@@ -195,16 +195,16 @@ EMUXFS int
 emuxfs_state_restore_pop_front(size_t *dev_index_out, char *path_out)
 {
 	EMUXFS_TRACE("enter");
-	struct emuxfs_state *st;
+	struct emuxfs_state	   *st;
 	struct emuxfs_restore_item *curr;
-	size_t item_offset;
+	size_t			    item_offset;
 
 	st = &emuxfs_global_state;
 	if (st->restore_front == st->restore_back)
 		return 1;
 
-	curr = (struct emuxfs_restore_item *)
-	    (st->restore_queue + st->restore_front);
+	curr = (struct emuxfs_restore_item *)(st->restore_queue +
+	    st->restore_front);
 
 	*dev_index_out = curr->dev_index;
 	memcpy(path_out, curr->path, curr->path_len);
@@ -324,15 +324,15 @@ emuxfs_state_syslog_init(void)
 	const char *trace_file;
 
 	emuxfs_global_state.log = (struct syslog_data)SYSLOG_DATA_INIT;
-	openlog_r("emuxfs", LOG_PID|LOG_NDELAY, LOG_USER,
-	    &emuxfs_global_state.log);
+	openlog_r(
+	    "emuxfs", LOG_PID | LOG_NDELAY, LOG_USER, &emuxfs_global_state.log);
 
 	emuxfs_trace_fd = -1;
 	emuxfs_trace_stderr = (getenv("EMUXFS_TRACE") != nullptr);
 	trace_file = getenv("EMUXFS_TRACE_FILE");
 	if ((trace_file != nullptr) && (trace_file[0] != '\0'))
-		emuxfs_trace_fd = open(trace_file,
-		    O_WRONLY|O_CREAT|O_APPEND, 0600);
+		emuxfs_trace_fd =
+		    open(trace_file, O_WRONLY | O_CREAT | O_APPEND, 0600);
 
 	return 0;
 }
@@ -393,9 +393,9 @@ emuxfs_alert(const char *msg, ...)
 EMUXFS void
 emuxfs_trace(const char *file, int line, const char *fmt, ...)
 {
-	char buf[1024];
+	char	buf[1024];
 	va_list va_args;
-	int n, fd;
+	int	n, fd;
 
 	fd = emuxfs_trace_fd;
 	if ((fd < 0) && !emuxfs_trace_stderr)
@@ -424,8 +424,8 @@ EMUXFS int
 emuxfs_init(int skip_first_mount, int force)
 {
 	EMUXFS_TRACE("enter");
-	uint64_t next_eno, max_next_eno;
-	dind i, j, mnts;
+	uint64_t	    next_eno, max_next_eno;
+	dind		    i, j, mnts;
 	struct emuxfs_args *args;
 
 	args = &emuxfs_cmdline;
@@ -473,7 +473,7 @@ emuxfs_final(void)
 {
 	EMUXFS_TRACE("enter");
 	static int done;
-	dind i, j, dev_count;
+	dind	   i, j, dev_count;
 
 	if (done)
 		return 0;
@@ -554,10 +554,11 @@ emuxfs_state_wrbuf_set(const char *path, uid_t user, gid_t group, size_t sz,
 		return 1;
 
 	*wrbuf = (struct emuxfs_wrbuf){
-	    .wc = {
-		.user = user,
-		.group = group,
-	    },
+	    .wc =
+		{
+		    .user = user,
+		    .group = group,
+		},
 	    .sz = sz,
 	    .off = off,
 	};

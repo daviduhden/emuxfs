@@ -81,12 +81,11 @@ EMUXFS int
 emuxfs_dsgrow(void **p_inout, size_t s)
 {
 	struct emuxfs_ds_hdr *h;
-	size_t newsz;
+	size_t		      newsz;
 
 	if (*p_inout == nullptr)
 		exit(-1); /* Programming error. */
-	h = (struct emuxfs_ds_hdr *)
-	    ((uint8_t *)*p_inout - EMUXFS_DS_HDR_SIZE);
+	h = (struct emuxfs_ds_hdr *)((uint8_t *)*p_inout - EMUXFS_DS_HDR_SIZE);
 	if (s > SIZE_MAX - h->size - EMUXFS_DS_HDR_SIZE)
 		exit(-1);
 	newsz = h->size + s;

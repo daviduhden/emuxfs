@@ -17,7 +17,8 @@
  */
 
 /*
- * This file belongs to emuxfs, The Enhanced Multiplexed File System (see NOTICE.md).
+ * This file belongs to emuxfs, The Enhanced Multiplexed File System (see
+ * NOTICE.md).
  *
  * The algorithm table is a stable, on-disk ABI: the 'name' strings are
  * persisted in muxfs.conf and the order fixes the values of
@@ -92,26 +93,23 @@ emuxfs_sha1_final(uint8_t *buf_out, struct emuxfs_chk *chk)
 }
 
 static struct emuxfs_chk_alg emuxfs_chk_alg_tab[] = {
-	{ CAT_CRC32,  4, emuxfs_crc32_init, emuxfs_crc32_update,
-	  emuxfs_crc32_final, "crc32" },
-	{ CAT_MD5, 16, emuxfs_md5_init, emuxfs_md5_update,
-	  emuxfs_md5_final, "md5"   },
-	{ CAT_SHA1, 20, emuxfs_sha1_init, emuxfs_sha1_update,
-	  emuxfs_sha1_final, "sha1"  },
-	{ CAT_NONE,  0, nullptr, nullptr,
-	  nullptr, "none"  }
-};
+    {CAT_CRC32, 4, emuxfs_crc32_init, emuxfs_crc32_update, emuxfs_crc32_final,
+	"crc32"},
+    {CAT_MD5, 16, emuxfs_md5_init, emuxfs_md5_update, emuxfs_md5_final, "md5"},
+    {CAT_SHA1, 20, emuxfs_sha1_init, emuxfs_sha1_update, emuxfs_sha1_final,
+	"sha1"},
+    {CAT_NONE, 0, nullptr, nullptr, nullptr, "none"}};
 
 EMUXFS int
-emuxfs_chk_str_to_type(enum emuxfs_chk_alg_type *type, const char *name,
-    size_t name_len)
+emuxfs_chk_str_to_type(
+    enum emuxfs_chk_alg_type *type, const char *name, size_t name_len)
 {
 	size_t i;
 
 	for (i = 0; emuxfs_chk_alg_tab[i].type != CAT_NONE; ++i) {
 		if ((strlen(emuxfs_chk_alg_tab[i].name) == name_len) &&
 		    (strncmp(emuxfs_chk_alg_tab[i].name, name, name_len) ==
-		     0)) {
+			0)) {
 			*type = emuxfs_chk_alg_tab[i].type;
 			return 0;
 		}

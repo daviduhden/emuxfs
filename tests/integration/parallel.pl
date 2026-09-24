@@ -20,10 +20,10 @@
 use strict;
 use warnings;
 
-use Cwd           qw(getcwd);
-use File::Path    qw(make_path remove_tree);
-use File::Temp    qw(tempdir);
-use POSIX         qw(WNOHANG);
+use Cwd        qw(getcwd);
+use File::Path qw(make_path remove_tree);
+use File::Temp qw(tempdir);
+use POSIX      qw(WNOHANG);
 
 my $EMUXFS  = $ENV{EMUXFS}           // ( getcwd() . "/emuxfs" );
 my $WORKERS = $ENV{PARALLEL_WORKERS} // 32;
@@ -54,7 +54,8 @@ $| = 1;
 my $tmpbase = $ENV{TMPDIR} // "/tmp";
 $tmpbase =~ s{/+$}{};
 
-my $sandbox = tempdir( "emuxfs-parallel.XXXXXX", DIR => $tmpbase, CLEANUP => 0 );
+my $sandbox =
+  tempdir( "emuxfs-parallel.XXXXXX", DIR => $tmpbase, CLEANUP => 0 );
 unless ( $sandbox =~ m{\A\Q$tmpbase\E/[^/]+\z} ) {
     print STDERR "Refusing to run: sandbox '$sandbox' is outside '$tmpbase'\n";
     exit 2;
@@ -235,12 +236,12 @@ sub probe_mount {
         return 0;
     }
     print $pf "probe\n" or fail("mount probe write failed: $!");
-    close($pf) or fail("mount probe close failed: $!");
+    close($pf)          or fail("mount probe close failed: $!");
     my $got = slurp("$dev_a/$tag/p");
     fail("mount probe was not mirrored to dev_a")
       unless defined($got) && $got eq "probe\n";
     unlink("$mp/$tag/p") or fail("mount probe unlink failed: $!");
-    rmdir($dir) or fail("mount probe rmdir failed: $!");
+    rmdir($dir)          or fail("mount probe rmdir failed: $!");
     return 1;
 }
 
@@ -409,7 +410,7 @@ for my $id ( 0 .. $WORKERS - 1 ) {
 }
 
 my %status;
-my %alive = map { $_ => 1 } @pids;
+my %alive    = map { $_ => 1 } @pids;
 my $deadline = time() + $TIMEOUT;
 my $last     = time();
 while (%alive) {
@@ -422,8 +423,9 @@ while (%alive) {
     }
     last unless %alive;
     if ( time() > $deadline ) {
-        fail("$TIMEOUT-second timeout with " . scalar(keys %alive)
-              . " worker(s) still running");
+        fail(   "$TIMEOUT-second timeout with "
+              . scalar( keys %alive )
+              . " worker(s) still running" );
         kill( "KILL", keys %alive );
         waitpid( $_, 0 ) for keys %alive;
         %alive = ();
@@ -511,8 +513,8 @@ else {
 if ( $failures != 0 ) {
     my $l = slurp($mlog);
     if ( defined $l ) {
-        my @all   = split( /\n/, $l );
-        my @key   = grep { /PHANTOM|: fail|stage=|readback:/ } @all;
+        my @all = split( /\n/, $l );
+        my @key = grep { /PHANTOM|: fail|stage=|readback:/ } @all;
         @key = @key[ 0 .. 79 ] if @key > 80;
         if (@key) {
             print STDERR "diag: daemon failure lines:\n", join( "\n", @key ),
@@ -520,9 +522,7 @@ if ( $failures != 0 ) {
         }
         my $first = -1;
         for my $i ( 0 .. $#all ) {
-            if ( $all[$i] =~
-                /fail|readback:|dir_meta_recompute:|degraded=1/ )
-            {
+            if ( $all[$i] =~ /fail|readback:|dir_meta_recompute:|degraded=1/ ) {
                 $first = $i;
                 last;
             }

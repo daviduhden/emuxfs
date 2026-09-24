@@ -17,7 +17,8 @@
  */
 
 /*
- * This file belongs to emuxfs, The Enhanced Multiplexed File System (see NOTICE.md).
+ * This file belongs to emuxfs, The Enhanced Multiplexed File System (see
+ * NOTICE.md).
  *
  * muxfs.conf is a line-oriented, newline-terminated key=value text file.
  * Two versions are recognised and written:
@@ -25,21 +26,22 @@
  *   version=MAJOR.MINOR-flavor   human-readable program version (provenance)
  *   format_version=N             enforced on-disk format version
  *
- * The original Multiplexed File System wrote version=MAJOR.MINORflavor (no separator) and, due
- * to a parsing defect, never recovered the revision component, which made an
- * array formatted with any revision other than zero unmountable by the same
- * program.  The parser below accepts both the legacy and the new spelling.
- * format_version was not written by the original; its absence is treated as
- * EMUXFS_FORMAT_VERSION_LEGACY, which describes the same layout as version 1.
+ * The original Multiplexed File System wrote version=MAJOR.MINORflavor (no
+ * separator) and, due to a parsing defect, never recovered the revision
+ * component, which made an array formatted with any revision other than zero
+ * unmountable by the same program.  The parser below accepts both the legacy
+ * and the new spelling. format_version was not written by the original; its
+ * absence is treated as EMUXFS_FORMAT_VERSION_LEGACY, which describes the same
+ * layout as version 1.
  */
 
+#include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <uuid.h>
-#include <errno.h>
 
 #include "emuxfs.h"
 
@@ -54,7 +56,7 @@ static_assert(sizeof(uuid_t) == EMUXFS_UUID_SIZE,
  * 2 decimals at most 10 digits long (the string length of the decimal
  * representation of UINT32_MAX), plus 2 dots, plus the length of "release".
  */
-#define EMUXFS_VERSION_STRING_LENGTH_MAX ((2*10)+2+7)
+#define EMUXFS_VERSION_STRING_LENGTH_MAX ((2 * 10) + 2 + 7)
 
 /* 2^64 is about 1.8e19 */
 #define EMUXFS_DECIMAL_UINT64_LENGTH_MAX 20
@@ -75,16 +77,15 @@ emuxfs_conf_key_is(const char *key, size_t key_len, const char *literal)
 }
 
 static int
-emuxfs_conf_version_parse(struct emuxfs_dev_conf *conf, const char *version,
-    size_t version_len)
+emuxfs_conf_version_parse(
+    struct emuxfs_dev_conf *conf, const char *version, size_t version_len)
 {
 	EMUXFS_TRACE("enter");
-	char		 version_string_buf[EMUXFS_VERSION_STRING_LENGTH_MAX +
-			 1];
-	char		*b, *e;
-	char		 saved;
-	const char	*errstr;
-	long long	 num;
+	char	    version_string_buf[EMUXFS_VERSION_STRING_LENGTH_MAX + 1];
+	char	   *b, *e;
+	char	    saved;
+	const char *errstr;
+	long long   num;
 
 	if ((version_len == 0) ||
 	    (version_len > EMUXFS_VERSION_STRING_LENGTH_MAX))
@@ -142,9 +143,9 @@ static int
 emuxfs_uuid_read(uint8_t *dest, const char *src, size_t len)
 {
 	EMUXFS_TRACE("enter");
-	char *str;
+	char	*str;
 	uint32_t status;
-	uuid_t uuid;
+	uuid_t	 uuid;
 
 	if (len > EMUXFS_UUID_SIZE * 5)
 		return 1;
@@ -169,10 +170,10 @@ emuxfs_conf_line_parse(struct emuxfs_dev_conf *conf, const char *line,
 {
 	EMUXFS_TRACE("enter");
 	const char *eq, *key, *val;
-	size_t key_len, val_len;
-	char num_buf[EMUXFS_DECIMAL_UINT64_LENGTH_MAX + 1];
+	size_t	    key_len, val_len;
+	char	    num_buf[EMUXFS_DECIMAL_UINT64_LENGTH_MAX + 1];
 	const char *errstr;
-	long long num;
+	long long   num;
 
 	if ((eq = memchr(line, '=', len)) == nullptr)
 		return 1;
@@ -236,12 +237,12 @@ emuxfs_conf_line_parse(struct emuxfs_dev_conf *conf, const char *line,
 }
 
 static int
-emuxfs_conf_check(struct emuxfs_dev_conf *conf,
-    struct emuxfs_dev_conf_checklist cl)
+emuxfs_conf_check(
+    struct emuxfs_dev_conf *conf, struct emuxfs_dev_conf_checklist cl)
 {
 	EMUXFS_TRACE("enter");
 	if (!(cl.has_alg && cl.has_array_uuid && cl.has_dev_uuid &&
-	    cl.has_version && cl.has_seq_zero_time))
+		cl.has_version && cl.has_seq_zero_time))
 		return EMUXFS_CONF_EPARSE;
 
 	if (conf->format_version != EMUXFS_FORMAT_VERSION)
@@ -254,12 +255,12 @@ EMUXFS int
 emuxfs_conf_parse(struct emuxfs_dev_conf *conf, int fd)
 {
 	EMUXFS_TRACE("enter");
-	char buf[EMUXFS_BLOCK_SIZE];
-	ssize_t readsz;
-	size_t bufsz, rawlen, linesz;
-	char *eol;
+	char				 buf[EMUXFS_BLOCK_SIZE];
+	ssize_t				 readsz;
+	size_t				 bufsz, rawlen, linesz;
+	char				*eol;
 	struct emuxfs_dev_conf_checklist cl;
-	int rc;
+	int				 rc;
 
 	memset(conf, 0, sizeof(*conf));
 	conf->format_version = EMUXFS_FORMAT_VERSION_LEGACY;
@@ -329,22 +330,22 @@ EMUXFS int
 emuxfs_conf_write(struct emuxfs_dev_conf *conf, int fd)
 {
 	EMUXFS_TRACE("enter");
-	uuid_t uuid;
-	char *uuid_str;
+	uuid_t	 uuid;
+	char	*uuid_str;
 	uint32_t uuid_status;
 
 	if (ftruncate(fd, 0))
 		return 1;
 
 	if (dprintf(fd, "version=%u.%u-%s\n", conf->version.number,
-	    conf->version.revision,
-	    emuxfs_version_flavor_str(conf->version.flavor)) < 0)
+		conf->version.revision,
+		emuxfs_version_flavor_str(conf->version.flavor)) < 0)
 		return 1;
-	if (dprintf(fd, "format_version=%u\n",
-	    (unsigned)conf->format_version) < 0)
+	if (dprintf(fd, "format_version=%u\n", (unsigned)conf->format_version) <
+	    0)
 		return 1;
 	if (dprintf(fd, "chk_alg=%s\n",
-	    emuxfs_chk_type_to_str(conf->chk_alg_type)) < 0)
+		emuxfs_chk_type_to_str(conf->chk_alg_type)) < 0)
 		return 1;
 
 	uuid_dec_le(conf->array_uuid, &uuid);
@@ -367,8 +368,8 @@ emuxfs_conf_write(struct emuxfs_dev_conf *conf, int fd)
 	}
 	free(uuid_str);
 
-	if (dprintf(fd, "seq_zero_time=%lld\n",
-	    (long long)conf->seq_zero_time) < 0)
+	if (dprintf(
+		fd, "seq_zero_time=%lld\n", (long long)conf->seq_zero_time) < 0)
 		return 1;
 
 	if (fsync(fd))

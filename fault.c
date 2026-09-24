@@ -17,8 +17,8 @@
  */
 
 /*
- * This file is part of emuxfs, The Enhanced Multiplexed File System (see NOTICE.md).
- * See fault.h and TESTING.md.
+ * This file is part of emuxfs, The Enhanced Multiplexed File System (see
+ * NOTICE.md). See fault.h and TESTING.md.
  */
 
 #include <stdlib.h>
