@@ -716,6 +716,34 @@ emuxfs_pushdir(struct emuxfs_dir *dir_out, int fd, const char *path)
 	}
 	if (rdsz == -1)
 		goto fail2;
+
+	EMUXFS_TRACE("pushdir: path=%s blksz=%zu rdend=%zd ent_count=%zu\n",
+	    path, blksz, (ssize_t)rdend, ent_count);
+
+	/*
+	 * A name returned by getdents must be resolvable.  If it is not, the
+	 * listing contains a phantom entry and any checksum computed from it
+	 * would be wrong; record it rather than failing silently later.
+	 */
+	for (i = 0; i < rdend; i += dirent->d_reclen) {
+		struct stat pst;
+
+		dirent = (struct dirent *)&dirbuf[i];
+		if ((dirent->d_namlen == 1) && (dirent->d_name[0] == '.'))
+			continue;
+		if ((dirent->d_namlen == 2) && (dirent->d_name[0] == '.') &&
+		    (dirent->d_name[1] == '.'))
+			continue;
+		if ((dirent->d_namlen == 6) &&
+		    (strncmp(dirent->d_name, ".muxfs", 6) == 0))
+			continue;
+		if (fstatat(dirfd, dirent->d_name, &pst,
+		    AT_SYMLINK_NOFOLLOW))
+			EMUXFS_TRACE("pushdir: PHANTOM path=%s name=%s "
+			    "ino=%llu errno=%d\n", path, dirent->d_name,
+			    (unsigned long long)dirent->d_fileno, errno);
+	}
+
 	if (close(dirfd))
 		exit(-1);
 
