@@ -78,7 +78,12 @@ jobs:
 
             echo "== Parallel-load stress test (32 workers) =="
             if [ -c /dev/fuse0 ]; then
-                EMUXFS="$PWD/emuxfs" perl tests/integration/parallel.pl
+                # The stress test is CPU-bound.  On the emulated arm64 job it
+                # runs close to the default 900 s deadline and has failed on
+                # runner variance alone, so raise the deadline rather than
+                # weaken the 32x20 workload.
+                PARALLEL_TIMEOUT=1800 \
+                    EMUXFS="$PWD/emuxfs" perl tests/integration/parallel.pl
             else
                 echo "SKIP: /dev/fuse0 is not available on this architecture"
             fi
@@ -183,7 +188,12 @@ jobs:
 
             echo "== Parallel-load stress test (32 workers) =="
             if [ -c /dev/fuse0 ]; then
-                EMUXFS="$PWD/emuxfs" perl tests/integration/parallel.pl
+                # The stress test is CPU-bound.  On the emulated arm64 job it
+                # runs close to the default 900 s deadline and has failed on
+                # runner variance alone, so raise the deadline rather than
+                # weaken the 32x20 workload.
+                PARALLEL_TIMEOUT=1800 \
+                    EMUXFS="$PWD/emuxfs" perl tests/integration/parallel.pl
             else
                 echo "SKIP: /dev/fuse0 is not available on this architecture"
             fi
