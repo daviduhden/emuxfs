@@ -201,12 +201,20 @@ emuxfs_open(const char *path, struct fuse_file_info *ffi)
 	EMUXFS_TRACE("enter");
 	dind dev_count, i;
 	struct emuxfs_dev *dev;
-	int fd, err;
+	int fd, err, oflags;
 
 	emuxfs_wrbuf_flush();
 
 	if (emuxfs_path_sanitize(&path))
 		return -EIO;
+
+	/*
+	 * Creation is done by mknod(2), so open must not create.  Passing
+	 * O_CREAT through would create a node that emuxfs does not track (no
+	 * metadata) and would also be undefined behaviour, because openat(2)
+	 * then requires a mode argument that FUSE does not supply.
+	 */
+	oflags = ffi->flags & ~(O_CREAT | O_EXCL);
 
 	if ((dev_count = emuxfs_dev_count()) == 0)
 		return -EIO;
@@ -214,7 +222,7 @@ emuxfs_open(const char *path, struct fuse_file_info *ffi)
 		if (emuxfs_dev_get(&dev, i, 0))
 			continue;
 		emuxfs_eids_set();
-		fd = openat(dev->root_fd, path, ffi->flags);
+		fd = openat(dev->root_fd, path, oflags);
 		err = errno;
 		emuxfs_eids_reset();
 		if (fd == -1)
@@ -232,12 +240,15 @@ emuxfs_opendir(const char *path, struct fuse_file_info *ffi)
 	EMUXFS_TRACE("enter");
 	dind dev_count, i;
 	struct emuxfs_dev *dev;
-	int fd, err;
+	int fd, err, oflags;
 
 	emuxfs_wrbuf_flush();
 
 	if (emuxfs_path_sanitize(&path))
 		return -EIO;
+
+	/* Directories are created by mkdir(2); see emuxfs_open(). */
+	oflags = (ffi->flags & ~(O_CREAT | O_EXCL)) | O_DIRECTORY;
 
 	if ((dev_count = emuxfs_dev_count()) == 0)
 		return -EIO;
@@ -245,7 +256,7 @@ emuxfs_opendir(const char *path, struct fuse_file_info *ffi)
 		if (emuxfs_dev_get(&dev, i, 0))
 			continue;
 		emuxfs_eids_set();
-		fd = openat(dev->root_fd, path, ffi->flags|O_DIRECTORY);
+		fd = openat(dev->root_fd, path, oflags);
 		err = errno;
 		emuxfs_eids_reset();
 		if (fd == -1)
@@ -1729,7 +1740,20 @@ emuxfs_write_inner(int root_fd, struct emuxfs_op_update_args *args,
 			off = 0;
 			if (i_offset < newoff) {
 				if (i_offset < prewr_sz) {
-					beginsz = prewr_sz - i_offset;
+					/*
+					 * Copy only the bytes that precede
+					 * the write offset: everything from
+					 * newoff on is supplied by args->buf
+					 * below.  Reading to prewr_sz here
+					 * would leave the old bytes in the
+					 * block that contains newoff and
+					 * would also make the copy below
+					 * underflow when the write ends
+					 * inside that block.
+					 */
+					beginsz = (prewr_sz < newoff) ?
+					    prewr_sz : newoff;
+					beginsz -= i_offset;
 					if (beginsz > blksz)
 						beginsz = blksz;
 					if (pread(fd, content_buf, beginsz,

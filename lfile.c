@@ -483,6 +483,15 @@ emuxfs_lfile_readback(uint8_t *root_sum, dind dev_index, const char *path,
 	lfd = -1;
 	lfile = MAP_FAILED;
 	lfilesz = 0;
+	/*
+	 * A file that fits in a single block has no internal tree level: its
+	 * content checksum is the root entry at index 0.  The loops below do
+	 * not run in that case, so keep the parent index defined for the
+	 * expected/root_sum comparisons (and to avoid reading an
+	 * indeterminate value).
+	 */
+	pli = 0;
+	pln = 0;
 
 	if (emuxfs_dev_get(&dev, dev_index, 0))
 		goto out;

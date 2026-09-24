@@ -1,5 +1,37 @@
 # Change log
 
+## Memory-safety audit (2026-09-24)
+
+* **Write starting inside a file block.**  `emuxfs_write_inner` copied the
+  old block contents up to the previous end of file before applying the new
+  data, so a write whose offset was not block-aligned left the bytes before
+  the offset unchanged and placed the new bytes at the wrong position (and,
+  when the write ended inside the same block, the length computation
+  underflowed).  The copy now stops at the write offset, which is inert for
+  block-aligned writes.
+* **Bounds on fixed-size path buffers.**  `emuxfs_removeat`,
+  `emuxfs_parent_readback` and `emuxfs_state_restore_push_back` now reject
+  paths that do not fit in the `PATH_MAX` buffer they are copied into
+  (`emuxfs_state_restore_pop_front` copies the queued path into the caller's
+  buffer).
+* **`emuxfs_lfile_readback` parent index.**  The index of the parent entry
+  was read only from the level loop, so it was indeterminate for a file that
+  fits in one block (no internal level); it is now initialised to the root
+  entry at index 0.
+* **`open`/`opendir` no longer pass `O_CREAT`.**  Creation is performed by
+  `mknod`/`mkdir`/`symlink`; forwarding `O_CREAT` would create an untracked
+  node and is undefined behaviour because FUSE supplies no mode argument.
+* **Directory-entry comparison was one byte short.**  Three loops matched
+  `..` with `strncmp("..", name, 1)`, which also skipped any two-character
+  name beginning with `.` (for example a file named `.a`); most visibly,
+  `emuxfs_dir_is_empty` could report a non-empty directory as empty, and
+  `emuxfs format`/`sync` could then overwrite it.
+* **`ds_malloc` fallback grew allocations incorrectly.**  The optional
+  `EMUXFS_DS_MALLOC=1` build defined `emuxfs_dsgrow()` as `realloc(p, n)`
+  (setting the size) while `ds.h` requires *growing* by `n` bytes, so
+  `emuxfs_pushdir` would write past the allocation.  The fallback now tracks
+  each allocation's size and grows by the requested number of bytes.
+
 ## Free directory entries (2026-09-24)
 
 * **`emuxfs_pushdir` now skips free directory entries.**  `getdents(2)` on

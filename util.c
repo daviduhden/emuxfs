@@ -435,6 +435,8 @@ emuxfs_parent_readback(dind i, const char *path)
 		return 1;
 
 	path_len = strlen(path);
+	if (path_len >= PATH_MAX)
+		return 1;
 	memcpy(ppath, path, path_len);
 	ppath[path_len] = '\0';
 
@@ -643,7 +645,7 @@ emuxfs_dir_is_empty(int *empty_out, char const *path)
 		dnamelen = dirent->d_namlen;
 		if ((dnamelen == 1) && (strncmp(".", dname, 1) == 0))
 			continue;
-		if ((dnamelen == 2) && (strncmp("..", dname, 1) == 0))
+		if ((dnamelen == 2) && (strncmp("..", dname, 2) == 0))
 			continue;
 		empty = 0;
 		break;
@@ -839,6 +841,8 @@ emuxfs_removeat(int fd, const char *_path)
 	size_t	 len;
 
 	len = strlen(_path);
+	if (len >= PATH_MAX)
+		return 1;
 	memset(path, 0, PATH_MAX);
 	memcpy(path, _path, len);
 
@@ -966,7 +970,7 @@ emuxfs_restore_dir(dind ddev_index, dind sdev_index, const char *path,
 		dnamelen = dirent->d_namlen;
 		if ((dnamelen == 1) && (strncmp(".", dname, 1) == 0))
 			continue;
-		if ((dnamelen == 2) && (strncmp("..", dname, 1) == 0))
+		if ((dnamelen == 2) && (strncmp("..", dname, 2) == 0))
 			continue;
 		if ((dnamelen == 6) && (strncmp(".muxfs", dname, 6) == 0))
 			continue;
@@ -1033,7 +1037,7 @@ subout:
 		dnamelen = dirent->d_namlen;
 		if ((dnamelen == 1) && (strncmp(".", dname, 1) == 0))
 			continue;
-		if ((dnamelen == 2) && (strncmp("..", dname, 1) == 0))
+		if ((dnamelen == 2) && (strncmp("..", dname, 2) == 0))
 			continue;
 		if ((dnamelen == 6) && (strncmp(".muxfs", dname, 6) == 0))
 			continue;

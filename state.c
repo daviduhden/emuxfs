@@ -142,6 +142,13 @@ emuxfs_state_restore_push_back(dind dev_index, const char *path)
 
 	st = &emuxfs_global_state;
 	path_len = strlen(path);
+	/*
+	 * A queued path is later copied into a PATH_MAX buffer by
+	 * emuxfs_state_restore_pop_front(), so reject anything that would not
+	 * fit instead of letting it overflow the caller's buffer.
+	 */
+	if (path_len >= PATH_MAX)
+		return 1;
 	item_offset = emuxfs_restore_item_next_offset(path);
 
 	if (emuxfs_restore_queue_reserve(item_offset))
