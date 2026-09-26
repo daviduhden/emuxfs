@@ -27,7 +27,7 @@ jobs:
           persist-credentials: false
 
       - name: Build and test on OpenBSD 7.9 (amd64)
-        uses: vmactions/openbsd-vm@e6c68b637a12e83519688d115d57d5b0b53923cd  # v1.4.6
+        uses: vmactions/openbsd-vm@5f7b2c933b8846a138361d6843c52af4bef5d945  # v1.4.8
         with:
           release: "7.9"
           arch: amd64
@@ -137,7 +137,7 @@ jobs:
           persist-credentials: false
 
       - name: Build and test on OpenBSD 7.9 (arm64)
-        uses: vmactions/openbsd-vm@e6c68b637a12e83519688d115d57d5b0b53923cd  # v1.4.6
+        uses: vmactions/openbsd-vm@5f7b2c933b8846a138361d6843c52af4bef5d945  # v1.4.8
         with:
           release: "7.9"
           arch: aarch64
