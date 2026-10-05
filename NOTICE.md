@@ -9,7 +9,7 @@ Stephen D. Adams <stephen@sdadams.org>.
 ## Copyright and licensing
 
 * The original muxfs code is copyright (c) 2022 Stephen D. Adams and is
-  distributed under the ISC licence reproduced in [`LICENSE.md`](LICENSE.md).
+  distributed under the ISC licence reproduced in `LICENSE`.
   All original copyright notices are retained unmodified in the source files.
 * New and modified files in the emuxfs fork are copyright (c) 2026 David
   Uhden Collado and are distributed under the same ISC terms.
@@ -27,7 +27,7 @@ usable: the private directory is `.muxfs` and its configuration file is
 
 ## Files from the original muxfs
 
-`CHANGES.md`, `GLOSSARY.md`, `LICENSE.md`, `README.md`, `chk.c`, `chk.h`,
+`CHANGES.md`, `GLOSSARY.md`, `LICENSE`, `README.md`, `chk.c`, `chk.h`,
 `conf.c`, `desc.c`, `dev.c`, `ds.c`, `ds.h`, `ds_malloc.c`, `format.c`,
 `lfile.c`, `mount.c`, `emuxfs.c`, `emuxfs.h`, `ops.c`, `ops.h`, `scan.c`,
 `state.c`, `sync.c`, `test.conf.dist`, `test.pl`, `util.c`, `version.c`.
