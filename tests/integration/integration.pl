@@ -381,9 +381,7 @@ print "== partial reads of a large file\n";
     my $whole = slurp($in);
     must_run( "copy partial in", "cp", $in, "$mp/partial" );
 
-    foreach my $case ( [ 0, 100 ], [ 4000, 100 ], [ 4096, 100 ],
-        [ 8192, 1 ] )
-    {
+    foreach my $case ( [ 0, 100 ], [ 4000, 100 ], [ 4096, 100 ], [ 8192, 1 ] ) {
         my ( $off, $len ) = @$case;
         open( my $fh, "<", "$mp/partial" ) or do {
             fail("open partial ($off,$len): $!");

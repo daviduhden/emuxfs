@@ -2120,8 +2120,8 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 			mod_begin = (size_t)args->offset;
 			if (mod_begin > (size_t)prewr_st.st_size)
 				mod_begin = (size_t)prewr_st.st_size;
-			if (ckd_add(&mod_end, (size_t)args->offset,
-				args->bufsz))
+			if (ckd_add(
+				&mod_end, (size_t)args->offset, args->bufsz))
 				goto fail;
 			mod_size = mod_end;
 			if (mod_size < (size_t)prewr_st.st_size)

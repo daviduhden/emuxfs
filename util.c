@@ -1528,12 +1528,12 @@ emuxfs_restore_possible(
     bool *is_delete_out, dind ddev_index, dind sdev_index, const char *_path)
 {
 	EMUXFS_TRACE("enter");
-	int		   subrc;
-	bool		   is_first, is_last, is_unnecessary, is_delete;
-	char		   path[PATH_MAX], ppathbuf[PATH_MAX];
-	const char	  *ppath, *fname;
-	size_t		   ppathlen;
-	struct emuxfs_dev *ddev, *sdev;
+	int			 subrc;
+	bool			 is_first, is_last, is_unnecessary, is_delete;
+	char			 path[PATH_MAX], ppathbuf[PATH_MAX];
+	const char		*ppath, *fname;
+	size_t			 ppathlen;
+	struct emuxfs_dev	*ddev, *sdev;
 	enum emuxfs_chk_alg_type alg;
 	size_t			 chksz;
 	struct emuxfs_dir_patch	 patch;

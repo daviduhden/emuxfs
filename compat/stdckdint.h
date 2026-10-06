@@ -78,8 +78,8 @@
  */
 #ifndef __STDC_VERSION_STDCKDINT_H__
 #if defined(__has_builtin)
-#if !__has_builtin(__builtin_add_overflow) || \
-    !__has_builtin(__builtin_sub_overflow) || \
+#if !__has_builtin(__builtin_add_overflow) ||                                  \
+    !__has_builtin(__builtin_sub_overflow) ||                                  \
     !__has_builtin(__builtin_mul_overflow)
 #error "emuxfs needs the compiler overflow builtins for <stdckdint.h>"
 #endif
@@ -92,16 +92,13 @@
  * non-conforming header that already defines some of the macros.
  */
 #ifndef ckd_add
-#define ckd_add(result, a, b) \
-	((bool)__builtin_add_overflow((a), (b), (result)))
+#define ckd_add(result, a, b) ((bool)__builtin_add_overflow((a), (b), (result)))
 #endif
 #ifndef ckd_sub
-#define ckd_sub(result, a, b) \
-	((bool)__builtin_sub_overflow((a), (b), (result)))
+#define ckd_sub(result, a, b) ((bool)__builtin_sub_overflow((a), (b), (result)))
 #endif
 #ifndef ckd_mul
-#define ckd_mul(result, a, b) \
-	((bool)__builtin_mul_overflow((a), (b), (result)))
+#define ckd_mul(result, a, b) ((bool)__builtin_mul_overflow((a), (b), (result)))
 #endif
 
 #define __STDC_VERSION_STDCKDINT_H__ 202311L

@@ -207,8 +207,8 @@ EMUXFS int		 emuxfs_assign_peek_next_eno(uint64_t *, dind);
     struct emuxfs_assign *, dind, uint64_t);
 [[nodiscard]] EMUXFS int emuxfs_assign_write(
     const struct emuxfs_assign *, dind, uint64_t);
-EMUXFS bool emuxfs_assign_is_valid(dind, uint64_t, uint64_t);
-EMUXFS int emuxfs_meta_assign_check(dind, size_t *);
+EMUXFS bool		 emuxfs_assign_is_valid(dind, uint64_t, uint64_t);
+EMUXFS int		 emuxfs_meta_assign_check(dind, size_t *);
 [[nodiscard]] EMUXFS int emuxfs_assign_write_fd(
     int, const struct emuxfs_assign *, uint64_t);
 
@@ -256,16 +256,16 @@ struct emuxfs_range {
 	size_t	 byte_begin, byte_end, blk_begin, blk_end, lfilesz, lfileoff;
 	uint64_t blk_index_begin, blk_index_end;
 };
-EMUXFS void emuxfs_range_compute(struct emuxfs_range *, size_t);
-EMUXFS int  emuxfs_lfile_open(int *, int, ino_t, int);
-[[nodiscard]] EMUXFS int  emuxfs_lfile_create(int, size_t, ino_t, size_t);
-[[nodiscard]] EMUXFS int  emuxfs_lfile_resize(
+EMUXFS void		 emuxfs_range_compute(struct emuxfs_range *, size_t);
+EMUXFS int		 emuxfs_lfile_open(int *, int, ino_t, int);
+[[nodiscard]] EMUXFS int emuxfs_lfile_create(int, size_t, ino_t, size_t);
+[[nodiscard]] EMUXFS int emuxfs_lfile_resize(
     int, size_t, ino_t, size_t, size_t);
-EMUXFS int  emuxfs_lfile_exists(bool *, int, ino_t);
-[[nodiscard]] EMUXFS int  emuxfs_lfile_delete(int, ino_t);
-[[nodiscard]] EMUXFS int  emuxfs_lfile_ancestors_recompute(uint8_t *, int,
+EMUXFS int		 emuxfs_lfile_exists(bool *, int, ino_t);
+[[nodiscard]] EMUXFS int emuxfs_lfile_delete(int, ino_t);
+[[nodiscard]] EMUXFS int emuxfs_lfile_ancestors_recompute(uint8_t *, int,
     enum emuxfs_chk_alg_type, ino_t, size_t, uint64_t, uint64_t);
-[[nodiscard]] EMUXFS int  emuxfs_lfile_readback(
+[[nodiscard]] EMUXFS int emuxfs_lfile_readback(
     uint8_t *, dind, const char *, size_t, size_t, const uint8_t *);
 
 /* mount.c */
@@ -341,8 +341,8 @@ EMUXFS int emuxfs_state_eno_next_acquire(uint64_t *);
 EMUXFS int emuxfs_state_eno_next_return(uint64_t);
 
 EMUXFS bool emuxfs_state_wrbuf_is_set(void);
-EMUXFS int emuxfs_state_wrbuf_reset(void);
-EMUXFS int emuxfs_state_wrbuf_set(
+EMUXFS int  emuxfs_state_wrbuf_reset(void);
+EMUXFS int  emuxfs_state_wrbuf_set(
     const char *, uid_t, gid_t, size_t, size_t, const uint8_t *);
 EMUXFS int emuxfs_state_wrbuf_append(
     size_t *, const char *, uid_t, gid_t, size_t, size_t, const uint8_t *);

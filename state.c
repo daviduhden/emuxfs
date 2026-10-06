@@ -68,7 +68,7 @@ struct emuxfs_state {
 static struct emuxfs_state emuxfs_global_state;
 
 /* Debug tracing, enabled by EMUXFS_TRACE / EMUXFS_TRACE_FILE. */
-static int emuxfs_trace_fd = -1;
+static int  emuxfs_trace_fd = -1;
 static bool emuxfs_trace_stderr;
 
 static size_t
@@ -93,9 +93,9 @@ static int
 emuxfs_restore_queue_reserve(size_t extra)
 {
 	EMUXFS_TRACE("enter");
-	auto st = &emuxfs_global_state;
-	size_t		     used, newsz;
-	uint8_t		    *q;
+	auto	 st = &emuxfs_global_state;
+	size_t	 used, newsz;
+	uint8_t *q;
 
 	used = st->restore_back - st->restore_front;
 
@@ -474,7 +474,7 @@ emuxfs_final(void)
 {
 	EMUXFS_TRACE("enter");
 	static bool done;
-	dind	   i, j, dev_count;
+	dind	    i, j, dev_count;
 
 	if (done)
 		return 0;
