@@ -33,7 +33,7 @@ EMUXFS int
 emuxfs_sync_main(int argc, char *argv[])
 {
 	EMUXFS_TRACE("enter");
-	int			 empty, exists;
+	bool			 empty, exists;
 	struct emuxfs_dev	*ddev, *sdev;
 	const char		*ddev_path;
 	enum emuxfs_chk_alg_type alg;

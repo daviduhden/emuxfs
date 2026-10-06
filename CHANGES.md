@@ -1,5 +1,118 @@
 # Change log
 
+## C23 intensive pass (2026-10-06)
+
+An explicitly aggressive, low-conservatism pass that applies every C23 feature
+that could be applied to this codebase, even where the benefit is marginal.
+The persistent format (`format_version` 1), the on-disk record layouts and the
+externally visible behaviour are deliberately unchanged; the C23 features that
+cannot be applied without breaking those are listed as non-applicable rather
+than forced.
+
+Applied:
+
+* `constexpr` for the integer constants that were preprocessor macros in
+  `emuxfs.h` and `fault.h` (`EMUXFS_EINT`/`EFS`/`ECHK`, the size constants, the
+  format version, the `EMUXFS_CONF_*` results and the `EMUXFS_DT_*` values).
+  The string constants stay macros: C23 `constexpr` pointer initialisers must
+  be null, so `constexpr const char *` cannot hold `".muxfs"`.
+* Digit separators (`4'096`, `1'048'576`) where they were already written in
+  decimal.
+* Fixed underlying types for every enumeration (`: int`, or `: unsigned` for
+  the flag enums), matching the default representation so no ABI or format
+  changes.
+* Native `bool`, `true` and `false` for the boolean-valued predicates,
+  out-parameters, flags and locals: `emuxfs_dev_state_is_valid`,
+  `emuxfs_dev_is_mounted`, `emuxfs_is_hardlink`, `emuxfs_assign_validate`,
+  `emuxfs_state_is_restore_only`, `emuxfs_state_wrbuf_is_set`,
+  `emuxfs_existsat`/`emuxfs_dir_is_empty`/`emuxfs_lfile_exists` out-parameters,
+  `emuxfs_readback`'s `shallow`, `emuxfs_dev_get`/`emuxfs_dev_open`/
+  `emuxfs_dev_mount`/`emuxfs_init`'s `force`/`readonly`, the `has_*`/`is_*`
+  locals, and the internal boolean struct fields.  Error-code returns stay
+  `int`.
+* `auto` type inference in two places where a pointer is assigned immediately
+  (`emuxfs_restore_queue_reserve`, `emuxfs_eids_set`).
+* `<stdckdint.h>` `ckd_add()` for the size sums that could overflow:
+  `emuxfs_read_inner`'s range end, `emuxfs_write_inner`'s new end and
+  `emuxfs_op_update`'s modification end.
+* `[[nodiscard]]` extended to the remaining integrity/availability results
+  (`emuxfs_conf_parse`/`write`, `emuxfs_meta_write`/`_fd`,
+  `emuxfs_assign_write`/`_fd`, the lfile helpers,
+  `emuxfs_lfile_ancestors_recompute`, `emuxfs_pread_exact`,
+  `emuxfs_pwrite_exact`, `emuxfs_fsync_parent`).
+
+Evaluated and not applied, with the reason:
+
+* `constexpr` string objects: C23 only allows null pointer constants.
+* `alignas`: the allocator already aligns explicitly to `EMUXFS_MEM_ALIGN` and
+  the persistent records are laid out by byte offset; adding alignment would
+  only risk changing `sizeof` and the format.
+* `thread_local`: the daemon is single-threaded by design (`fuse_loop`); making
+  the global state thread-local would change the storage model, not the code.
+* `typeof`/`typeof_unqual`: no expression where the type is not trivially
+  spelled, and the `typeof(T)` form is ambiguous with a cast.
+* `_BitInt`: no integer widths outside those `<stdint.h>` already provides.
+* `#embed`: no binary blobs are embedded.
+* `<stdbit.h>`: no manual bit operations to replace.
+* `u8` literals: in C23 these are plain `char` arrays, so they add nothing.
+* `#elifdef`/`#elifndef`/`#warning`: there is only one `#ifdef`.
+* `__VA_OPT__`: there is no `, ##__VA_ARGS__` hack.
+* `[[noreturn]]`: no function is provably non-returning.
+
+## Memory-safety audit follow-up (2026-10-06)
+
+A second pass over the C23 baseline and the memory model.  The standard was
+already adopted (see the C23 migration below), so this pass changes only code
+with a demonstrated or well-founded defect and keeps the ABI, the on-disk
+format and the observable behaviour.
+
+* **Partial reads copied whole blocks.**  `emuxfs_read_inner` checksums the
+  large-file tree by whole 4096-byte blocks, but it also copied the whole
+  block to the caller's buffer.  For a read whose end did not fall on a block
+  boundary (`offset + size < file size`), the first and last blocks of the
+  range extended past `byte_end`, so the daemon copied more bytes than
+  requested — past the end of the buffer FUSE supplied — and reported a
+  length larger than the request.  The copy now intersects each block with
+  `[byte_begin, byte_end)`.  Added a FUSE regression test that reads prefixes
+  and unaligned ranges of a large file.
+* **A zero-length read aborted the daemon.**  A zero-length read of a large
+  file whose offset was block-aligned computed a zero-sized checksum-tree
+  range and called `mmap(2)` with length 0, which fails; the failure was
+  classified as an unrecoverable internal error.  A zero-length read now
+  returns zero bytes before the tree is mapped, and a zero-length write is a
+  no-op instead of requiring a buffer.
+* **`truncate` could not grow a small file past one block.**  Case 2 of
+  `emuxfs_truncate_inner` read a full block from a file shorter than a block
+  and rejected the short read (EOF), so growing a file that fits in one block
+  to more than one block failed with `EIO`.  It now reads only the bytes that
+  exist and zero-fills the rest of the block, which is the sparse hole the
+  checksum tree must describe.  Added a FUSE regression test.
+* **`emuxfs_truncate_inner` leaked the checksum-tree mapping and descriptor
+  on error.**  Its cleanup label closed only the user file descriptor; every
+  error after the lfile was opened (a short read, an checksum mismatch, an
+  ancestor recomputation failure) left the `mmap` and the `lfd` behind.
+  Repeated failures could exhaust descriptors and address space.  The cleanup
+  now mirrors `emuxfs_write_inner` and releases the mapping and `lfd`.
+* **The sequential write buffer mishandled a partial append.**
+  `emuxfs_buffered_write` re-buffered the bytes that did not fit from the
+  start of the request instead of from `buf + wrsz`, duplicating data, and
+  returned only the re-buffered count instead of the number of bytes
+  accepted.  A write larger than the 1 MiB buffer could therefore corrupt the
+  file and report a short write.
+* **`mmap` of the checksum tree used `PROT_WRITE` without `PROT_READ`.**
+  OpenBSD's `mmap(2)` documents a `PROT_WRITE`-only mapping (with an
+  `O_WRONLY` descriptor) as unusable; the four write-side mappings now use
+  `PROT_READ | PROT_WRITE` and `O_RDWR`, matching the lfile helpers.
+* **`emuxfs_ds*` compared unrelated pointers with `<`.**  The dynamic stack
+  ranged over separately allocated nodes and used relational comparison on
+  the resulting pointers, which is undefined for pointers into different
+  objects.  The comparisons are now made on `uintptr_t` values, and the
+  remaining space checks use integer sizes instead of forming an
+  out-of-bounds pointer.  A dead `emuxfs_ds_entcount` counter was removed
+  (it was written but never read, and newer compilers warn for it).  The
+  allocator was exercised under AddressSanitizer and UndefinedBehaviorSanitizer
+  for both `ds.c` and the `ds_malloc.c` fallback.
+
 ## Security-model audit (2026-09-24)
 
 Focused hardening of the documented security model; no new external

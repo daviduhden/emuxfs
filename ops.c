@@ -22,6 +22,8 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
+#include <stdckdint.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,9 +43,7 @@ static void
 emuxfs_eids_set(void)
 {
 	EMUXFS_TRACE("enter");
-	struct fuse_context *fc;
-
-	fc = fuse_get_context();
+	auto fc = fuse_get_context();
 	/*
 	 * Drop the supplementary groups before dropping euid.  Otherwise an
 	 * operation attributed to the requesting user would still carry
@@ -89,7 +89,7 @@ emuxfs_statfs(const char *path, struct statvfs *stvfs)
 	struct emuxfs_dev *dev;
 	int		   fd, err, subrc;
 	struct statvfs	   st, st_agg;
-	int		   has_st;
+	bool		   has_st;
 	size_t		   frsize, sz;
 
 	emuxfs_wrbuf_flush();
@@ -97,7 +97,7 @@ emuxfs_statfs(const char *path, struct statvfs *stvfs)
 	if (emuxfs_path_sanitize(&path))
 		return -EIO;
 
-	has_st = 0;
+	has_st = false;
 	if ((dev_count = emuxfs_dev_count()) == 0)
 		return -EIO;
 	for (i = 0; i < dev_count; ++i) {
@@ -160,7 +160,7 @@ emuxfs_statfs(const char *path, struct statvfs *stvfs)
 			st_agg.f_bavail = sz;
 			st_agg.f_fsid = 0;
 			st_agg.f_flag = 0;
-			has_st = 1;
+			has_st = true;
 		}
 	}
 	if (has_st) {
@@ -351,7 +351,7 @@ emuxfs_op_create(struct emuxfs_op_create_args *args)
 	gid_t parent_gid;
 
 	int		     rc, err, subrc, subfd;
-	int		     has_write;
+	bool		     has_write;
 	uint64_t	     eno;
 	struct emuxfs_desc   desc;
 	struct emuxfs_chk    content_chk;
@@ -371,7 +371,7 @@ emuxfs_op_create(struct emuxfs_op_create_args *args)
 	if ((dev_count = emuxfs_dev_count()) == 0)
 		return -EIO;
 
-	has_write = 0;
+	has_write = false;
 	if (emuxfs_state_eno_next_acquire(&eno))
 		return -EIO;
 
@@ -511,7 +511,7 @@ emuxfs_op_create(struct emuxfs_op_create_args *args)
 		if (emuxfs_ancestors_meta_recompute(i, &cud))
 			goto fail;
 
-		has_write = 1;
+		has_write = true;
 		emuxfs_working_pop(i, now);
 		continue;
 	fail:
@@ -599,7 +599,7 @@ emuxfs_op_delete(const char *path, enum emuxfs_op_delete_type type)
 	uint64_t return_eno;
 
 	int		     rc, err, subrc;
-	int		     has_write;
+	bool		     has_write;
 	const char	    *stage;
 	struct stat	     prewr_st;
 	ino_t		     prewr_ino;
@@ -619,7 +619,7 @@ emuxfs_op_delete(const char *path, enum emuxfs_op_delete_type type)
 	if ((dev_count = emuxfs_dev_count()) == 0)
 		return -EIO;
 
-	has_write = 0;
+	has_write = false;
 	return_eno = UINT64_MAX;
 	stage = "start";
 
@@ -770,7 +770,7 @@ emuxfs_op_delete(const char *path, enum emuxfs_op_delete_type type)
 			goto fail;
 
 		if (!has_write) {
-			has_write = 1;
+			has_write = true;
 			return_eno = prewr_eno;
 		}
 
@@ -873,7 +873,7 @@ emuxfs_read_inner(int root_fd, struct emuxfs_op_read_args *args,
 	uint8_t		    content_sum[EMUXFS_CHKSZ_MAX];
 	size_t		    rdsz;
 	struct emuxfs_range r;
-	size_t		    i_offset, out_offset, out_size, buf_offset;
+	size_t		    i_offset, out_offset, copy_begin, copy_end;
 	uint64_t	    i;
 	int		    lfd;
 	uint8_t		   *lfile;
@@ -891,6 +891,16 @@ emuxfs_read_inner(int root_fd, struct emuxfs_op_read_args *args,
 
 	fsz = (size_t)st->st_size;
 	if ((size_t)args->offset >= fsz) {
+		*rdsz_out = 0;
+		rc = 0;
+		goto out2;
+	}
+	/*
+	 * A zero-length read must not reach the mmap(2) below: the checksum
+	 * tree has no entry to map and a zero-length mapping fails, which
+	 * would be reported as an unrecoverable internal error.
+	 */
+	if (args->size == 0) {
 		*rdsz_out = 0;
 		rc = 0;
 		goto out2;
@@ -919,7 +929,10 @@ emuxfs_read_inner(int root_fd, struct emuxfs_op_read_args *args,
 	}
 
 	r.byte_begin = (size_t)args->offset;
-	r.byte_end = (size_t)args->offset + args->size;
+	if (ckd_add(&r.byte_end, (size_t)args->offset, args->size)) {
+		rc = EMUXFS_EFS;
+		goto out2;
+	}
 	if (r.byte_end > fsz)
 		r.byte_end = fsz;
 	emuxfs_range_compute(&r, chksz);
@@ -948,14 +961,25 @@ emuxfs_read_inner(int root_fd, struct emuxfs_op_read_args *args,
 			rc = EMUXFS_ECHK;
 			goto out4;
 		}
-		buf_offset = 0;
-		out_size = rdsz;
-		if (i_offset < r.byte_begin) {
-			buf_offset = (r.byte_begin - i_offset);
-			out_size -= buf_offset;
+		/*
+		 * The checksum tree is addressed by whole blocks, so the
+		 * first and last block of the requested range can extend
+		 * beyond byte_begin/byte_end.  Copy only the requested
+		 * bytes: copying a whole block here would write past the
+		 * end of the caller's buffer (the block's tail bytes may
+		 * also lie beyond its end).
+		 */
+		copy_begin = i_offset;
+		if (copy_begin < r.byte_begin)
+			copy_begin = r.byte_begin;
+		copy_end = i_offset + rdsz;
+		if (copy_end > r.byte_end)
+			copy_end = r.byte_end;
+		if (copy_end > copy_begin) {
+			memcpy(&args->buf_out[out_offset],
+			    &buf[copy_begin - i_offset], copy_end - copy_begin);
+			out_offset += copy_end - copy_begin;
 		}
-		memcpy(&args->buf_out[out_offset], &buf[buf_offset], out_size);
-		out_offset += out_size;
 	}
 
 	*rdsz_out = (ssize_t)out_offset;
@@ -1426,10 +1450,15 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 		r.byte_end = newoff;
 		emuxfs_range_compute(&r, chksz);
 
-		if (emuxfs_lfile_open(&lfd, lfile_fd, st->st_ino, O_WRONLY))
+		if (emuxfs_lfile_open(&lfd, lfile_fd, st->st_ino, O_RDWR))
 			goto out;
-		if ((lfile = mmap(nullptr, r.lfilesz, PROT_WRITE, MAP_SHARED,
-			 lfd, (off_t)r.lfileoff)) == MAP_FAILED)
+		/*
+		 * OpenBSD's mmap(2) documents a PROT_WRITE mapping without
+		 * PROT_READ (and an O_WRONLY descriptor) as unusable, so map
+		 * read/write exactly as the lfile tree helpers do.
+		 */
+		if ((lfile = mmap(nullptr, r.lfilesz, PROT_READ | PROT_WRITE,
+			 MAP_SHARED, lfd, (off_t)r.lfileoff)) == MAP_FAILED)
 			goto out;
 
 		for (i = r.blk_index_begin; i < r.blk_index_end; ++i) {
@@ -1437,11 +1466,26 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 			rdsz = blksz;
 			if (i_offset + rdsz > newoff)
 				rdsz = newoff - i_offset;
-			if (pread(fd, content_buf, rdsz, (off_t)i_offset) !=
-			    (ssize_t)rdsz) {
-				rc = EMUXFS_EFS;
-				goto out;
+			/*
+			 * This case grows a file that fits in one block: only
+			 * the first block holds data, and everything from
+			 * prewr_sz on is a hole of zeroes.  pread(2) returns
+			 * short at end of file, so read only the bytes that
+			 * exist and zero-fill the rest of the block.
+			 */
+			off = 0;
+			if (i_offset < prewr_sz) {
+				beginsz = prewr_sz - i_offset;
+				if (beginsz > rdsz)
+					beginsz = rdsz;
+				if (pread(fd, content_buf, beginsz,
+					(off_t)i_offset) != (ssize_t)beginsz) {
+					rc = EMUXFS_EFS;
+					goto out;
+				}
+				off = beginsz;
 			}
+			memset(&content_buf[off], 0, rdsz - off);
 			emuxfs_chk_init(&wr_content_chk, alg);
 			emuxfs_chk_update(&wr_content_chk, content_buf, rdsz);
 			emuxfs_chk_final(&lfile[chksz * i], &wr_content_chk);
@@ -1471,11 +1515,11 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 			emuxfs_range_compute(&r, chksz);
 
 			if (emuxfs_lfile_open(
-				&lfd, lfile_fd, st->st_ino, O_WRONLY))
+				&lfd, lfile_fd, st->st_ino, O_RDWR))
 				goto out;
-			if ((lfile = mmap(nullptr, r.lfilesz, PROT_WRITE,
-				 MAP_SHARED, lfd, (off_t)r.lfileoff)) ==
-			    MAP_FAILED)
+			if ((lfile = mmap(nullptr, r.lfilesz,
+				 PROT_READ | PROT_WRITE, MAP_SHARED, lfd,
+				 (off_t)r.lfileoff)) == MAP_FAILED)
 				goto out;
 
 			rdsz = newoff - r.blk_begin;
@@ -1508,10 +1552,15 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 		r.byte_end = newoff;
 		emuxfs_range_compute(&r, chksz);
 
-		if (emuxfs_lfile_open(&lfd, lfile_fd, st->st_ino, O_WRONLY))
+		if (emuxfs_lfile_open(&lfd, lfile_fd, st->st_ino, O_RDWR))
 			goto out;
-		if ((lfile = mmap(nullptr, r.lfilesz, PROT_WRITE, MAP_SHARED,
-			 lfd, (off_t)r.lfileoff)) == MAP_FAILED)
+		/*
+		 * OpenBSD's mmap(2) documents a PROT_WRITE mapping without
+		 * PROT_READ (and an O_WRONLY descriptor) as unusable, so map
+		 * read/write exactly as the lfile tree helpers do.
+		 */
+		if ((lfile = mmap(nullptr, r.lfilesz, PROT_READ | PROT_WRITE,
+			 MAP_SHARED, lfd, (off_t)r.lfileoff)) == MAP_FAILED)
 			goto out;
 
 		for (i = r.blk_index_begin; i < r.blk_index_end; ++i) {
@@ -1568,6 +1617,23 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 
 	rc = 0;
 out:
+	/*
+	 * Mirror emuxfs_write_inner(): every error path after the lfile is
+	 * opened must release the mapping and the descriptor, or repeated
+	 * failures (for example on a corrupt array) leak file descriptors and
+	 * address space.
+	 */
+	if (lfile != MAP_FAILED) {
+		if (r.lfilesz == 0)
+			exit(-1); /* Programming error. */
+		if (munmap(lfile, r.lfilesz))
+			exit(-1);
+	} else if (r.lfilesz != 0)
+		exit(-1); /* Programming error. */
+	if (lfd != -1) {
+		if (close(lfd))
+			exit(-1);
+	}
 	if (fd != -1) {
 		if (close(fd))
 			exit(-1);
@@ -1629,7 +1695,10 @@ emuxfs_write_inner(int root_fd, struct emuxfs_op_update_args *args,
 		goto out;
 	}
 	largest_sz = prewr_sz = (size_t)st->st_size;
-	wrub = (newoff + args->bufsz);
+	if (ckd_add(&wrub, newoff, args->bufsz)) {
+		rc = EMUXFS_EFS;
+		goto out;
+	}
 	if (wrub > largest_sz)
 		largest_sz = wrub;
 
@@ -1730,10 +1799,15 @@ emuxfs_write_inner(int root_fd, struct emuxfs_op_update_args *args,
 		r.byte_end = newoff + args->bufsz;
 		emuxfs_range_compute(&r, chksz);
 
-		if (emuxfs_lfile_open(&lfd, lfile_fd, st->st_ino, O_WRONLY))
+		if (emuxfs_lfile_open(&lfd, lfile_fd, st->st_ino, O_RDWR))
 			goto out;
-		if ((lfile = mmap(nullptr, r.lfilesz, PROT_WRITE, MAP_SHARED,
-			 lfd, (off_t)r.lfileoff)) == MAP_FAILED)
+		/*
+		 * OpenBSD's mmap(2) documents a PROT_WRITE mapping without
+		 * PROT_READ (and an O_WRONLY descriptor) as unusable, so map
+		 * read/write exactly as the lfile tree helpers do.
+		 */
+		if ((lfile = mmap(nullptr, r.lfilesz, PROT_READ | PROT_WRITE,
+			 MAP_SHARED, lfd, (off_t)r.lfileoff)) == MAP_FAILED)
 			goto out;
 
 		wroff = 0;
@@ -1863,7 +1937,7 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 	size_t			 chksz;
 
 	int		   rc, err, subrc, subfd;
-	int		   has_write;
+	bool		   has_write;
 	struct stat	   prewr_st;
 	ino_t		   prewr_ino;
 	struct emuxfs_meta prewr_meta;
@@ -1884,7 +1958,7 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 	if ((dev_count = emuxfs_dev_count()) == 0)
 		return -EIO;
 
-	has_write = 0;
+	has_write = false;
 
 	now = time(nullptr);
 
@@ -2038,7 +2112,9 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 			mod_begin = (size_t)args->offset;
 			if (mod_begin > (size_t)prewr_st.st_size)
 				mod_begin = (size_t)prewr_st.st_size;
-			mod_end = (size_t)args->offset + args->bufsz;
+			if (ckd_add(&mod_end, (size_t)args->offset,
+				args->bufsz))
+				goto fail;
 			mod_size = mod_end;
 			if (mod_size < (size_t)prewr_st.st_size)
 				mod_size = (size_t)prewr_st.st_size;
@@ -2065,7 +2141,7 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 		if (emuxfs_ancestors_meta_recompute(i, &cud))
 			goto fail;
 
-		has_write = 1;
+		has_write = true;
 		emuxfs_working_pop(i, now);
 		continue;
 	fail:
@@ -2098,7 +2174,7 @@ emuxfs_rename(const char *from, const char *to)
 	size_t			 chksz;
 
 	int		   rc, err, subrc;
-	int		   has_write;
+	bool		   has_write;
 	struct stat	   prewr_st;
 	ino_t		   prewr_ino;
 	struct emuxfs_meta prewr_meta;
@@ -2121,7 +2197,7 @@ emuxfs_rename(const char *from, const char *to)
 	if ((dev_count = emuxfs_dev_count()) == 0)
 		return -EIO;
 
-	has_write = 0;
+	has_write = false;
 
 	now = time(nullptr);
 
@@ -2213,7 +2289,7 @@ emuxfs_rename(const char *from, const char *to)
 		if (emuxfs_ancestors_meta_recompute(i, &cud))
 			goto fail;
 
-		has_write = 1;
+		has_write = true;
 		emuxfs_working_pop(i, now);
 		continue;
 	fail:
@@ -2348,6 +2424,14 @@ emuxfs_access(const char *path, int amode)
 	return -EIO;
 }
 
+/*
+ * The FUSE read/write callbacks return an int, and emuxfs_buffered_write()
+ * casts the accepted byte count to int, so the sequential write buffer must
+ * fit in an int.
+ */
+static_assert(EMUXFS_WRBUF_SIZE <= INT_MAX,
+    "the sequential write buffer size must fit in an int");
+
 static void
 emuxfs_wrbuf_flush(void)
 {
@@ -2415,12 +2499,21 @@ emuxfs_buffered_write(
 	if (!emuxfs_state_wrbuf_append(&wrsz, path, fc->uid, fc->gid, bufsz,
 		(size_t)offset, (const uint8_t *)buf)) {
 		if (wrsz < bufsz) {
-			offset += wrsz;
+			/*
+			 * The sequential buffer filled up.  Flush what was
+			 * appended, then start a fresh buffer with the bytes
+			 * that did not fit (they begin at buf + wrsz); the
+			 * whole request has been accepted, so report its
+			 * original size.
+			 */
+			offset += (off_t)wrsz;
+			buf += wrsz;
 			bufsz -= wrsz;
 			emuxfs_wrbuf_flush();
 			if (emuxfs_state_wrbuf_set(path, fc->uid, fc->gid,
 				bufsz, (size_t)offset, (const uint8_t *)buf))
 				exit(-1);
+			return (int)(wrsz + bufsz);
 		}
 		return (int)bufsz;
 	}
@@ -2438,6 +2531,10 @@ emuxfs_write(const char *path, const char *buf, size_t bufsz, off_t offset,
 
 	if (emuxfs_path_sanitize(&path))
 		return -EIO;
+
+	/* A zero-length write is a no-op and has no buffer to consume. */
+	if (bufsz == 0)
+		return 0;
 
 	if (bufsz <= EMUXFS_WRBUF_SIZE)
 		return emuxfs_buffered_write(path, buf, bufsz, offset);

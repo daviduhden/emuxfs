@@ -365,6 +365,75 @@ print "== in-place write at a non-block-aligned offset\n";
       if compare( "$dev_b/unaligned", $exp ) != 0;
 }
 
+print "== partial reads of a large file\n";
+{
+    # The checksum tree is addressed by whole 4096-byte blocks, so a read
+    # whose end does not fall on a block boundary must not copy the rest of
+    # the block: doing so exceeds the requested length and the caller's
+    # buffer.
+    my $in = "$work/partial.in";
+    open( my $ifh, ">", $in ) or fail("create partial.in: $!");
+    for ( my $i = 0 ; $i < 10000 ; $i += 100 ) {
+        printf $ifh "%0100d", $i;
+    }
+    close($ifh);
+
+    my $whole = slurp($in);
+    must_run( "copy partial in", "cp", $in, "$mp/partial" );
+
+    foreach my $case ( [ 0, 100 ], [ 4000, 100 ], [ 4096, 100 ],
+        [ 8192, 1 ] )
+    {
+        my ( $off, $len ) = @$case;
+        open( my $fh, "<", "$mp/partial" ) or do {
+            fail("open partial ($off,$len): $!");
+            next;
+        };
+        binmode($fh);
+        if ( !sysseek( $fh, $off, 0 ) ) {
+            fail("seek partial ($off,$len): $!");
+            close($fh);
+            next;
+        }
+        my $buf = "";
+        my $got = sysread( $fh, $buf, $len );
+        close($fh);
+        if ( !defined($got) || $got != $len ) {
+            fail( "partial read ($off,$len) returned "
+                  . ( defined($got) ? $got : "error" ) );
+            next;
+        }
+        if ( substr( $whole, $off, $len ) ne $buf ) {
+            fail("partial read ($off,$len) content");
+        }
+    }
+    must_run( "remove partial", "rm", "-f", "$mp/partial" );
+}
+
+print "== truncate grows a small file into a sparse large file\n";
+{
+    # Growing a file that fits in one block to a size beyond one block
+    # rebuilds the checksum tree; the bytes past the old end are a hole of
+    # zeroes.  Exercise truncate(2) directly rather than a write.
+    open( my $sfh, ">", "$mp/grow" ) or fail("create grow: $!");
+    print $sfh "hello";
+    close($sfh);
+    if ( !truncate( "$mp/grow", 10000 ) ) {
+        fail("truncate grow: $!");
+    }
+    else {
+        my $data = slurp("$mp/grow");
+        fail("grow size") unless defined($data) && length($data) == 10000;
+        if ( defined($data) && length($data) == 10000 ) {
+            fail("grow lost the original prefix")
+              unless substr( $data, 0, 5 ) eq "hello";
+            fail("grow hole is not zero")
+              unless substr( $data, 5 ) eq ( "\0" x 9995 );
+        }
+    }
+    must_run( "remove grow", "rm", "-f", "$mp/grow" );
+}
+
 print "== deep tree\n";
 my $deep = $mp;
 for ( my $i = 0 ; $i < 40 ; $i++ ) {

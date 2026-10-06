@@ -369,7 +369,7 @@ out:
 }
 
 EMUXFS int
-emuxfs_lfile_exists(int *exists_out, int lfile_fd, ino_t ino)
+emuxfs_lfile_exists(bool *exists_out, int lfile_fd, ino_t ino)
 {
 	EMUXFS_TRACE("enter");
 	char path_buf[PATH_MAX];

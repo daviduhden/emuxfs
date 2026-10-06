@@ -58,7 +58,7 @@ struct emuxfs_state {
 	uint64_t	    next_eno;
 	size_t		    ambiguities;
 	struct syslog_data  log;
-	int		    is_restore_only;
+	bool		    is_restore_only;
 	dind		    restore_only_dind;
 	struct emuxfs_wrbuf wr;
 };
@@ -67,7 +67,7 @@ static struct emuxfs_state emuxfs_global_state;
 
 /* Debug tracing, enabled by EMUXFS_TRACE / EMUXFS_TRACE_FILE. */
 static int emuxfs_trace_fd = -1;
-static int emuxfs_trace_stderr;
+static bool emuxfs_trace_stderr;
 
 static size_t
 emuxfs_restore_item_next_offset(const char *path)
@@ -91,11 +91,10 @@ static int
 emuxfs_restore_queue_reserve(size_t extra)
 {
 	EMUXFS_TRACE("enter");
-	struct emuxfs_state *st;
+	auto st = &emuxfs_global_state;
 	size_t		     used, newsz;
 	uint8_t		    *q;
 
-	st = &emuxfs_global_state;
 	used = st->restore_back - st->restore_front;
 
 	/*
@@ -235,7 +234,7 @@ emuxfs_state_restore_queue_init(void)
 	if (emuxfs_restore_queue_reserve(1))
 		return 1;
 
-	state->is_restore_only = 0;
+	state->is_restore_only = false;
 	state->restore_only_dind = 0;
 
 	return 0;
@@ -421,7 +420,7 @@ emuxfs_trace(const char *file, int line, const char *fmt, ...)
 
 /* Assumes that emuxfs_dsinit() has already been called. */
 EMUXFS int
-emuxfs_init(int skip_first_mount, int force)
+emuxfs_init(bool skip_first_mount, bool force)
 {
 	EMUXFS_TRACE("enter");
 	uint64_t	    next_eno, max_next_eno;
@@ -472,12 +471,12 @@ EMUXFS int
 emuxfs_final(void)
 {
 	EMUXFS_TRACE("enter");
-	static int done;
+	static bool done;
 	dind	   i, j, dev_count;
 
 	if (done)
 		return 0;
-	done = 1;
+	done = true;
 
 	dev_count = emuxfs_dev_count();
 	for (i = dev_count; i > 0; --i) {
@@ -501,18 +500,18 @@ emuxfs_state_restore_only_set(dind dev_index)
 {
 	EMUXFS_TRACE("enter");
 	emuxfs_global_state.restore_only_dind = dev_index;
-	emuxfs_global_state.is_restore_only = 1;
+	emuxfs_global_state.is_restore_only = true;
 	return 0;
 }
 
-EMUXFS int
+EMUXFS bool
 emuxfs_state_is_restore_only(void)
 {
 	EMUXFS_TRACE("enter");
 	return emuxfs_global_state.is_restore_only;
 }
 
-EMUXFS int
+EMUXFS bool
 emuxfs_state_wrbuf_is_set(void)
 {
 	EMUXFS_TRACE("enter");

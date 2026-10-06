@@ -62,7 +62,7 @@ static_assert(sizeof(uuid_t) == EMUXFS_UUID_SIZE,
 #define EMUXFS_DECIMAL_UINT64_LENGTH_MAX 20
 
 struct emuxfs_dev_conf_checklist {
-	int has_version, has_format_version, has_alg, has_array_uuid,
+	bool has_version, has_format_version, has_alg, has_array_uuid,
 	    has_dev_uuid, has_seq_zero_time;
 };
 
@@ -188,7 +188,7 @@ emuxfs_conf_line_parse(struct emuxfs_dev_conf *conf, const char *line,
 			return 1; /* Duplicate key. */
 		if (emuxfs_conf_version_parse(conf, val, val_len))
 			return 1;
-		cl->has_version = 1;
+		cl->has_version = true;
 	} else if (emuxfs_conf_key_is(key, key_len, "format_version")) {
 		if (cl->has_format_version)
 			return 1; /* Duplicate key. */
@@ -200,25 +200,25 @@ emuxfs_conf_line_parse(struct emuxfs_dev_conf *conf, const char *line,
 		if (errstr != nullptr)
 			return 1;
 		conf->format_version = (uint32_t)num;
-		cl->has_format_version = 1;
+		cl->has_format_version = true;
 	} else if (emuxfs_conf_key_is(key, key_len, "chk_alg")) {
 		if (cl->has_alg)
 			return 1; /* Duplicate key. */
 		if (emuxfs_chk_str_to_type(&conf->chk_alg_type, val, val_len))
 			return 1;
-		cl->has_alg = 1;
+		cl->has_alg = true;
 	} else if (emuxfs_conf_key_is(key, key_len, "array_uuid")) {
 		if (cl->has_array_uuid)
 			return 1; /* Duplicate key. */
 		if (emuxfs_uuid_read(conf->array_uuid, val, val_len))
 			return 1;
-		cl->has_array_uuid = 1;
+		cl->has_array_uuid = true;
 	} else if (emuxfs_conf_key_is(key, key_len, "dev_uuid")) {
 		if (cl->has_dev_uuid)
 			return 1; /* Duplicate key. */
 		if (emuxfs_uuid_read(conf->dev_uuid, val, val_len))
 			return 1;
-		cl->has_dev_uuid = 1;
+		cl->has_dev_uuid = true;
 	} else if (emuxfs_conf_key_is(key, key_len, "seq_zero_time")) {
 		if (cl->has_seq_zero_time)
 			return 1; /* Duplicate key. */
@@ -229,7 +229,7 @@ emuxfs_conf_line_parse(struct emuxfs_dev_conf *conf, const char *line,
 		conf->seq_zero_time = strtonum(num_buf, 0, INT64_MAX, &errstr);
 		if (errstr != nullptr)
 			return 1;
-		cl->has_seq_zero_time = 1;
+		cl->has_seq_zero_time = true;
 	} else
 		return 1;
 

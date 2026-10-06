@@ -60,7 +60,7 @@ emuxfs_dev_format(const char *dev_root, enum emuxfs_chk_alg_type alg,
 	EMUXFS_TRACE("enter");
 	int			rc;
 	struct emuxfs_dev_conf	conf;
-	int			empty;
+	bool			empty;
 	char			path_buf[PATH_MAX];
 	uuid_t			uuid;
 	uint32_t		uuid_status;

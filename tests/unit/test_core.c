@@ -485,7 +485,7 @@ test_dev_format_mount(void)
 	dind		     i;
 	uint64_t	     next;
 	time_t		     now;
-	int		     exists;
+	bool		     exists;
 	ino_t		     root_ino;
 	int		     have_root_ino;
 

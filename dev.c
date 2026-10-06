@@ -55,7 +55,7 @@ static dind		 emuxfs_dev_array_degraded_count;
 
 /*
  * Validate the fields that a state.db record can express.  A record is
- * *structurally invalid* (return 0) when it contains values this
+ * *structurally invalid* (false) when it contains values this
  * implementation can never produce; it is merely *dirty* when it is valid but
  * non-clean.  Only structural impossibility is rejected here: a dirty record
  * must remain readable so that recovery is possible.
@@ -67,16 +67,16 @@ static dind		 emuxfs_dev_array_degraded_count;
  *     working, the recovery path uses restoring, never both);
  *   - seq may be any uint64 value, including 0 and UINT64_MAX.
  */
-EMUXFS int
+EMUXFS bool
 emuxfs_dev_state_is_valid(const struct emuxfs_dev_state *state)
 {
 	EMUXFS_TRACE("enter");
 	if (state->mounted > 1 || state->working > 1 || state->restoring > 1 ||
 	    state->degraded > 1)
-		return 0;
+		return false;
 	if (state->working != 0 && state->restoring != 0)
-		return 0;
-	return 1;
+		return false;
+	return true;
 }
 
 /* Returns 0 on success, 1 on I/O or size error, 2 on a structurally invalid
@@ -110,7 +110,7 @@ emuxfs_dev_state_read(struct emuxfs_dev_state *state, int fd)
 	return 0;
 }
 
-static int
+static bool
 emuxfs_dev_state_is_clean(struct emuxfs_dev_state *state)
 {
 	EMUXFS_TRACE("enter");
@@ -186,7 +186,7 @@ emuxfs_dev_count(void)
 }
 
 EMUXFS int
-emuxfs_dev_get(struct emuxfs_dev **dev_out, size_t dev_index, int force)
+emuxfs_dev_get(struct emuxfs_dev **dev_out, size_t dev_index, bool force)
 {
 	EMUXFS_TRACE("enter");
 	struct emuxfs_dev *dev;
@@ -234,7 +234,7 @@ emuxfs_dev_module_init(void)
 	emuxfs_dev_array_degraded_count = 0;
 }
 
-EMUXFS int
+EMUXFS bool
 emuxfs_dev_is_mounted(dind dev_index)
 {
 	EMUXFS_TRACE("enter");
@@ -261,7 +261,7 @@ emuxfs_dev_append(dind *dev_index_out, const char *path)
 
 	strlcpy(emuxfs_dev_roots[i], path, PATH_MAX);
 	dev->root_path = emuxfs_dev_roots[i];
-	dev->attached_now = 1;
+	dev->attached_now = true;
 	if (dev_index_out != nullptr)
 		*dev_index_out = i;
 	++emuxfs_dev_array_count;
@@ -270,7 +270,7 @@ emuxfs_dev_append(dind *dev_index_out, const char *path)
 }
 
 EMUXFS int
-emuxfs_dev_open(dind dev_index, int force, int readonly)
+emuxfs_dev_open(dind dev_index, bool force, bool readonly)
 {
 	EMUXFS_TRACE("enter");
 	int rc, root_fd, muxfs_fd, conf_fd, state_fd, meta_fd, assign_fd;
@@ -392,7 +392,7 @@ emuxfs_dev_open(dind dev_index, int force, int readonly)
 	dev->assign_fd = assign_fd;
 	dev->lfile_fd = lfile_fd;
 	dev->readonly_now = readonly;
-	dev->mounted_now = 1;
+	dev->mounted_now = true;
 	++emuxfs_dev_array_mounted_count;
 
 	return 0;
@@ -415,10 +415,10 @@ fail:
 }
 
 EMUXFS int
-emuxfs_dev_mount(dind dev_index, int force)
+emuxfs_dev_mount(dind dev_index, bool force)
 {
 	EMUXFS_TRACE("enter");
-	return emuxfs_dev_open(dev_index, force, 0);
+	return emuxfs_dev_open(dev_index, force, false);
 }
 
 EMUXFS int
@@ -474,8 +474,8 @@ emuxfs_dev_unmount(size_t index)
 		dev->root_fd = -1;
 	}
 
-	dev->readonly_now = 0;
-	dev->mounted_now = 0;
+	dev->readonly_now = false;
+	dev->mounted_now = false;
 	if (emuxfs_dev_array_mounted_count > 0)
 		--emuxfs_dev_array_mounted_count;
 	return 0;
@@ -812,22 +812,22 @@ emuxfs_assign_write(
 
 /*
  * Verify the invariant meta.db[ino].eno == eno  <=>  assign.db[eno].ino == ino
- * for one node.  Returns 0 when the mapping is consistent, 1 otherwise.
+ * for one node.  Returns true when the mapping is consistent, false otherwise.
  */
-EMUXFS int
+EMUXFS bool
 emuxfs_assign_validate(dind dev_index, uint64_t ino, uint64_t eno)
 {
 	EMUXFS_TRACE("enter");
 	struct emuxfs_assign assign;
 
 	if (emuxfs_assign_read(&assign, dev_index, eno))
-		return 1;
+		return false;
 	if (assign.flags != AF_ASSIGNED)
-		return 1;
+		return false;
 	if (assign.ino != ino)
-		return 1;
+		return false;
 
-	return 0;
+	return true;
 }
 
 /*

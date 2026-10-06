@@ -53,20 +53,20 @@ emuxfs_mount_usage(void)
  * comparison is component-wise so that "/a/bc" is not treated as being under
  * "/a/b".
  */
-static int
+static bool
 emuxfs_path_within(const char *parent, const char *child)
 {
 	size_t plen;
 
 	plen = strlen(parent);
 	if (plen == 0)
-		return 0;
+		return false;
 	if (strncmp(parent, child, plen) != 0)
-		return 0;
+		return false;
 	if (child[plen] == '\0')
-		return 1; /* Equal. */
+		return true; /* Equal. */
 	if (parent[plen - 1] == '/')
-		return 1; /* Parent is the root directory. */
+		return true; /* Parent is the root directory. */
 	return child[plen] == '/';
 }
 

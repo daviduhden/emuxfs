@@ -31,7 +31,7 @@
 
 #define EMUXFS_FAULT_ENV_POINT "EMUXFS_FAULT_POINT"
 #define EMUXFS_FAULT_ENV_ACTION "EMUXFS_FAULT_ACTION"
-#define EMUXFS_FAULT_EXIT_STATUS 70
+constexpr int EMUXFS_FAULT_EXIT_STATUS = 70;
 
 /*
  * If the environment names 'name' as the active fault point, terminate the

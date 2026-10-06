@@ -46,7 +46,6 @@ static const size_t emuxfs_ds_memalign = sizeof(uint64_t);
 
 static size_t emuxfs_ds_offset;
 static size_t emuxfs_ds_pagesz;
-static size_t emuxfs_ds_entcount;
 static size_t emuxfs_ds_total_pagecount;
 static size_t emuxfs_ds_total_allocated;
 static size_t emuxfs_ds_max_pagecount;
@@ -76,7 +75,7 @@ emuxfs_dspush(void **p, size_t sz)
 	    emuxfs_ds_total_pagecount, emuxfs_ds_max_pagecount);
 
 	n = SLIST_FIRST(&emuxfs_ds_head);
-	if (n->allocend + sz >= n->end) {
+	if (sz >= (size_t)(n->end - n->allocend)) {
 		s = emuxfs_align_up(sz + emuxfs_ds_offset, emuxfs_ds_pagesz) /
 		    emuxfs_ds_pagesz;
 		if (s < (emuxfs_ds_max_pagecount - emuxfs_ds_total_pagecount))
@@ -99,7 +98,6 @@ emuxfs_ds_free_head(struct ds *n)
 {
 	EMUXFS_TRACE("enter");
 	SLIST_REMOVE_HEAD(&emuxfs_ds_head, ent);
-	--emuxfs_ds_entcount;
 	emuxfs_ds_total_pagecount -= n->pagecount;
 	emuxfs_ds_total_allocated -= (size_t)(n->allocend - n->begin);
 	free(n);
@@ -113,7 +111,8 @@ emuxfs_dspop(void *p)
 
 	while (!SLIST_EMPTY(&emuxfs_ds_head)) {
 		n = SLIST_FIRST(&emuxfs_ds_head);
-		if ((p < (void *)n->begin) || (p >= (void *)n->end))
+		if (((uintptr_t)p < (uintptr_t)n->begin) ||
+		    ((uintptr_t)p >= (uintptr_t)n->end))
 			emuxfs_ds_free_head(n);
 		else {
 			emuxfs_ds_total_allocated -=
@@ -147,14 +146,15 @@ emuxfs_dsgrow(void **p_inout, size_t sz)
 	EMUXFS_TRACE("dsgrow sp=%p sz=%zu", (void *)sp, sz);
 
 	n = SLIST_FIRST(&emuxfs_ds_head);
-	if ((sp < n->begin) || (sp >= n->allocend)) {
+	if (((uintptr_t)sp < (uintptr_t)n->begin) ||
+	    ((uintptr_t)sp >= (uintptr_t)n->allocend)) {
 		EMUXFS_TRACE("dsgrow: sp=%p begin=%p allocend=%p end=%p\n",
 		    (void *)sp, (void *)n->begin, (void *)n->allocend,
 		    (void *)n->end);
 		return 1;
 	}
 
-	if (n->allocend + sz >= n->end) {
+	if (sz >= (size_t)(n->end - n->allocend)) {
 		ssz = (size_t)(n->allocend - sp);
 		dsz = ssz + sz;
 		if (emuxfs_dspush((void **)&dp, dsz))
@@ -189,7 +189,6 @@ emuxfs_ds_add_pages(size_t pagecount)
 	n->end = d + sz;
 
 	SLIST_INSERT_HEAD(&emuxfs_ds_head, n, ent);
-	++emuxfs_ds_entcount;
 	emuxfs_ds_total_pagecount += pagecount;
 	if (emuxfs_ds_total_pagecount > emuxfs_ds_max_pagecount)
 		emuxfs_ds_max_pagecount = emuxfs_ds_total_pagecount;
@@ -211,7 +210,6 @@ emuxfs_dsinit(void)
 	emuxfs_ds_pagesz = (size_t)pagesz;
 	if (emuxfs_ds_offset >= emuxfs_ds_pagesz)
 		return 1;
-	emuxfs_ds_entcount = 0;
 	emuxfs_ds_total_pagecount = 0;
 	emuxfs_ds_total_allocated = 0;
 
