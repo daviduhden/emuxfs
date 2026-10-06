@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+// clang-format off
 #include <sys/mman.h>
 #include <sys/syslimits.h>
 
@@ -35,6 +36,7 @@
 #include "emuxfs.h"
 #include "fault.h"
 #include "ops.h"
+// clang-format on
 
 static void emuxfs_wrbuf_flush(void);
 static int  emuxfs_truncate(const char *, off_t);

@@ -28,11 +28,13 @@
  *   ./tests/fuzz/fuzz_conf
  */
 
+// clang-format off
 #include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 #include "emuxfs.h"
+// clang-format on
 
 int
 LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)

@@ -35,6 +35,7 @@
  * layout as version 1.
  */
 
+// clang-format off
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -44,6 +45,7 @@
 #include <uuid.h>
 
 #include "emuxfs.h"
+// clang-format on
 
 /*
  * The configuration stores UUIDs as 16 raw bytes and both uuid_enc_le() and

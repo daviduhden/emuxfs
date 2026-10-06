@@ -31,6 +31,7 @@
  * order of allocation, which should be relatively cache coherent.
  */
 
+// clang-format off
 #include <sys/queue.h>
 
 #include <stdint.h>
@@ -41,6 +42,7 @@
 
 #include "ds.h"
 #include "emuxfs.h"
+// clang-format on
 
 static const size_t emuxfs_ds_memalign = sizeof(uint64_t);
 

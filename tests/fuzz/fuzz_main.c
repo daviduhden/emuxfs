@@ -30,10 +30,12 @@
  *   ./fuzz_conf_standalone [runs]
  */
 
+// clang-format off
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+// clang-format on
 
 int LLVMFuzzerTestOneInput(const uint8_t *, size_t);
 

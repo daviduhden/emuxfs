@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+// clang-format off
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/syslimits.h>
@@ -32,6 +33,7 @@
 #include "ds.h"
 #include "emuxfs.h"
 #include "fault.h"
+// clang-format on
 
 struct emuxfs_args emuxfs_cmdline;
 

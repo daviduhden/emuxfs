@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+// clang-format off
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/syslimits.h>
@@ -29,6 +30,7 @@
 
 #include "chk.h"
 #include "emuxfs.h"
+// clang-format on
 
 #define EMUXFS_LEVEL_FACTOR (EMUXFS_BLOCK_SIZE / EMUXFS_CHKSZ_MAX)
 

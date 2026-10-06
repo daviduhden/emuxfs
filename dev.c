@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+// clang-format off
 #include <sys/stat.h>
 #include <sys/syslimits.h>
 
@@ -28,6 +29,7 @@
 #include <unistd.h>
 
 #include "emuxfs.h"
+// clang-format on
 
 /*
  * The private directory is opened once with O_DIRECTORY|O_NOFOLLOW and every

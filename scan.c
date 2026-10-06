@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+// clang-format off
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -29,6 +30,7 @@
 #include "ds.h"
 #include "emuxfs.h"
 #include "sandbox.h"
+// clang-format on
 
 /*
  * 'path' is required to be null-terminated and pointing to a buffer of

@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+// clang-format off
 #include <sys/types.h>
 
 #include <fcntl.h>
@@ -29,6 +30,7 @@
 
 #include "ds.h"
 #include "emuxfs.h"
+// clang-format on
 
 struct emuxfs_restore_item {
 	size_t dev_index;

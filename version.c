@@ -16,9 +16,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+// clang-format off
 #include <stdio.h>
 
 #include "emuxfs.h"
+// clang-format on
 
 struct emuxfs_version emuxfs_program_version = {
     .number = 1, .revision = 0, .flavor = VF_CURRENT};

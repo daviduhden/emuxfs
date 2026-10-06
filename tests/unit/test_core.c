@@ -29,6 +29,7 @@
  * cannot be created the tests abort rather than touch anything else.
  */
 
+// clang-format off
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -47,6 +48,7 @@
 #include "chk.h"
 #include "ds.h"
 #include "emuxfs.h"
+// clang-format on
 
 static int  failures;
 static char sandbox[PATH_MAX];

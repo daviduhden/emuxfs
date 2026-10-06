@@ -25,6 +25,7 @@
  * free of OpenBSD-specific sandboxing code.
  */
 
+// clang-format off
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,6 +34,7 @@
 
 #include "emuxfs.h"
 #include "sandbox.h"
+// clang-format on
 
 static int
 emuxfs_sandbox_unveil_path_perm(const char *path, const char *permissions)

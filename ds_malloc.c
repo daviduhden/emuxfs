@@ -26,10 +26,12 @@
  * data and struct dirent pointers).
  */
 
+// clang-format off
 #include <stdint.h>
 #include <stdlib.h>
 
 #include "ds.h"
+// clang-format on
 
 struct emuxfs_ds_hdr {
 	size_t size;

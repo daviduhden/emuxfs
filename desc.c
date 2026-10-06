@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+// clang-format off
 #include <sys/stat.h>
 #include <sys/syslimits.h>
 
@@ -28,6 +29,7 @@
 #include "chk.h"
 #include "ds.h"
 #include "emuxfs.h"
+// clang-format on
 
 EMUXFS int
 emuxfs_desc_chk_reg_content(

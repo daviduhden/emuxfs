@@ -26,11 +26,13 @@
  * algorithms only at the end, before CAT_NONE.
  */
 
+// clang-format off
 #include <endian.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "chk.h"
+// clang-format on
 
 static void
 emuxfs_crc32_init(struct emuxfs_chk *chk, struct emuxfs_chk_alg *alg)

@@ -30,6 +30,7 @@
  * exit.  See SECURITY.md and RECOVERY.md.
  */
 
+// clang-format off
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,6 +40,7 @@
 #include "emuxfs.h"
 #include "ops.h"
 #include "sandbox.h"
+// clang-format on
 
 static void
 emuxfs_mount_usage(void)

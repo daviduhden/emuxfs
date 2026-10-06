@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+// clang-format off
 #include <sys/stat.h>
 #include <sys/syslimits.h>
 
@@ -31,6 +32,7 @@
 #include "ds.h"
 #include "emuxfs.h"
 #include "sandbox.h"
+// clang-format on
 
 /* See conf.c: uuid_enc_le() moves sizeof(uuid_t) bytes. */
 static_assert(sizeof(uuid_t) == EMUXFS_UUID_SIZE,

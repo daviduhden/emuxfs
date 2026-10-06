@@ -21,11 +21,13 @@
  * NOTICE.md). See fault.h and TESTING.md.
  */
 
+// clang-format off
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "fault.h"
+// clang-format on
 
 void
 emuxfs_fault_point([[maybe_unused]] const char *name)
