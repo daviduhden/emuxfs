@@ -431,6 +431,36 @@ print "== truncate grows a small file into a sparse large file\n";
               unless substr( $data, 5 ) eq ( "\0" x 9995 );
         }
     }
+
+    # A file that already spans several blocks exercises the in-place
+    # checksum-tree resize, both growing and shrinking.
+    if ( !truncate( "$mp/grow", 30000 ) ) {
+        fail("truncate large grow: $!");
+    }
+    else {
+        my $data = slurp("$mp/grow");
+        fail("large grow size")
+          unless defined($data) && length($data) == 30000;
+        if ( defined($data) && length($data) == 30000 ) {
+            fail("large grow lost the prefix")
+              unless substr( $data, 0, 5 ) eq "hello";
+            fail("large grow hole is not zero")
+              unless substr( $data, 5 ) eq ( "\0" x 29995 );
+        }
+    }
+    if ( !truncate( "$mp/grow", 6000 ) ) {
+        fail("truncate shrink: $!");
+    }
+    else {
+        my $data = slurp("$mp/grow");
+        fail("shrink size") unless defined($data) && length($data) == 6000;
+        if ( defined($data) && length($data) == 6000 ) {
+            fail("shrink lost the prefix")
+              unless substr( $data, 0, 5 ) eq "hello";
+            fail("shrink tail is not zero")
+              unless substr( $data, 5 ) eq ( "\0" x 5995 );
+        }
+    }
     must_run( "remove grow", "rm", "-f", "$mp/grow" );
 }
 

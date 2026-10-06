@@ -1503,6 +1503,8 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 			lfile_fd, alg, st->st_ino, newoff, r.blk_index_begin,
 			r.blk_index_end))
 			goto out;
+		memcpy(&wr_meta->checksums[chksz], wr_desc->content_checksum,
+		    chksz);
 		break;
 	case 3:
 		if (emuxfs_lfile_resize(
@@ -1546,6 +1548,8 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 				st->st_ino, newoff, r.blk_index_begin,
 				r.blk_index_end))
 				goto out;
+			memcpy(&wr_meta->checksums[chksz],
+			    wr_desc->content_checksum, chksz);
 			break;
 		}
 		r.byte_begin = prewr_sz;
@@ -1603,6 +1607,8 @@ emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
 			lfile_fd, alg, st->st_ino, newoff, r.blk_index_begin,
 			r.blk_index_end))
 			goto out;
+		memcpy(&wr_meta->checksums[chksz], wr_desc->content_checksum,
+		    chksz);
 		break;
 	default:
 		exit(-1); /* Unreachable. */
