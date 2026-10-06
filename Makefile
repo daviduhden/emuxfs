@@ -32,6 +32,11 @@ CFLAGS += ${CSTD} ${WARNINGS}
 # /usr/lib/libfuse.a, so the include directory must be named explicitly.  The
 # same directory is what the base system's fuse.pc advertises.
 CPPFLAGS += -I/usr/include/fuse
+# C23 compatibility shims.  The header belongs to the C library and OpenBSD's
+# libc does not provide it yet, so compat/ (searched before the system
+# directories) shadows <stdckdint.h> and provides the operations when needed.
+# See compat/stdckdint.h.
+CPPFLAGS += -Icompat
 LDLIBS += -lfuse -lz
 
 # Full strict set (openutils "check" policy).
@@ -113,10 +118,10 @@ ${PROG}: ${OBJ}
 	${CC} ${LDFLAGS} -o $@ ${OBJ} ${LDLIBS}
 
 .SUFFIXES: .c .o .fault.o
-.c.o: emuxfs.h chk.h ds.h fault.h ops.h sandbox.h
+.c.o: emuxfs.h chk.h ds.h fault.h ops.h sandbox.h compat/stdckdint.h
 	${CC} ${CFLAGS} ${CPPFLAGS} -DEMUXFS= -c -o $@ $<
 
-.c.fault.o: emuxfs.h chk.h ds.h fault.h ops.h sandbox.h
+.c.fault.o: emuxfs.h chk.h ds.h fault.h ops.h sandbox.h compat/stdckdint.h
 	${CC} ${CFLAGS} ${CPPFLAGS} -DEMUXFS= -DEMUXFS_FAULT_INJECTION -c -o $@ $<
 
 # Strict-warning build: same policy as the openutils 'check' target.

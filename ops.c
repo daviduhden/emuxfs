@@ -701,7 +701,7 @@ emuxfs_op_delete(const char *path, enum emuxfs_op_delete_type type)
 			 * that unlink(2) refused to delete would destroy the
 			 * checksums of a still-live file.
 			 */
-			if (prewr_st.st_size > EMUXFS_BLOCK_SIZE) {
+			if ((size_t)prewr_st.st_size > EMUXFS_BLOCK_SIZE) {
 				stage = "lfile_delete";
 				if (emuxfs_lfile_delete(
 					dev->lfile_fd, prewr_ino))

@@ -40,6 +40,14 @@ Applied:
   `emuxfs_assign_write`/`_fd`, the lfile helpers,
   `emuxfs_lfile_ancestors_recompute`, `emuxfs_pread_exact`,
   `emuxfs_pwrite_exact`, `emuxfs_fsync_parent`).
+* `compat/stdckdint.h`, modeled on the openutils shim: the OpenBSD 7.9 libc
+  does not ship `<stdckdint.h>`, so `compat/` is searched before the system
+  directories (`CPPFLAGS += -Icompat`), the shim forwards to a real header via
+  `#include_next` when one exists, and otherwise provides `ckd_add`,
+  `ckd_sub` and `ckd_mul` with the compiler overflow builtins.
+* The size constants became `size_t`, so the two signed/unsigned comparisons
+  they participated in (`prewr_st.st_size > EMUXFS_BLOCK_SIZE` and the UUID
+  loop in the unit test) were made explicit.
 
 Evaluated and not applied, with the reason:
 

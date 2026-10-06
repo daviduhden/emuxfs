@@ -258,7 +258,7 @@ test_conf_roundtrip(void)
 	out.version = emuxfs_program_version;
 	out.format_version = EMUXFS_FORMAT_VERSION;
 	out.chk_alg_type = CAT_SHA1;
-	for (i = 0; i < EMUXFS_UUID_SIZE; ++i) {
+	for (i = 0; i < (int)EMUXFS_UUID_SIZE; ++i) {
 		out.array_uuid[i] = (uint8_t)i;
 		/*
 		 * uuid_from_string(3) rejects UUIDs whose variant bits are
