@@ -207,7 +207,7 @@ EMUXFS int		 emuxfs_assign_peek_next_eno(uint64_t *, dind);
     struct emuxfs_assign *, dind, uint64_t);
 [[nodiscard]] EMUXFS int emuxfs_assign_write(
     const struct emuxfs_assign *, dind, uint64_t);
-EMUXFS bool emuxfs_assign_validate(dind, uint64_t, uint64_t);
+EMUXFS bool emuxfs_assign_is_valid(dind, uint64_t, uint64_t);
 EMUXFS int emuxfs_meta_assign_check(dind, size_t *);
 [[nodiscard]] EMUXFS int emuxfs_assign_write_fd(
     int, const struct emuxfs_assign *, uint64_t);

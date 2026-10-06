@@ -414,7 +414,7 @@ emuxfs_readback(
 	 * the metadata and assign writes, and stale mappings left by inode
 	 * reuse.
 	 */
-	if (emuxfs_assign_validate(i, ino, eno)) {
+	if (!emuxfs_assign_is_valid(i, ino, eno)) {
 		EMUXFS_TRACE("readback: assign dev=%lu ino=%llu eno=%llu "
 			     "path=%s\n",
 		    (unsigned long)i, (unsigned long long)ino,

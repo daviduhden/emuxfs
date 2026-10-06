@@ -815,7 +815,7 @@ emuxfs_assign_write(
  * for one node.  Returns true when the mapping is consistent, false otherwise.
  */
 EMUXFS bool
-emuxfs_assign_validate(dind dev_index, uint64_t ino, uint64_t eno)
+emuxfs_assign_is_valid(dind dev_index, uint64_t ino, uint64_t eno)
 {
 	EMUXFS_TRACE("enter");
 	struct emuxfs_assign assign;
