@@ -37,12 +37,11 @@
 
 #include <limits.h>
 #include <stdbool.h>
+#include <stdckdint.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-
-#include <stdckdint.h>
 
 /* The header must announce itself with the C23 value. */
 #ifndef __STDC_VERSION_STDCKDINT_H__
@@ -53,7 +52,7 @@
 #endif
 
 /* __int128 is the reference arithmetic; silence the -Wpedantic complaint. */
-__extension__ typedef __int128 i128;
+__extension__ typedef __int128		i128;
 __extension__ typedef unsigned __int128 u128;
 
 static int failures;
@@ -61,8 +60,8 @@ static int failures;
 #define CHECK(cond, what)                                                      \
 	do {                                                                   \
 		if (!(cond)) {                                                 \
-			printf("FAIL: %s (%s:%d)\n", (what), __FILE__,         \
-			    __LINE__);                                         \
+			printf(                                                \
+			    "FAIL: %s (%s:%d)\n", (what), __FILE__, __LINE__); \
 			failures++;                                            \
 		}                                                              \
 	} while (0)
@@ -74,8 +73,8 @@ mask_of(unsigned width)
 }
 
 struct int_info {
-	unsigned	width;
-	unsigned	is_signed;
+	unsigned width;
+	unsigned is_signed;
 };
 
 /* Value of a width-bit two's complement pattern in the given type. */
@@ -121,11 +120,11 @@ oracle(int op, struct int_info ra, struct int_info rb, struct int_info rr,
 	int	 sa, sb, sign;
 
 	if (op == 0)
-		return convert(value_of(a_bits, ra) + value_of(b_bits, rb), rr,
-		    out);
+		return convert(
+		    value_of(a_bits, ra) + value_of(b_bits, rb), rr, out);
 	if (op == 1)
-		return convert(value_of(a_bits, ra) - value_of(b_bits, rb), rr,
-		    out);
+		return convert(
+		    value_of(a_bits, ra) - value_of(b_bits, rb), rr, out);
 
 	/* Multiplication: track sign and magnitude so the product of two
 	 * full-width unsigned operands still fits in unsigned __int128. */
@@ -159,91 +158,94 @@ oracle(int op, struct int_info ra, struct int_info rb, struct int_info rr,
 
 /* Boundary patterns; masked to the operand width at use. */
 static const uint64_t vals[] = {
-	UINT64_C(0),
-	UINT64_C(1),
-	UINT64_C(2),
-	UINT64_C(3),
-	UINT64_C(127),
-	UINT64_C(128),
-	UINT64_C(255),
-	UINT64_C(256),
-	UINT64_C(0x7fff),
-	UINT64_C(0x8000),
-	UINT64_C(0xffff),
-	UINT64_C(0x10000),
-	UINT64_C(0x7fffffff),
-	UINT64_C(0x80000000),
-	UINT64_C(0xffffffff),
-	UINT64_C(0x100000000),
-	UINT64_C(0x7fffffffffffffff),
-	UINT64_C(0x8000000000000000),
-	UINT64_C(0xffffffffffffffff),
-	UINT64_C(100),
-	UINT64_C(1000),
-	UINT64_C(65535),
+    UINT64_C(0),
+    UINT64_C(1),
+    UINT64_C(2),
+    UINT64_C(3),
+    UINT64_C(127),
+    UINT64_C(128),
+    UINT64_C(255),
+    UINT64_C(256),
+    UINT64_C(0x7fff),
+    UINT64_C(0x8000),
+    UINT64_C(0xffff),
+    UINT64_C(0x10000),
+    UINT64_C(0x7fffffff),
+    UINT64_C(0x80000000),
+    UINT64_C(0xffffffff),
+    UINT64_C(0x100000000),
+    UINT64_C(0x7fffffffffffffff),
+    UINT64_C(0x8000000000000000),
+    UINT64_C(0xffffffffffffffff),
+    UINT64_C(100),
+    UINT64_C(1000),
+    UINT64_C(65535),
 };
 
 /*
  * Run the exhaustive boundary grid for one (operand, operand, result) triple
  * and compare ckd_add/sub/mul against the oracle.
  */
-#define RUN_CASE(AT, AS, AUT, BT, BS, BUT, RT, RS, RUT)                       \
-	do {                                                                  \
-		struct int_info ra = {sizeof(AT) * CHAR_BIT, (AS)};           \
-		struct int_info rb = {sizeof(BT) * CHAR_BIT, (BS)};           \
-		struct int_info rr = {sizeof(RT) * CHAR_BIT, (RS)};           \
-		size_t		i;                                            \
-		size_t		j;                                            \
-		int		k;                                            \
-									      \
-		for (i = 0; i < sizeof(vals) / sizeof(vals[0]); i++) {        \
-			for (j = 0; j < sizeof(vals) / sizeof(vals[0]); j++) {\
-				uint64_t av = vals[i] & mask_of(ra.width);    \
-				uint64_t bv = vals[j] & mask_of(rb.width);    \
-				AT	 a = (AT)(AUT)av;                     \
-				BT	 b = (BT)(BUT)bv;                     \
-				RT	 r;                                   \
-				uint64_t want;                                \
-				int	 wf;                                  \
-				int	 gf;                                  \
-									      \
-				for (k = 0; k < 3; k++) {                     \
-					r = (RT)(RUT)UINT64_C(0x5a5a5a5a5a5a5a5a);\
-					wf = oracle(k, ra, rb, rr, av, bv, &want);\
-					switch (k) {                          \
-					case 0:                               \
-						gf = ckd_add(&r, a, b) != 0;  \
-						break;                        \
-					case 1:                               \
-						gf = ckd_sub(&r, a, b) != 0;  \
-						break;                        \
-					default:                              \
-						gf = ckd_mul(&r, a, b) != 0;  \
-						break;                        \
-					}                                     \
-					if (gf != wf ||                       \
-					    (uint64_t)(RUT)r != want) {       \
-						if (failures < 40)            \
-							printf("FAIL: %s "\
-							    "op=%d a=%#llx "\
-							    "b=%#llx gf=%d "\
-							    "wf=%d got=%#llx "\
-							    "want=%#llx\n",     \
-							    #RT, k,            \
-							    (unsigned long     \
-								long)av,           \
-							    (unsigned long     \
-								long)bv,           \
-							    gf, wf,            \
-							    (unsigned long     \
-								long)(RUT)r,       \
-							    (unsigned long     \
-								long)want);        \
-						failures++;                   \
-					}                                     \
-				}                                             \
-			}                                                      \
-		}                                                              \
+#define RUN_CASE(AT, AS, AUT, BT, BS, BUT, RT, RS, RUT)                               \
+	do {                                                                          \
+		struct int_info ra = {sizeof(AT) * CHAR_BIT, (AS)};                   \
+		struct int_info rb = {sizeof(BT) * CHAR_BIT, (BS)};                   \
+		struct int_info rr = {sizeof(RT) * CHAR_BIT, (RS)};                   \
+		size_t		i;                                                    \
+		size_t		j;                                                    \
+		int		k;                                                    \
+                                                                                      \
+		for (i = 0; i < sizeof(vals) / sizeof(vals[0]); i++) {                \
+			for (j = 0; j < sizeof(vals) / sizeof(vals[0]); j++) {        \
+				uint64_t av = vals[i] & mask_of(ra.width);            \
+				uint64_t bv = vals[j] & mask_of(rb.width);            \
+				AT	 a = (AT)(AUT)av;                             \
+				BT	 b = (BT)(BUT)bv;                             \
+				RT	 r;                                           \
+				uint64_t want;                                        \
+				int	 wf;                                          \
+				int	 gf;                                          \
+                                                                                      \
+				for (k = 0; k < 3; k++) {                             \
+					r = (RT)(RUT)UINT64_C(                        \
+					    0x5a5a5a5a5a5a5a5a);                      \
+					wf = oracle(                                  \
+					    k, ra, rb, rr, av, bv, &want);            \
+					switch (k) {                                  \
+					case 0:                                       \
+						gf = ckd_add(&r, a, b) != 0;          \
+						break;                                \
+					case 1:                                       \
+						gf = ckd_sub(&r, a, b) != 0;          \
+						break;                                \
+					default:                                      \
+						gf = ckd_mul(&r, a, b) != 0;          \
+						break;                                \
+					}                                             \
+					if (gf != wf ||                               \
+					    (uint64_t)(RUT)r != want) {               \
+						if (failures < 40)                    \
+							printf(                       \
+							    "FAIL: %s "               \
+							    "op=%d a=%#llx "          \
+							    "b=%#llx gf=%d "          \
+							    "wf=%d got=%#llx "        \
+							    "want=%#llx\n",           \
+							    #RT, k,                   \
+							    (unsigned long long)      \
+								av,                   \
+							    (unsigned long long)      \
+								bv,                   \
+							    gf, wf,                   \
+							    (unsigned long long)(RUT) \
+								r,                    \
+							    (unsigned long long)      \
+								want);                \
+						failures++;                           \
+					}                                             \
+				}                                                     \
+			}                                                             \
+		}                                                                     \
 	} while (0)
 
 /* Single-evaluation probes. */
@@ -370,8 +372,8 @@ main(void)
 	    unsigned short);
 	RUN_CASE(unsigned short, 0, unsigned short, unsigned short, 0,
 	    unsigned short, unsigned short, 0, unsigned short);
-	RUN_CASE(int, 1, unsigned int, int, 1, unsigned int, int, 1,
-	    unsigned int);
+	RUN_CASE(
+	    int, 1, unsigned int, int, 1, unsigned int, int, 1, unsigned int);
 	RUN_CASE(unsigned int, 0, unsigned int, unsigned int, 0, unsigned int,
 	    unsigned int, 0, unsigned int);
 	RUN_CASE(long long, 1, unsigned long long, long long, 1,
@@ -385,8 +387,8 @@ main(void)
 	    unsigned long long);
 	RUN_CASE(int, 1, unsigned int, unsigned int, 0, unsigned int, int, 1,
 	    unsigned int);
-	RUN_CASE(long long, 1, unsigned long long, int, 1, unsigned int,
-	    int, 1, unsigned int);
+	RUN_CASE(long long, 1, unsigned long long, int, 1, unsigned int, int, 1,
+	    unsigned int);
 	RUN_CASE(int, 1, unsigned int, int, 1, unsigned int, unsigned char, 0,
 	    unsigned char);
 	RUN_CASE(long long, 1, unsigned long long, unsigned long long, 0,
