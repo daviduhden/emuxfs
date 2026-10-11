@@ -133,10 +133,18 @@ check:
 	${MAKE} -k WARNINGS="${CHECK_WARNINGS} -Werror" ${PROG}
 
 # Headless unit tests: no FUSE, no mounts.
-unittest: tests/unit/test_core
+unittest: tests/unit/test_core tests/unit/test_stdckdint
 tests/unit/test_core: tests/unit/test_core.c ${CORE_OBJ}
 	${CC} ${CFLAGS} ${CPPFLAGS} -DEMUXFS= -I. \
 	    -o $@ tests/unit/test_core.c ${CORE_OBJ} -lz
+
+# <stdckdint.h> conformance test.  The fallback is forced so that the
+# vendored implementation is always the code under test, even on hosts whose
+# libc or compiler ships a native header.
+tests/unit/test_stdckdint: tests/unit/test_stdckdint.c compat/stdckdint.h
+	${CC} ${CFLAGS} ${CPPFLAGS} -DEMUXFS= \
+	    -DEMUXFS_STDCKDINT_FORCE_FALLBACK \
+	    -o $@ tests/unit/test_stdckdint.c
 
 # Full integration suite (Perl).  Requires root and a working FUSE device; it
 # creates and destroys its own temporary sandbox.
@@ -153,6 +161,10 @@ legacytest: ${PROG}
 	perl test.pl
 
 test: unittest
+	./tests/unit/test_stdckdint
+	CC="${CC}" CFLAGS="${CFLAGS}" \
+	    FORCE=EMUXFS_STDCKDINT_FORCE_FALLBACK \
+	    sh tests/unit/stdckdint-compile-fail.sh
 check-tests: test integration
 
 # Optional libFuzzer target.  Not built by 'all'; 'fuzz-smoke' runs a bounded
@@ -225,7 +237,8 @@ install: ${PROG}
 clean:
 	rm -f ${PROG} emuxfs-fault \
 	    ${FAULT_OBJ} \
-	    tests/unit/test_core tests/fuzz/fuzz_conf \
+	    tests/unit/test_core tests/unit/test_stdckdint \
+	    tests/fuzz/fuzz_conf \
 	    tests/fuzz/fuzz_conf_standalone \
 	    ${OBJ} >/dev/null 2>&1 || true
 

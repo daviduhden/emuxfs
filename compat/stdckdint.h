@@ -1,24 +1,35 @@
 /*
  * <stdckdint.h> compatibility shim.
  *
- * emuxfs is C23 and uses the checked integer arithmetic macros from
- * <stdckdint.h>.  Clang accepts -std=c23, but the header belongs to the C
- * library, and a system can have a C23-capable compiler while its libc still
- * lacks the header (OpenBSD 7.9 at the time of writing).  Because compat/ is
- * on the include path (-I) this file shadows the system header:
+ * C23 places the checked-integer macros in the C library, but a system can
+ * have a C23-capable compiler while its libc still lacks the header (OpenBSD
+ * 7.9 at the time of writing).  compat/ is searched ahead of the system
+ * directories, so this file is what
  *
- *   - when a real <stdckdint.h> is reachable after compat/ in the include
- *     search order, it is included and used unchanged;
- *   - otherwise ckd_add(), ckd_sub() and ckd_mul() are provided with the
- *     compiler's overflow builtins.
+ *	#include <stdckdint.h>
  *
- * __has_include_next() and #include_next (instead of __has_include() and
- * #include) are essential here: compat/ precedes the system directories, so a
- * plain include would find this very file again and recurse instead of
- * reaching the real header.  include_next resumes the search after compat/,
- * which cannot match this file.  Both are GCC/Clang extensions; they are
- * confined to this portability shim, and the fallback below relies on those
- * same compilers anyway.
+ * finds.  It is intentionally thin:
+ *
+ *   - a conforming system header reachable after compat/ is included with
+ *     #include_next and used unchanged;
+ *   - otherwise ckd_add(), ckd_sub() and ckd_mul() are defined in terms of
+ *     the compiler overflow builtins.
+ *
+ * #include_next (rather than #include) is required: compat/ precedes the
+ * system directories, so a plain include would find this very file again and
+ * recurse.  #include_next resumes the search after compat/, which cannot
+ * match this file.  It is a GCC/Clang extension, but this portability shim
+ * already relies on those compilers for the overflow builtins.
+ *
+ * The fallback matches C23 7.20.1: the builtins evaluate both operands to
+ * infinite precision, convert the mathematical result to the type of *result
+ * (wrapping when it is not representable), store it, and report whether that
+ * conversion changed the value.  Each operand and the result pointer are
+ * evaluated exactly once.  This is the same formulation used by GCC's and
+ * Clang's resource headers and by the musl <stdckdint.h> proposal (Jens
+ * Gustedt, 2023-05-31, message-id <323b1aaf4c7e31010ead4eae127d0d580f319ce6.
+ * 1685535458.git.Jens.Gustedt@inria.fr>); no code is copied from either, only
+ * the builtin contract they all express.
  *
  * EMUXFS_STDCKDINT_FORCE_FALLBACK exists so that a test can exercise the
  * fallback on hosts whose libc already provides the header.  The build never
@@ -50,7 +61,7 @@
 /*
  * GCC diagnoses the (intentional) GNU #include_next extension under
  * -Wpedantic; suppress exactly that diagnostic for this one directive so the
- * shim stays warning-free.  This is not hiding a defect: the directive is the
+ * shim stays warning-free.  This does not hide a defect: the directive is the
  * mechanism that reaches the real header.
  */
 #pragma GCC diagnostic push
@@ -65,16 +76,6 @@
  * A conforming C23 <stdckdint.h> defines __STDC_VERSION_STDCKDINT_H__ (C23
  * 7.20).  If it is not defined here, either no real header was found or it is
  * not conforming, so supply the operations.
- *
- * C23 specifies ckd_add(result, a, b) as computing the mathematical (infinite
- * precision) value of a + b, converting it to the type of *result, storing it
- * in *result, and returning true exactly when the conversion is not
- * value-preserving.  The operands are not first converted to a common type.
- * __builtin_add_overflow(a, b, result) has that exact contract: it promotes a
- * and b to infinite precision, converts the mathematical result to the type of
- * *result, stores it and reports whether the conversion changed the value.
- * This fallback therefore matches the real header for the standard integer
- * types used by the project.  Each operand is evaluated exactly once.
  */
 #ifndef __STDC_VERSION_STDCKDINT_H__
 #if defined(__has_builtin)
@@ -92,13 +93,13 @@
  * non-conforming header that already defines some of the macros.
  */
 #ifndef ckd_add
-#define ckd_add(result, a, b) ((bool)__builtin_add_overflow((a), (b), (result)))
+#define ckd_add(result, a, b) ((_Bool)__builtin_add_overflow((a), (b), (result)))
 #endif
 #ifndef ckd_sub
-#define ckd_sub(result, a, b) ((bool)__builtin_sub_overflow((a), (b), (result)))
+#define ckd_sub(result, a, b) ((_Bool)__builtin_sub_overflow((a), (b), (result)))
 #endif
 #ifndef ckd_mul
-#define ckd_mul(result, a, b) ((bool)__builtin_mul_overflow((a), (b), (result)))
+#define ckd_mul(result, a, b) ((_Bool)__builtin_mul_overflow((a), (b), (result)))
 #endif
 
 #define __STDC_VERSION_STDCKDINT_H__ 202311L

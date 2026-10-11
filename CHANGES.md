@@ -1,5 +1,18 @@
 # Change log
 
+## Checked-arithmetic audit (2026-10-11)
+
+* Audited `compat/stdckdint.h` against ISO C23 7.20 and the compiler overflow
+  builtins: the fallback result is cast to `bool` explicitly, the
+  `ckd_add`/`ckd_sub`/`ckd_mul` definitions stay guarded so a partial system
+  header cannot collide with them, and the provenance (the musl
+  `<stdckdint.h>` proposal and the GCC/clang resource headers) is recorded.
+* Added `tests/unit/test_stdckdint.c`, which forces the fallback and checks
+  every operation against an independent `__int128` oracle over a boundary
+  grid, comparing both the overflow indication and the stored value, plus
+  `tests/unit/stdckdint-compile-fail.sh` for the operand and destination types
+  C23 forbids.  `make test` runs both.
+
 ## C23 intensive pass (2026-10-06)
 
 An explicitly aggressive, low-conservatism pass that applies every C23 feature
