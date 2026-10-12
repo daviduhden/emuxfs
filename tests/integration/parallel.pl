@@ -259,50 +259,10 @@ sub worker {
 
     eval {
         for my $i ( 1 .. $ITERS ) {
-            my $dir = "$mp/$tag-d$i";
-            die "mkdir $dir: $!\n" unless mkdir($dir);
-
-            my $name = "$dir/f";
-            open( my $fh, ">", $name )
-              or die "open $name: $!\n";
-            print $fh "$tag:$i\n"
-              or die "write $name: $!\n";
-            close($fh)
-              or die "close $name: $!\n";
-
-            my $got = slurp($name);
-            die "read $name: wrong or missing content\n"
-              unless defined($got) && $got eq "$tag:$i\n";
-
-            my $name2 = "$dir/f.ren";
-            die "rename $name -> $name2: $!\n"
-              unless rename( $name, $name2 );
-
-            $got = slurp($name2);
-            die "read $name2: wrong or missing content\n"
-              unless defined($got) && $got eq "$tag:$i\n";
-
-            die "unlink $name2: $!\n" unless unlink($name2);
-            die "rmdir $dir: $!\n"    unless rmdir($dir);
-
-            # Best-effort progress for the parent (sandbox, not the mount).
-            if ( open( my $pf, ">", "$sandbox/progress/$tag" ) ) {
-                print $pf "$i\n";
-                close($pf);
-            }
+            churn_iteration( $tag, $i );
         }
 
-        open( my $fh, ">", "$mp/final_$tag" )
-          or die "open final_$tag: $!\n";
-        print $fh "$tag:done\n"
-          or die "write final_$tag: $!\n";
-        close($fh)
-          or die "close final_$tag: $!\n";
-
-        if ( open( my $pf, ">", "$sandbox/progress/$tag" ) ) {
-            print $pf "done\n";
-            close($pf);
-        }
+        write_marker($tag);
 
         1;
     } or $err = ( $@ // "unknown failure\n" );
@@ -317,6 +277,60 @@ sub worker {
     }
 
     return 0;
+}
+
+# One churn step for worker(): create, write, read, rename, read, unlink, rmdir.
+sub churn_iteration {
+    my ( $tag, $i ) = @_;
+    my $dir = "$mp/$tag-d$i";
+    die "mkdir $dir: $!\n" unless mkdir($dir);
+
+    my $name = "$dir/f";
+    open( my $fh, ">", $name )
+      or die "open $name: $!\n";
+    print $fh "$tag:$i\n"
+      or die "write $name: $!\n";
+    close($fh)
+      or die "close $name: $!\n";
+
+    my $got = slurp($name);
+    die "read $name: wrong or missing content\n"
+      unless defined($got) && $got eq "$tag:$i\n";
+
+    my $name2 = "$dir/f.ren";
+    die "rename $name -> $name2: $!\n"
+      unless rename( $name, $name2 );
+
+    $got = slurp($name2);
+    die "read $name2: wrong or missing content\n"
+      unless defined($got) && $got eq "$tag:$i\n";
+
+    die "unlink $name2: $!\n" unless unlink($name2);
+    die "rmdir $dir: $!\n"    unless rmdir($dir);
+
+    # Best-effort progress for the parent (sandbox, not the mount).
+    if ( open( my $pf, ">", "$sandbox/progress/$tag" ) ) {
+        print $pf "$i\n";
+        close($pf);
+    }
+    return;
+}
+
+# Write worker()'s deterministic marker file and final progress record.
+sub write_marker {
+    my ($tag) = @_;
+    open( my $fh, ">", "$mp/final_$tag" )
+      or die "open final_$tag: $!\n";
+    print $fh "$tag:done\n"
+      or die "write final_$tag: $!\n";
+    close($fh)
+      or die "close final_$tag: $!\n";
+
+    if ( open( my $pf, ">", "$sandbox/progress/$tag" ) ) {
+        print $pf "done\n";
+        close($pf);
+    }
+    return;
 }
 
 # Read the per-worker progress markers written by worker().  The daemon is
@@ -385,136 +399,168 @@ sub manifest {
     return \%m;
 }
 
-# ---------------------------------------------------------------------------
+# Format both devices, mount the array and probe it.
+sub setup_devices {
+    make_path( $dev_a, $dev_b, $mp );
+    make_path("$sandbox/progress");
 
-make_path( $dev_a, $dev_b, $mp );
-make_path("$sandbox/progress");
+    print "== format\n";
+    must_run( "format", $EMUXFS, "format", "-a", "sha1", $dev_a, $dev_b )
+      or exit 1;
 
-print "== format\n";
-must_run( "format", $EMUXFS, "format", "-a", "sha1", $dev_a, $dev_b )
-  or exit 1;
-
-print "== mount\n";
-mount_array();
-probe_mount();
-
-print "== $WORKERS workers x $ITERS iterations\n";
-my @pids;
-for my $id ( 0 .. $WORKERS - 1 ) {
-    my $pid = fork();
-    if ( !defined $pid ) {
-        fail("fork: $!");
-        last;
-    }
-    if ( $pid == 0 ) {
-        my $rc = worker($id);
-        POSIX::_exit( $rc ? 1 : 0 );
-    }
-    push @pids, $pid;
+    print "== mount\n";
+    mount_array();
+    probe_mount();
+    return;
 }
 
-my %status;
-my %alive       = map { $_ => 1 } @pids;
-my $deadline    = time() + $TIMEOUT;
-my $last_report = time();
-while (%alive) {
-    for my $pid ( sort { $a <=> $b } keys %alive ) {
-        my $r = waitpid( $pid, WNOHANG );
-        if ( $r == $pid ) {
-            $status{$pid} = $?;
-            delete $alive{$pid};
+# Fork one worker per id and return the list of child pids.
+sub spawn_workers {
+    print "== $WORKERS workers x $ITERS iterations\n";
+    my @pids;
+    for my $id ( 0 .. $WORKERS - 1 ) {
+        my $pid = fork();
+        if ( !defined $pid ) {
+            fail("fork: $!");
+            last;
+        }
+        if ( $pid == 0 ) {
+            my $rc = worker($id);
+            POSIX::_exit( $rc ? 1 : 0 );
+        }
+        push @pids, $pid;
+    }
+    return @pids;
+}
+
+# Reap the workers, reporting progress, and return pid => status.
+sub wait_for_workers {
+    my (@pids) = @_;
+    my %status;
+    my %alive       = map { $_ => 1 } @pids;
+    my $deadline    = time() + $TIMEOUT;
+    my $last_report = time();
+    while (%alive) {
+        for my $pid ( sort { $a <=> $b } keys %alive ) {
+            my $r = waitpid( $pid, WNOHANG );
+            if ( $r == $pid ) {
+                $status{$pid} = $?;
+                delete $alive{$pid};
+            }
+        }
+        last unless %alive;
+        if ( time() > $deadline ) {
+            fail(   "$TIMEOUT-second timeout with "
+                  . scalar( keys %alive )
+                  . " worker(s) still running" );
+            kill( "KILL", keys %alive );
+            waitpid( $_, 0 ) for keys %alive;
+            %alive = ();
+            last;
+        }
+        if ( time() >= $last_report + 2 ) {
+            $last_report = time();
+            print progress_line(), "\n";
+        }
+        Time::HiRes::sleep(0.05);
+    }
+    print progress_line(), "\n";
+    return %status;
+}
+
+# Report each failed worker and dump its per-worker error file.
+sub check_workers {
+    my (%status) = @_;
+    my $bad = 0;
+    for my $st ( values %status ) {
+        $bad++ if $st != 0;
+    }
+    if ($bad) {
+        fail("$bad worker(s) failed");
+        for my $id ( 0 .. $WORKERS - 1 ) {
+            my $tag = sprintf( "w%02d", $id );
+            my $e   = slurp("$sandbox/worker-$tag.err");
+            print STDERR "worker $tag: $e\n" if defined $e;
         }
     }
-    last unless %alive;
-    if ( time() > $deadline ) {
-        fail(   "$TIMEOUT-second timeout with "
-              . scalar( keys %alive )
-              . " worker(s) still running" );
-        kill( "KILL", keys %alive );
-        waitpid( $_, 0 ) for keys %alive;
-        %alive = ();
-        last;
-    }
-    if ( time() >= $last_report + 2 ) {
-        $last_report = time();
-        print progress_line(), "\n";
-    }
-    Time::HiRes::sleep(0.05);
-}
-print progress_line(), "\n";
-
-my $bad = 0;
-for my $st ( values %status ) {
-    $bad++ if $st != 0;
-}
-if ($bad) {
-    fail("$bad worker(s) failed");
-    for my $id ( 0 .. $WORKERS - 1 ) {
-        my $tag = sprintf( "w%02d", $id );
-        my $e   = slurp("$sandbox/worker-$tag.err");
-        print STDERR "worker $tag: $e\n" if defined $e;
-    }
+    return;
 }
 
-# If the daemon is already gone here, say how it went.
-report_daemon_death();
+# If the daemon is already gone here, say how it went; also flag degraded
+# devices, since a device marked degraded during the load explains the EIO
+# storm.
+sub check_daemon_and_devices {
+    report_daemon_death();
 
-# A device that was marked degraded during the load explains the EIO storm.
-for my $dev ( $dev_a, $dev_b ) {
-    my $st = state_fields($dev);
-    if ( !defined $st ) {
-        fail("cannot read state.db for $dev after the load");
+    for my $dev ( $dev_a, $dev_b ) {
+        my $st = state_fields($dev);
+        if ( !defined $st ) {
+            fail("cannot read state.db for $dev after the load");
+        }
+        elsif ( $st->[4] != 0 ) {
+            fail("$dev is degraded after the load");
+        }
     }
-    elsif ( $st->[4] != 0 ) {
-        fail("$dev is degraded after the load");
-    }
+    return;
 }
 
 # The mount point is empty again after unmount, so check it first.
-print "== verify through the mount\n";
-for my $id ( 0 .. $WORKERS - 1 ) {
-    my $tag = sprintf( "w%02d", $id );
-    my $got = slurp("$mp/final_$tag");
-    fail("final_$tag missing or wrong on the mount")
-      unless defined($got) && $got eq "$tag:done\n";
-}
-
-print "== unmount and verify the mirrors\n";
-umount_array();
-reap_daemon();
-wait_state_clean($dev_a) or fail("dev_a not clean after umount");
-wait_state_clean($dev_b) or fail("dev_b not clean after umount");
-
-must_run( "audit", $EMUXFS, "audit", $dev_a, $dev_b );
-
-for my $id ( 0 .. $WORKERS - 1 ) {
-    my $tag = sprintf( "w%02d", $id );
-    for my $dev ( $dev_a, $dev_b ) {
-        my $got = slurp("$dev/final_$tag");
-        fail("final_$tag missing or wrong on $dev")
+sub verify_through_mount {
+    print "== verify through the mount\n";
+    for my $id ( 0 .. $WORKERS - 1 ) {
+        my $tag = sprintf( "w%02d", $id );
+        my $got = slurp("$mp/final_$tag");
+        fail("final_$tag missing or wrong on the mount")
           unless defined($got) && $got eq "$tag:done\n";
     }
+    return;
 }
 
-my $ma = manifest($dev_a);
-my $mb = manifest($dev_b);
-if ( !defined($ma) || !defined($mb) ) {
-    fail("cannot build a device manifest");
-}
-else {
-    for my $k ( sort keys %{$ma} ) {
-        if ( !exists $mb->{$k} ) {
-            fail("only on dev_a: $k");
-            next;
+# Unmount, audit, and confirm the final marker on both mirrors.
+sub unmount_and_audit {
+    print "== unmount and verify the mirrors\n";
+    umount_array();
+    reap_daemon();
+    wait_state_clean($dev_a) or fail("dev_a not clean after umount");
+    wait_state_clean($dev_b) or fail("dev_b not clean after umount");
+
+    must_run( "audit", $EMUXFS, "audit", $dev_a, $dev_b );
+
+    for my $id ( 0 .. $WORKERS - 1 ) {
+        my $tag = sprintf( "w%02d", $id );
+        for my $dev ( $dev_a, $dev_b ) {
+            my $got = slurp("$dev/final_$tag");
+            fail("final_$tag missing or wrong on $dev")
+              unless defined($got) && $got eq "$tag:done\n";
         }
-        fail("mirrors differ: $k") if $ma->{$k} ne $mb->{$k};
     }
-    for my $k ( sort keys %{$mb} ) {
-        fail("only on dev_b: $k") unless exists $ma->{$k};
-    }
+    return;
 }
 
-if ( $failures != 0 ) {
+# Compare the two device trees entry by entry.
+sub compare_mirrors {
+    my $ma = manifest($dev_a);
+    my $mb = manifest($dev_b);
+    if ( !defined($ma) || !defined($mb) ) {
+        fail("cannot build a device manifest");
+    }
+    else {
+        for my $k ( sort keys %{$ma} ) {
+            if ( !exists $mb->{$k} ) {
+                fail("only on dev_a: $k");
+                next;
+            }
+            fail("mirrors differ: $k") if $ma->{$k} ne $mb->{$k};
+        }
+        for my $k ( sort keys %{$mb} ) {
+            fail("only on dev_b: $k") unless exists $ma->{$k};
+        }
+    }
+    return;
+}
+
+# Dump the daemon log diagnostics that explain the first failure.
+sub print_diagnostics {
     my $l = slurp($mlog);
     if ( defined $l ) {
         my @all = split( /\n/x, $l );
@@ -543,6 +589,22 @@ if ( $failures != 0 ) {
         my @t = @all > 120 ? @all[ -120 .. -1 ] : @all;
         print STDERR "diag: daemon trace tail:\n", join( "\n", @t ), "\n";
     }
+    return;
+}
+
+# ---------------------------------------------------------------------------
+
+setup_devices();
+my @pids   = spawn_workers();
+my %status = wait_for_workers(@pids);
+check_workers(%status);
+check_daemon_and_devices();
+verify_through_mount();
+unmount_and_audit();
+compare_mirrors();
+
+if ( $failures != 0 ) {
+    print_diagnostics();
     print STDERR "$failures parallel test(s) failed\n";
     exit 1;
 }

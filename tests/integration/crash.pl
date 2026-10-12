@@ -265,29 +265,34 @@ sub fuse_fault_recover {
 
 # ---------------------------------------------------------------------------
 
-make_path( $dev_a, $dev_b, $dev_c, $mp );
+sub setup_and_populate {
+    make_path( $dev_a, $dev_b, $dev_c, $mp );
 
-print "== format\n";
-must_run( "format", $EMUXFS, "format", "-a", "md5", $dev_a, $dev_b )
-  or exit 1;
+    print "== format\n";
+    must_run( "format", $EMUXFS, "format", "-a", "md5", $dev_a, $dev_b )
+      or exit 1;
 
-print "== populate\n";
-must_run( "mount", $EMUXFS, "mount", $mp, $dev_a, $dev_b ) or exit 1;
-$mounted = 1;
+    print "== populate\n";
+    must_run( "mount", $EMUXFS, "mount", $mp, $dev_a, $dev_b ) or exit 1;
+    $mounted = 1;
 
-# Wait until the daemon is actually serving FUSE requests (the mount point
-# returns ENXIO until then).
-for ( my $i = 0 ; $i < 500 ; $i++ ) {
-    last if stat($mp);
-    Time::HiRes::sleep(0.02);
+    # Wait until the daemon is actually serving FUSE requests (the mount point
+    # returns ENXIO until then).
+    for ( my $i = 0 ; $i < 500 ; $i++ ) {
+        last if stat($mp);
+        Time::HiRes::sleep(0.02);
+    }
+    put( "$mp/r", "original\n" ) or fail("write r");
+    must_run( "mkdir d", "mkdir", "$mp/d" );
+    put( "$mp/d/n", "nested\n" ) or fail("write nested");
+    must_run( "umount", "umount", $mp );
+    $mounted = 0;
+    wait_state_clean($dev_a) or fail("dev_a not clean after umount");
+    wait_state_clean($dev_b) or fail("dev_b not clean after umount");
+    return;
 }
-put( "$mp/r", "original\n" ) or fail("write r");
-must_run( "mkdir d", "mkdir", "$mp/d" );
-put( "$mp/d/n", "nested\n" ) or fail("write nested");
-must_run( "umount", "umount", $mp );
-$mounted = 0;
-wait_state_clean($dev_a) or fail("dev_a not clean after umount");
-wait_state_clean($dev_b) or fail("dev_b not clean after umount");
+
+setup_and_populate();
 
 # Corrupt both a file and a nested file on one mirror.
 sub corrupt {
@@ -316,54 +321,65 @@ sub recover_and_check {
     return;
 }
 
-print "== fault at restore/before\n";
-corrupt("before");
-my $rc = run_fault( "restore/before", $EMUXFS_FAULT, "heal", $dev_a, $dev_b );
-fail("expected exit $FAULT_STATUS, got $rc") unless $rc == $FAULT_STATUS;
-recover_and_check("before");
+sub test_restore_faults {
+    print "== fault at restore/before\n";
+    corrupt("before");
+    my $rc =
+      run_fault( "restore/before", $EMUXFS_FAULT, "heal", $dev_a, $dev_b );
+    fail("expected exit $FAULT_STATUS, got $rc") unless $rc == $FAULT_STATUS;
+    recover_and_check("before");
 
-print "== fault at restore/after\n";
-corrupt("after");
-$rc = run_fault( "restore/after", $EMUXFS_FAULT, "heal", $dev_a, $dev_b );
-fail("expected exit $FAULT_STATUS, got $rc") unless $rc == $FAULT_STATUS;
-recover_and_check("after");
+    print "== fault at restore/after\n";
+    corrupt("after");
+    $rc = run_fault( "restore/after", $EMUXFS_FAULT, "heal", $dev_a, $dev_b );
+    fail("expected exit $FAULT_STATUS, got $rc") unless $rc == $FAULT_STATUS;
+    recover_and_check("after");
 
-print "== fault during sync\n";
-$rc = run_fault( "restore/before", $EMUXFS_FAULT, "sync", $dev_c, $dev_a );
-fail("expected exit $FAULT_STATUS from sync, got $rc")
-  unless $rc == $FAULT_STATUS;
+    print "== fault during sync\n";
+    $rc = run_fault( "restore/before", $EMUXFS_FAULT, "sync", $dev_c, $dev_a );
+    fail("expected exit $FAULT_STATUS from sync, got $rc")
+      unless $rc == $FAULT_STATUS;
 
-# The destination is partially populated; a second, uninterrupted sync must
-# converge it.
-must_run( "recovery sync", $EMUXFS, "sync", $dev_c, $dev_a );
-fail("sync did not converge") if compare( "$dev_c/r", "$dev_a/r" ) != 0;
-fail("sync did not converge (n)")
-  if compare( "$dev_c/d/n", "$dev_a/d/n" ) != 0;
-assert_clean( $dev_c, "after sync recovery" );
+    # The destination is partially populated; a second, uninterrupted sync must
+    # converge it.
+    must_run( "recovery sync", $EMUXFS, "sync", $dev_c, $dev_a );
+    fail("sync did not converge") if compare( "$dev_c/r", "$dev_a/r" ) != 0;
+    fail("sync did not converge (n)")
+      if compare( "$dev_c/d/n", "$dev_a/d/n" ) != 0;
+    assert_clean( $dev_c, "after sync recovery" );
+    return;
+}
+
+test_restore_faults();
 
 # Plant an interrupted-operation marker (working=1) on the destination, as a
 # power loss would leave it, and verify that sync clears it so the array can be
 # mounted again.  This is the documented post-power-loss recovery path.
-print "== sync clears a planted interrupted-operation marker\n";
-{
-    my $st = state_fields($dev_c);
-    if ( !defined($st) ) {
-        fail("cannot read state.db for $dev_c before planting");
-    }
-    else {
-        my $seq = $st->[0];
-        if ( open( my $fh, ">", "$dev_c/.muxfs/state.db" ) ) {
-            binmode($fh);
-            print $fh pack( "Q<5", $seq, 0, 1, 0, 0 );
-            close($fh) or fail("cannot plant interrupted marker: $!");
+sub test_sync_clears_marker {
+    print "== sync clears a planted interrupted-operation marker\n";
+    {
+        my $st = state_fields($dev_c);
+        if ( !defined($st) ) {
+            fail("cannot read state.db for $dev_c before planting");
         }
         else {
-            fail("cannot plant interrupted marker: $!");
+            my $seq = $st->[0];
+            if ( open( my $fh, ">", "$dev_c/.muxfs/state.db" ) ) {
+                binmode($fh);
+                print $fh pack( "Q<5", $seq, 0, 1, 0, 0 );
+                close($fh) or fail("cannot plant interrupted marker: $!");
+            }
+            else {
+                fail("cannot plant interrupted marker: $!");
+            }
         }
     }
+    must_run( "sync after planted marker", $EMUXFS, "sync", $dev_c, $dev_a );
+    assert_clean( $dev_c, "after planted marker" );
+    return;
 }
-must_run( "sync after planted marker", $EMUXFS, "sync", $dev_c, $dev_a );
-assert_clean( $dev_c, "after planted marker" );
+
+test_sync_clears_marker();
 
 # ---------------------------------------------------------------------------
 # Faults inside FUSE callbacks.  An interrupted create/update/delete leaves the
@@ -371,47 +387,52 @@ assert_clean( $dev_c, "after planted marker" );
 # recovery is sync, which rebuilds that device from the intact mirror and thus
 # rolls the uncommitted operation back.
 
-print "== fault at create/after_meta (FUSE)\n";
-fuse_fault_recover(
-    "create/after_meta",
-    sub { try_put( "$mp/new", "x\n" ); },
-    sub {
-        my ( $a, $b ) = @_;
-        fail("create not rolled back") if -e "$a/new" || -e "$b/new";
-        fail("f changed by failed create")
-          unless ( slurp("$a/f") // q{} ) eq "v0\n";
-        fail("array did not converge after create fault")
-          if compare( "$a/f", "$b/f" ) != 0;
-    },
-    "create"
-);
+sub test_fuse_callback_faults {
+    print "== fault at create/after_meta (FUSE)\n";
+    fuse_fault_recover(
+        "create/after_meta",
+        sub { try_put( "$mp/new", "x\n" ); },
+        sub {
+            my ( $a, $b ) = @_;
+            fail("create not rolled back") if -e "$a/new" || -e "$b/new";
+            fail("f changed by failed create")
+              unless ( slurp("$a/f") // q{} ) eq "v0\n";
+            fail("array did not converge after create fault")
+              if compare( "$a/f", "$b/f" ) != 0;
+        },
+        "create"
+    );
 
-print "== fault at update/after_meta (FUSE)\n";
-fuse_fault_recover(
-    "update/after_meta",
-    sub { try_put( "$mp/f", "v1\n" ); },
-    sub {
-        my ( $a, $b ) = @_;
-        fail("update not rolled back")
-          unless ( slurp("$a/f") // q{} ) eq "v0\n";
-        fail("array did not converge after update fault")
-          if compare( "$a/f", "$b/f" ) != 0;
-    },
-    "update"
-);
+    print "== fault at update/after_meta (FUSE)\n";
+    fuse_fault_recover(
+        "update/after_meta",
+        sub { try_put( "$mp/f", "v1\n" ); },
+        sub {
+            my ( $a, $b ) = @_;
+            fail("update not rolled back")
+              unless ( slurp("$a/f") // q{} ) eq "v0\n";
+            fail("array did not converge after update fault")
+              if compare( "$a/f", "$b/f" ) != 0;
+        },
+        "update"
+    );
 
-print "== fault at delete/after_meta (FUSE)\n";
-fuse_fault_recover(
-    "delete/after_meta",
-    sub { unlink("$mp/f"); },
-    sub {
-        my ( $a, $b ) = @_;
-        fail("delete not rolled back") unless -f "$a/f";
-        fail("array did not converge after delete fault")
-          if compare( "$a/f", "$b/f" ) != 0;
-    },
-    "delete"
-);
+    print "== fault at delete/after_meta (FUSE)\n";
+    fuse_fault_recover(
+        "delete/after_meta",
+        sub { unlink("$mp/f"); },
+        sub {
+            my ( $a, $b ) = @_;
+            fail("delete not rolled back") unless -f "$a/f";
+            fail("array did not converge after delete fault")
+              if compare( "$a/f", "$b/f" ) != 0;
+        },
+        "delete"
+    );
+    return;
+}
+
+test_fuse_callback_faults();
 
 if ( $failures != 0 ) {
     print STDERR "$failures crash test(s) failed\n";

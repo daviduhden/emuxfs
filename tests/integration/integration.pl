@@ -216,206 +216,278 @@ sub unmount_array {
 
 # ---------------------------------------------------------------------------
 
-make_path( $dev_a, $dev_b, $dev_c, $mp, $work );
+format_arrays();
+basic_operations();
+refuse_second_mount();
+file_operations();
+modes_mirrored();
+directory_rename();
+boundary_sizes();
+unaligned_write();
+partial_reads();
+truncate_grow();
+deep_tree();
+odd_names();
+heal_content();
+heal_missing();
+heal_timestamps();
+heal_symlink();
+remount_cycle();
+repeated_cycles();
+audit_read_only();
+audit_corruption();
+heal_repairs();
+sync_replacement();
+hard_links_refused();
+report_version();
 
-print "== format\n";
-must_run( "format", $EMUXFS, "format", "-a", "sha1", $dev_a, $dev_b )
-  or exit 1;
+if ( $failures != 0 ) {
+    print STDERR "$failures integration test(s) failed\n";
+    exit 1;
+}
+print "All integration tests passed\n";
+exit 0;
 
-print "== basic operations\n";
-mount_array() or exit 1;
+# ---------------------------------------------------------------------------
 
-must_run( "touch",   "touch", "$mp/reg" );
-must_run( "mkdir",   "mkdir", "$mp/dir" );
-must_run( "symlink", "ln",    "-s", "target", "$mp/lnk" );
-fail("reg not mirrored to a") unless -f "$dev_a/reg";
-fail("reg not mirrored to b") unless -f "$dev_b/reg";
-fail("dir not mirrored")      unless -d "$dev_a/dir";
-fail("lnk not mirrored")      unless -l "$dev_a/lnk";
+sub format_arrays {
+    make_path( $dev_a, $dev_b, $dev_c, $mp, $work );
 
-open( my $rfh, ">", "$mp/reg" ) or fail("write reg: $!");
-print $rfh "foo\n";
-close($rfh) or fail("write reg: $!");
-fail("read-back content") unless ( slurp("$mp/reg")    // q{} ) eq "foo\n";
-fail("mirror a content")  unless ( slurp("$dev_a/reg") // q{} ) eq "foo\n";
-fail("mirror b content")  unless ( slurp("$dev_b/reg") // q{} ) eq "foo\n";
+    print "== format\n";
+    must_run( "format", $EMUXFS, "format", "-a", "sha1", $dev_a, $dev_b )
+      or exit 1;
+    return;
+}
 
-# A second daemon must never mount an array that is already mounted: the
-# 'mounted' flag in state.db is the single-writer guard.
-print "== a second mount of the same array is refused\n";
-{
-    my $mp2 = "$sandbox/mp2";
-    must_run( "mkdir mp2", "mkdir", $mp2 );
-    my $pid = fork();
-    if ( !defined $pid ) {
-        fail("fork: $!");
-    }
-    elsif ( $pid == 0 ) {
-        open( STDOUT, ">",  "$sandbox/mp2.log" ) or POSIX::_exit(127);
-        open( STDERR, ">&", \*STDOUT )           or POSIX::_exit(127);
+sub basic_operations {
+    print "== basic operations\n";
+    mount_array() or exit 1;
 
-        # Do not run the parent's END cleanup in the child if exec fails.
-        exec( $EMUXFS, "mount", "-f", $mp2, $dev_a, $dev_b )
-          or POSIX::_exit(127);
-    }
-    else {
+    must_run( "touch",   "touch", "$mp/reg" );
+    must_run( "mkdir",   "mkdir", "$mp/dir" );
+    must_run( "symlink", "ln",    "-s", "target", "$mp/lnk" );
+    fail("reg not mirrored to a") unless -f "$dev_a/reg";
+    fail("reg not mirrored to b") unless -f "$dev_b/reg";
+    fail("dir not mirrored")      unless -d "$dev_a/dir";
+    fail("lnk not mirrored")      unless -l "$dev_a/lnk";
 
-        # Wait for the refusal; if it instead mounted, that is the failure.
-        my $reaped = 0;
-        for ( my $i = 0 ; $i < 250 ; $i++ ) {
-            if ( waitpid( $pid, WNOHANG ) == $pid ) { $reaped = 1; last; }
-            Time::HiRes::sleep(0.02);
+    open( my $rfh, ">", "$mp/reg" ) or fail("write reg: $!");
+    print $rfh "foo\n";
+    close($rfh) or fail("write reg: $!");
+    fail("read-back content") unless ( slurp("$mp/reg")    // q{} ) eq "foo\n";
+    fail("mirror a content")  unless ( slurp("$dev_a/reg") // q{} ) eq "foo\n";
+    fail("mirror b content")  unless ( slurp("$dev_b/reg") // q{} ) eq "foo\n";
+    return;
+}
+
+sub refuse_second_mount {
+    print "== a second mount of the same array is refused\n";
+    {
+        my $mp2 = "$sandbox/mp2";
+        must_run( "mkdir mp2", "mkdir", $mp2 );
+        my $pid = fork();
+        if ( !defined $pid ) {
+            fail("fork: $!");
         }
-        if ( !$reaped ) {
-            fail("a second mount of a mounted array was not refused");
-            kill( "TERM", $pid );
-            waitpid( $pid, 0 );
-            system("umount -f $mp2 >/dev/null 2>&1");
+        elsif ( $pid == 0 ) {
+            open( STDOUT, ">",  "$sandbox/mp2.log" ) or POSIX::_exit(127);
+            open( STDERR, ">&", \*STDOUT )           or POSIX::_exit(127);
+
+            # Do not run the parent's END cleanup in the child if exec fails.
+            exec( $EMUXFS, "mount", "-f", $mp2, $dev_a, $dev_b )
+              or POSIX::_exit(127);
         }
+        else {
+
+            # Wait for the refusal; if it instead mounted, that is the failure.
+            my $reaped = 0;
+            for ( my $i = 0 ; $i < 250 ; $i++ ) {
+                if ( waitpid( $pid, WNOHANG ) == $pid ) { $reaped = 1; last; }
+                Time::HiRes::sleep(0.02);
+            }
+            if ( !$reaped ) {
+                fail("a second mount of a mounted array was not refused");
+                kill( "TERM", $pid );
+                waitpid( $pid, 0 );
+                system("umount -f $mp2 >/dev/null 2>&1");
+            }
+        }
+        fail("first mount damaged by the refused second mount")
+          unless ( slurp("$mp/reg") // q{} ) eq "foo\n";
     }
-    fail("first mount damaged by the refused second mount")
-      unless ( slurp("$mp/reg") // q{} ) eq "foo\n";
+    return;
 }
 
-open( my $tfh, ">", "$mp/reg" ) or fail("truncate reg: $!");
-close($tfh)                     or fail("truncate reg: $!");
-fail("truncate left content") if -s "$mp/reg";
+sub file_operations {
+    open( my $tfh, ">", "$mp/reg" ) or fail("truncate reg: $!");
+    close($tfh)                     or fail("truncate reg: $!");
+    fail("truncate left content") if -s "$mp/reg";
 
-must_run( "rename", "mv", "$mp/reg", "$mp/reg2" );
-fail("rename not mirrored") unless -f "$dev_a/reg2";
+    must_run( "rename", "mv", "$mp/reg", "$mp/reg2" );
+    fail("rename not mirrored") unless -f "$dev_a/reg2";
 
-must_run( "unlink", "rm", "$mp/reg2" );
-fail("unlink not mirrored") if -e "$dev_a/reg2";
-must_run( "rmdir", "rmdir", "$mp/dir" );
-must_run( "symlink retarget", "ln", "-sf", "other", "$mp/lnk" );
-my $target = readlink("$mp/lnk");
-$target = q{} unless defined $target;
-fail("readlink after retarget") unless $target eq "other";
-
-print "== modes are mirrored\n";
-{
-    open( my $mfh, ">", "$mp/mode" ) or fail("create mode: $!");
-    print $mfh "mode\n";
-    close($mfh) or fail("create mode: $!");
-    must_run( "chmod 0640", "chmod", "0640", "$mp/mode" );
-    run("sync");
-    my @a = stat("$dev_a/mode");
-    my @b = stat("$dev_b/mode");
-    fail("cannot stat mode copies") unless @a && @b;
-    fail("mode not mirrored to a")  unless ( $a[2] & oct(7777) ) == oct(640);
-    fail("mode not mirrored to b")  unless ( $b[2] & oct(7777) ) == oct(640);
+    must_run( "unlink", "rm", "$mp/reg2" );
+    fail("unlink not mirrored") if -e "$dev_a/reg2";
+    must_run( "rmdir", "rmdir", "$mp/dir" );
+    must_run( "symlink retarget", "ln", "-sf", "other", "$mp/lnk" );
+    my $target = readlink("$mp/lnk");
+    $target = q{} unless defined $target;
+    fail("readlink after retarget") unless $target eq "other";
+    return;
 }
 
-print "== directory rename\n";
-{
-    must_run( "mkdir z", "mkdir", "$mp/z" );
-    open( my $zfh, ">", "$mp/z/f" ) or fail("create z/f: $!");
-    print $zfh "z\n";
-    close($zfh) or fail("create z/f: $!");
-    must_run( "mv z z2", "mv", "$mp/z", "$mp/z2" );
-    if ( !-f "$dev_a/z2/f" || -e "$dev_a/z" ) {
-        fail("dir rename not mirrored a");
+sub modes_mirrored {
+    print "== modes are mirrored\n";
+    {
+        open( my $mfh, ">", "$mp/mode" ) or fail("create mode: $!");
+        print $mfh "mode\n";
+        close($mfh) or fail("create mode: $!");
+        must_run( "chmod 0640", "chmod", "0640", "$mp/mode" );
+        run("sync");
+        my @a = stat("$dev_a/mode");
+        my @b = stat("$dev_b/mode");
+        fail("cannot stat mode copies") unless @a && @b;
+        fail("mode not mirrored to a") unless ( $a[2] & oct(7777) ) == oct(640);
+        fail("mode not mirrored to b") unless ( $b[2] & oct(7777) ) == oct(640);
     }
-    fail("dir rename not mirrored b") unless -f "$dev_b/z2/f";
-    fail("dir rename content") unless ( slurp("$mp/z2/f") // q{} ) eq "z\n";
+    return;
 }
 
-print "== boundary sizes\n";
-foreach my $sz ( 0, 1, 4095, 4096, 4097, 8191, 8192, 8193, 65_537 ) {
-    my $src = "$work/sz";
-    must_run( "dd $sz", "dd", "if=/dev/urandom", "of=$src", "bs=1",
-        "count=$sz" );
-    must_run( "copy size $sz", "cp", $src, "$mp/sz" );
-    run("sync");
-    fail("mirror a mismatch size $sz") if compare( $src, "$dev_a/sz" ) != 0;
-    fail("mirror b mismatch size $sz") if compare( $src, "$dev_b/sz" ) != 0;
-    fail("read mismatch size $sz")     if compare( $src, "$mp/sz" ) != 0;
-    must_run( "remove size $sz", "rm", "-f", "$mp/sz" );
+sub directory_rename {
+    print "== directory rename\n";
+    {
+        must_run( "mkdir z", "mkdir", "$mp/z" );
+        open( my $zfh, ">", "$mp/z/f" ) or fail("create z/f: $!");
+        print $zfh "z\n";
+        close($zfh) or fail("create z/f: $!");
+        must_run( "mv z z2", "mv", "$mp/z", "$mp/z2" );
+        if ( !-f "$dev_a/z2/f" || -e "$dev_a/z" ) {
+            fail("dir rename not mirrored a");
+        }
+        fail("dir rename not mirrored b") unless -f "$dev_b/z2/f";
+        fail("dir rename content") unless ( slurp("$mp/z2/f") // q{} ) eq "z\n";
+    }
+    return;
 }
 
-print "== in-place write at a non-block-aligned offset\n";
-{
-    my $in  = "$work/unaligned.in";
-    my $exp = "$work/unaligned.exp";
-
-    # Deterministic 10000-byte content (three blocks, the last partial).
-    open( my $ifh, ">", $in ) or fail("create unaligned.in: $!");
-    for ( my $i = 0 ; $i < 10_000 ; $i += 100 ) {
-        printf $ifh "%0100d", $i;
+sub boundary_sizes {
+    print "== boundary sizes\n";
+    foreach my $sz ( 0, 1, 4095, 4096, 4097, 8191, 8192, 8193, 65_537 ) {
+        my $src = "$work/sz";
+        must_run(
+            "dd $sz", "dd", "if=/dev/urandom", "of=$src",
+            "bs=1",   "count=$sz"
+        );
+        must_run( "copy size $sz", "cp", $src, "$mp/sz" );
+        run("sync");
+        fail("mirror a mismatch size $sz") if compare( $src, "$dev_a/sz" ) != 0;
+        fail("mirror b mismatch size $sz") if compare( $src, "$dev_b/sz" ) != 0;
+        fail("read mismatch size $sz")     if compare( $src, "$mp/sz" ) != 0;
+        must_run( "remove size $sz", "rm", "-f", "$mp/sz" );
     }
-    close($ifh) or fail("create unaligned.in: $!");
-
-    must_run( "copy unaligned in",  "cp", $in, "$mp/unaligned" );
-    must_run( "copy unaligned exp", "cp", $in, $exp );
-
-    # Overwrite [4000, 4100) in place, both through the mount and in the
-    # local expected copy.  sysseek/syswrite use exactly that offset, which
-    # exercises the write path for a block it starts inside.
-    my $patch = "Z" x 100;
-    foreach my $path ( "$mp/unaligned", $exp ) {
-        open( my $fh, "+<", $path ) or do {
-            fail("open $path: $!");
-            next;
-        };
-        sysseek( $fh, 4000, 0 )        or fail("seek $path: $!");
-        syswrite( $fh, $patch ) == 100 or fail("write $path: $!");
-        close($fh)                     or fail("close $path: $!");
-    }
-
-    run("sync");
-    fail("unaligned write lost through the mount")
-      if compare( "$mp/unaligned", $exp ) != 0;
-    fail("unaligned write not mirrored to a")
-      if compare( "$dev_a/unaligned", $exp ) != 0;
-    fail("unaligned write not mirrored to b")
-      if compare( "$dev_b/unaligned", $exp ) != 0;
+    return;
 }
 
-print "== partial reads of a large file\n";
-{
-    # The checksum tree is addressed by whole 4096-byte blocks, so a read
-    # whose end does not fall on a block boundary must not copy the rest of
-    # the block: doing so exceeds the requested length and the caller's
-    # buffer.
-    my $in = "$work/partial.in";
-    open( my $ifh, ">", $in ) or fail("create partial.in: $!");
-    for ( my $i = 0 ; $i < 10_000 ; $i += 100 ) {
-        printf $ifh "%0100d", $i;
+sub unaligned_write {
+    print "== in-place write at a non-block-aligned offset\n";
+    {
+        my $in  = "$work/unaligned.in";
+        my $exp = "$work/unaligned.exp";
+
+        # Deterministic 10000-byte content (three blocks, the last partial).
+        open( my $ifh, ">", $in ) or fail("create unaligned.in: $!");
+        for ( my $i = 0 ; $i < 10_000 ; $i += 100 ) {
+            printf $ifh "%0100d", $i;
+        }
+        close($ifh) or fail("create unaligned.in: $!");
+
+        must_run( "copy unaligned in",  "cp", $in, "$mp/unaligned" );
+        must_run( "copy unaligned exp", "cp", $in, $exp );
+
+        # Overwrite [4000, 4100) in place, both through the mount and in the
+        # local expected copy.  sysseek/syswrite use exactly that offset, which
+        # exercises the write path for a block it starts inside.
+        my $patch = "Z" x 100;
+        foreach my $path ( "$mp/unaligned", $exp ) {
+            open( my $fh, "+<", $path ) or do {
+                fail("open $path: $!");
+                next;
+            };
+            sysseek( $fh, 4000, 0 )        or fail("seek $path: $!");
+            syswrite( $fh, $patch ) == 100 or fail("write $path: $!");
+            close($fh)                     or fail("close $path: $!");
+        }
+
+        run("sync");
+        fail("unaligned write lost through the mount")
+          if compare( "$mp/unaligned", $exp ) != 0;
+        fail("unaligned write not mirrored to a")
+          if compare( "$dev_a/unaligned", $exp ) != 0;
+        fail("unaligned write not mirrored to b")
+          if compare( "$dev_b/unaligned", $exp ) != 0;
     }
-    close($ifh) or fail("create partial.in: $!");
+    return;
+}
 
-    my $whole = slurp($in);
-    must_run( "copy partial in", "cp", $in, "$mp/partial" );
+sub partial_reads {
+    print "== partial reads of a large file\n";
+    {
+        # The checksum tree is addressed by whole 4096-byte blocks, so a read
+        # whose end does not fall on a block boundary must not copy the rest of
+        # the block: doing so exceeds the requested length and the caller's
+        # buffer.
+        my $in = "$work/partial.in";
+        open( my $ifh, ">", $in ) or fail("create partial.in: $!");
+        for ( my $i = 0 ; $i < 10_000 ; $i += 100 ) {
+            printf $ifh "%0100d", $i;
+        }
+        close($ifh) or fail("create partial.in: $!");
 
-    foreach my $case ( [ 0, 100 ], [ 4000, 100 ], [ 4096, 100 ], [ 8192, 1 ] ) {
-        my ( $off, $len ) = @{$case};
-        open( my $fh, "<", "$mp/partial" ) or do {
-            fail("open partial ($off,$len): $!");
-            next;
-        };
-        binmode($fh);
-        if ( !sysseek( $fh, $off, 0 ) ) {
-            fail("seek partial ($off,$len): $!");
+        my $whole = slurp($in);
+        must_run( "copy partial in", "cp", $in, "$mp/partial" );
+
+        foreach
+          my $case ( [ 0, 100 ], [ 4000, 100 ], [ 4096, 100 ], [ 8192, 1 ] )
+        {
+            my ( $off, $len ) = @{$case};
+            open( my $fh, "<", "$mp/partial" ) or do {
+                fail("open partial ($off,$len): $!");
+                next;
+            };
+            binmode($fh);
+            if ( !sysseek( $fh, $off, 0 ) ) {
+                fail("seek partial ($off,$len): $!");
+                close($fh);
+                next;
+            }
+            my $buf = q{};
+            my $got = sysread( $fh, $buf, $len );
             close($fh);
-            next;
+            if ( !defined($got) || $got != $len ) {
+                fail( "partial read ($off,$len) returned "
+                      . ( defined($got) ? $got : "error" ) );
+                next;
+            }
+            if ( substr( $whole, $off, $len ) ne $buf ) {
+                fail("partial read ($off,$len) content");
+            }
         }
-        my $buf = q{};
-        my $got = sysread( $fh, $buf, $len );
-        close($fh);
-        if ( !defined($got) || $got != $len ) {
-            fail( "partial read ($off,$len) returned "
-                  . ( defined($got) ? $got : "error" ) );
-            next;
-        }
-        if ( substr( $whole, $off, $len ) ne $buf ) {
-            fail("partial read ($off,$len) content");
-        }
+        must_run( "remove partial", "rm", "-f", "$mp/partial" );
     }
-    must_run( "remove partial", "rm", "-f", "$mp/partial" );
+    return;
 }
 
-print "== truncate grows a small file into a sparse large file\n";
-{
+sub truncate_grow {
+    print "== truncate grows a small file into a sparse large file\n";
+    truncate_grow_small();
+    truncate_grow_large();
+    truncate_shrink();
+    must_run( "remove grow", "rm", "-f", "$mp/grow" );
+    return;
+}
+
+sub truncate_grow_small {
+
     # Growing a file that fits in one block to a size beyond one block
     # rebuilds the checksum tree; the bytes past the old end are a hole of
     # zeroes.  Exercise truncate(2) directly rather than a write.
@@ -435,6 +507,10 @@ print "== truncate grows a small file into a sparse large file\n";
               unless substr( $data, 5 ) eq ( "\0" x 9995 );
         }
     }
+    return;
+}
+
+sub truncate_grow_large {
 
     # A file that already spans several blocks exercises the in-place
     # checksum-tree resize, both growing and shrinking.
@@ -452,6 +528,10 @@ print "== truncate grows a small file into a sparse large file\n";
               unless substr( $data, 5 ) eq ( "\0" x 29_995 );
         }
     }
+    return;
+}
+
+sub truncate_shrink {
     if ( !truncate( "$mp/grow", 6000 ) ) {
         fail("truncate shrink: $!");
     }
@@ -465,203 +545,241 @@ print "== truncate grows a small file into a sparse large file\n";
               unless substr( $data, 5 ) eq ( "\0" x 5995 );
         }
     }
-    must_run( "remove grow", "rm", "-f", "$mp/grow" );
+    return;
 }
 
-print "== deep tree\n";
-my $deep = $mp;
-for ( my $i = 0 ; $i < 40 ; $i++ ) {
-    $deep = subdir( $deep, "d$i" );
-    must_run( "deep mkdir $i", "mkdir", $deep );
-}
-open( my $dfh, ">", "$deep/leaf" ) or fail("deep leaf: $!");
-print $dfh "deep\n";
-close($dfh) or fail("deep leaf: $!");
-fail("deep leaf content") unless ( slurp("$deep/leaf") // q{} ) eq "deep\n";
-
-print "== odd but valid names\n";
-foreach my $name ( 'with space', 'a.b.c', '-dash', "\x{fc}n\x{ef}code" ) {
-
-    # Use Perl's sprintf-style length/equality rather than shell quoting.
-    open( my $nfh, ">", "$mp/$name" ) or do {
-        fail("create '$name': $!");
-        next;
-    };
-    print $nfh "$name\n";
-    close($nfh) or fail("create '$name': $!");
-    my $got = slurp("$mp/$name");
-    fail("read '$name'") unless defined($got) && $got eq "$name\n";
+sub deep_tree {
+    print "== deep tree\n";
+    my $deep = $mp;
+    for ( my $i = 0 ; $i < 40 ; $i++ ) {
+        $deep = subdir( $deep, "d$i" );
+        must_run( "deep mkdir $i", "mkdir", $deep );
+    }
+    open( my $dfh, ">", "$deep/leaf" ) or fail("deep leaf: $!");
+    print $dfh "deep\n";
+    close($dfh) or fail("deep leaf: $!");
+    fail("deep leaf content") unless ( slurp("$deep/leaf") // q{} ) eq "deep\n";
+    return;
 }
 
-print "== self-healing on read (content corruption)\n";
-open( my $hfh, ">", "$mp/healme" ) or fail("create healme: $!");
-print $hfh "good\n";
-close($hfh) or fail("create healme: $!");
-run("sync");
-open( my $efh, ">", "$dev_a/healme" ) or fail("corrupt mirror a: $!");
-print $efh "evil\n";
-close($efh) or fail("corrupt mirror a: $!");
-fail("self-heal read") unless ( slurp("$mp/healme") // q{} ) eq "good\n";
-fail("self-heal restored a")
-  unless ( slurp("$dev_a/healme") // q{} ) eq "good\n";
+sub odd_names {
+    print "== odd but valid names\n";
+    foreach my $name ( 'with space', 'a.b.c', '-dash', "\x{fc}n\x{ef}code" ) {
 
-print "== self-healing on read (missing node)\n";
-open( my $gfh, ">", "$mp/gone" ) or fail("create gone: $!");
-print $gfh "gone\n";
-close($gfh) or fail("create gone: $!");
-run("sync");
-must_run( "remove mirror a copy", "rm", "-f", "$dev_a/gone" );
-fail("restore read") unless ( slurp("$mp/gone") // q{} ) eq "gone\n";
-fail("missing node not restored") unless -f "$dev_a/gone";
+        # Use Perl's sprintf-style length/equality rather than shell quoting.
+        open( my $nfh, ">", "$mp/$name" ) or do {
+            fail("create '$name': $!");
+            next;
+        };
+        print $nfh "$name\n";
+        close($nfh) or fail("create '$name': $!");
+        my $got = slurp("$mp/$name");
+        fail("read '$name'") unless defined($got) && $got eq "$name\n";
+    }
+    return;
+}
 
-# A repair must reproduce the source timestamps (they are not checksummed in
-# format version 1, but the copy should still match).
-print "== self-healing reproduces the source timestamps\n";
-{
-    open( my $sfh, ">", "$mp/stamp" ) or fail("create stamp: $!");
-    print $sfh "stamped\n";
-    close($sfh) or fail("create stamp: $!");
+sub heal_content {
+    print "== self-healing on read (content corruption)\n";
+    open( my $hfh, ">", "$mp/healme" ) or fail("create healme: $!");
+    print $hfh "good\n";
+    close($hfh) or fail("create healme: $!");
     run("sync");
-    must_run( "set stamp time", "touch", "-t", "202001020304.05", "$mp/stamp" );
-    run("sync");
-    my @ref = stat("$dev_b/stamp");
-    fail("cannot stat stamp on b") unless @ref;
-    open( my $cfh, ">", "$dev_a/stamp" ) or fail("corrupt stamp: $!");
-    print $cfh "evil\n";
-    close($cfh) or fail("corrupt stamp: $!");
-    fail("stamp self-heal")
-      unless ( slurp("$mp/stamp") // q{} ) eq "stamped\n";
-    my @got = stat("$dev_a/stamp");
-    fail("cannot stat healed stamp") unless @got;
-    fail("healed mtime not reproduced") if $got[9] != $ref[9];
+    open( my $efh, ">", "$dev_a/healme" ) or fail("corrupt mirror a: $!");
+    print $efh "evil\n";
+    close($efh) or fail("corrupt mirror a: $!");
+    fail("self-heal read") unless ( slurp("$mp/healme") // q{} ) eq "good\n";
+    fail("self-heal restored a")
+      unless ( slurp("$dev_a/healme") // q{} ) eq "good\n";
+    return;
 }
 
-print "== self-healing (corrupt symlink)\n";
-must_run( "create slink",    "ln", "-s", "right", "$mp/slink" );
-must_run( "break a slink",   "rm", "-f", "$dev_a/slink" );
-must_run( "corrupt a slink", "ln", "-s", "wrong", "$dev_a/slink" );
-my $sl = readlink("$mp/slink");
-$sl = q{} unless defined $sl;
-fail("symlink self-heal") unless $sl eq "right";
-$sl = readlink("$dev_a/slink");
-$sl = q{} unless defined $sl;
-fail("symlink restored in a") unless $sl eq "right";
+sub heal_missing {
+    print "== self-healing on read (missing node)\n";
+    open( my $gfh, ">", "$mp/gone" ) or fail("create gone: $!");
+    print $gfh "gone\n";
+    close($gfh) or fail("create gone: $!");
+    run("sync");
+    must_run( "remove mirror a copy", "rm", "-f", "$dev_a/gone" );
+    fail("restore read") unless ( slurp("$mp/gone") // q{} ) eq "gone\n";
+    fail("missing node not restored") unless -f "$dev_a/gone";
+    return;
+}
 
-print "== unmount / remount\n";
-unmount_array();
-mount_array() or exit 1;
-fail("content across remount")
-  unless ( slurp("$mp/healme") // q{} ) eq "good\n";
-open( my $pfh, ">", "$mp/post" ) or fail("write after remount: $!");
-print $pfh "post-remount\n";
-close($pfh) or fail("write after remount: $!");
-fail("post mirrored") unless -f "$dev_b/post";
-unmount_array();
+sub heal_timestamps {
+    print "== self-healing reproduces the source timestamps\n";
+    {
+        open( my $sfh, ">", "$mp/stamp" ) or fail("create stamp: $!");
+        print $sfh "stamped\n";
+        close($sfh) or fail("create stamp: $!");
+        run("sync");
+        must_run( "set stamp time",
+            "touch", "-t", "202001020304.05", "$mp/stamp" );
+        run("sync");
+        my @ref = stat("$dev_b/stamp");
+        fail("cannot stat stamp on b") unless @ref;
+        open( my $cfh, ">", "$dev_a/stamp" ) or fail("corrupt stamp: $!");
+        print $cfh "evil\n";
+        close($cfh) or fail("corrupt stamp: $!");
+        fail("stamp self-heal")
+          unless ( slurp("$mp/stamp") // q{} ) eq "stamped\n";
+        my @got = stat("$dev_a/stamp");
+        fail("cannot stat healed stamp") unless @got;
+        fail("healed mtime not reproduced") if $got[9] != $ref[9];
+    }
+    return;
+}
 
-# Repeated mount/unmount cycles must preserve the tree and leave every device
-# clean: this exercises open/close, state.db transitions and the teardown path.
-print "== repeated mount / unmount cycles\n";
-for ( my $i = 0 ; $i < 5 ; $i++ ) {
-    mount_array() or exit 1;
-    fail("cycle $i content") unless ( slurp("$mp/healme") // q{} ) eq "good\n";
-    fail("cycle $i post")
-      unless ( slurp("$mp/post") // q{} ) eq "post-remount\n";
+sub heal_symlink {
+    print "== self-healing (corrupt symlink)\n";
+    must_run( "create slink",    "ln", "-s", "right", "$mp/slink" );
+    must_run( "break a slink",   "rm", "-f", "$dev_a/slink" );
+    must_run( "corrupt a slink", "ln", "-s", "wrong", "$dev_a/slink" );
+    my $sl = readlink("$mp/slink");
+    $sl = q{} unless defined $sl;
+    fail("symlink self-heal") unless $sl eq "right";
+    $sl = readlink("$dev_a/slink");
+    $sl = q{} unless defined $sl;
+    fail("symlink restored in a") unless $sl eq "right";
+    return;
+}
+
+sub remount_cycle {
+    print "== unmount / remount\n";
     unmount_array();
+    mount_array() or exit 1;
+    fail("content across remount")
+      unless ( slurp("$mp/healme") // q{} ) eq "good\n";
+    open( my $pfh, ">", "$mp/post" ) or fail("write after remount: $!");
+    print $pfh "post-remount\n";
+    close($pfh) or fail("write after remount: $!");
+    fail("post mirrored") unless -f "$dev_b/post";
+    unmount_array();
+    return;
 }
 
-print "== audit is read-only on persistent state\n";
-{
-    my @files = qw(muxfs.conf state.db meta.db assign.db);
-    my %before;
-    for my $d ( $dev_a, $dev_b ) {
-        my $db = slurp("$d/.muxfs/state.db");
-        my @f  = defined($db) && length($db) == 40 ? unpack( "Q<5", $db ) : ();
-        print "diag: pre-audit $d seq=$f[0] mounted=$f[1] working=$f[2] "
-          . "restoring=$f[3] degraded=$f[4]\n";
+sub repeated_cycles {
+    print "== repeated mount / unmount cycles\n";
+    for ( my $i = 0 ; $i < 5 ; $i++ ) {
+        mount_array() or exit 1;
+        fail("cycle $i content")
+          unless ( slurp("$mp/healme") // q{} ) eq "good\n";
+        fail("cycle $i post")
+          unless ( slurp("$mp/post") // q{} ) eq "post-remount\n";
+        unmount_array();
     }
-    my ( $aout, $ast ) =
-      capture( "/bin/sh", "-c", "$EMUXFS audit $dev_a $dev_b 2>&1" );
-    print "diag: audit out: @$aout (status " . ( $ast >> 8 ) . ")\n";
-    for my $d ( $dev_a, $dev_b ) {
-        for my $f (@files) {
-            $before{"$d/$f"} = slurp("$d/.muxfs/$f");
-        }
-    }
-    must_run( "audit (clean)", $EMUXFS, "audit", $dev_a, $dev_b );
-    for my $d ( $dev_a, $dev_b ) {
-        for my $f (@files) {
-            my $after = slurp("$d/.muxfs/$f");
-            fail("audit modified $f on $d")
-              unless defined( $before{"$d/$f"} )
-              && defined($after)
-              && $before{"$d/$f"} eq $after;
-        }
-    }
+    return;
 }
 
-print "== audit detects corruption\n";
-open( my $cfh, ">>", "$dev_a/post" ) or fail("corrupt post: $!");
-print $cfh "corrupt\n";
-close($cfh) or fail("corrupt post: $!");
-my ( $audit_lines, $audit_st ) = capture( $EMUXFS, "audit", $dev_a, $dev_b );
-if ( $audit_st != 0 ) {
-    fail( "audit exited " . ( $audit_st >> 8 ) );
-}
-else {
-    my $expected = "$dev_a/post";
-    my $found    = first { $_ eq $expected } @{$audit_lines};
-    fail("audit did not report $expected") unless $found;
-}
-
-print "== heal repairs corruption\n";
-must_run( "heal", $EMUXFS, "heal", $dev_a, $dev_b );
-{
-    for my $d ( $dev_a, $dev_b ) {
-        my $db = slurp("$d/.muxfs/state.db");
-        if ( defined($db) && length($db) == 40 ) {
-            my @f = unpack( "Q<5", $db );
-            print "diag: $d seq=$f[0] mounted=$f[1] working=$f[2] "
+sub audit_read_only {
+    print "== audit is read-only on persistent state\n";
+    {
+        my @files = qw(muxfs.conf state.db meta.db assign.db);
+        my %before;
+        for my $d ( $dev_a, $dev_b ) {
+            my $db = slurp("$d/.muxfs/state.db");
+            my @f =
+              defined($db) && length($db) == 40 ? unpack( "Q<5", $db ) : ();
+            print "diag: pre-audit $d seq=$f[0] mounted=$f[1] working=$f[2] "
               . "restoring=$f[3] degraded=$f[4]\n";
         }
-        else {
-            print "diag: $d state.db unreadable\n";
+        my ( $aout, $ast ) =
+          capture( "/bin/sh", "-c", "$EMUXFS audit $dev_a $dev_b 2>&1" );
+        print "diag: audit out: @$aout (status " . ( $ast >> 8 ) . ")\n";
+        for my $d ( $dev_a, $dev_b ) {
+            for my $f (@files) {
+                $before{"$d/$f"} = slurp("$d/.muxfs/$f");
+            }
+        }
+        must_run( "audit (clean)", $EMUXFS, "audit", $dev_a, $dev_b );
+        for my $d ( $dev_a, $dev_b ) {
+            for my $f (@files) {
+                my $after = slurp("$d/.muxfs/$f");
+                fail("audit modified $f on $d")
+                  unless defined( $before{"$d/$f"} )
+                  && defined($after)
+                  && $before{"$d/$f"} eq $after;
+            }
         }
     }
+    return;
 }
-fail("heal did not converge") if compare( "$dev_a/post", "$dev_b/post" ) != 0;
-must_run( "audit after heal", $EMUXFS, "audit", $dev_a, $dev_b );
 
-print "== sync to a replacement mirror\n";
-must_run( "sync", $EMUXFS, "sync", $dev_c, $dev_a, $dev_b );
-fail("sync c != a") if compare( "$dev_c/post", "$dev_a/post" ) != 0;
-fail("sync c != b") if compare( "$dev_c/post", "$dev_b/post" ) != 0;
-
-print "== hard links are refused\n";
-mount_array() or exit 1;
-
-# Creating a hard link through the filesystem must fail: emuxfs cannot
-# represent two names for one inode.
-if ( system( "ln", "$mp/post", "$mp/hard" ) == 0 ) {
-    fail("hard link unexpectedly created through emuxfs");
-    system( "rm", "-f", "$mp/hard" );
+sub audit_corruption {
+    print "== audit detects corruption\n";
+    open( my $cfh, ">>", "$dev_a/post" ) or fail("corrupt post: $!");
+    print $cfh "corrupt\n";
+    close($cfh) or fail("corrupt post: $!");
+    my ( $audit_lines, $audit_st ) =
+      capture( $EMUXFS, "audit", $dev_a, $dev_b );
+    if ( $audit_st != 0 ) {
+        fail( "audit exited " . ( $audit_st >> 8 ) );
+    }
+    else {
+        my $expected = "$dev_a/post";
+        my $found    = first { $_ eq $expected } @{$audit_lines};
+        fail("audit did not report $expected") unless $found;
+    }
+    return;
 }
-unmount_array();
 
-# A hard link introduced directly into a mirror must be detected by audit.
-must_run( "make direct hard link", "ln", "$dev_a/post", "$dev_a/post-hard" );
-{
-    my ( $out, $st ) = capture( $EMUXFS, "audit", $dev_a, $dev_b );
-    fail("audit accepted a hard-linked device") if $st == 0;
+sub heal_repairs {
+    print "== heal repairs corruption\n";
+    must_run( "heal", $EMUXFS, "heal", $dev_a, $dev_b );
+    {
+        for my $d ( $dev_a, $dev_b ) {
+            my $db = slurp("$d/.muxfs/state.db");
+            if ( defined($db) && length($db) == 40 ) {
+                my @f = unpack( "Q<5", $db );
+                print "diag: $d seq=$f[0] mounted=$f[1] working=$f[2] "
+                  . "restoring=$f[3] degraded=$f[4]\n";
+            }
+            else {
+                print "diag: $d state.db unreadable\n";
+            }
+        }
+    }
+    fail("heal did not converge")
+      if compare( "$dev_a/post", "$dev_b/post" ) != 0;
+    must_run( "audit after heal", $EMUXFS, "audit", $dev_a, $dev_b );
+    return;
 }
-system( "rm", "-f", "$dev_a/post-hard" );
-must_run( "audit after hard link removal", $EMUXFS, "audit", $dev_a, $dev_b );
 
-print "== version\n";
-must_run( "version", $EMUXFS, "version" );
-
-if ( $failures != 0 ) {
-    print STDERR "$failures integration test(s) failed\n";
-    exit 1;
+sub sync_replacement {
+    print "== sync to a replacement mirror\n";
+    must_run( "sync", $EMUXFS, "sync", $dev_c, $dev_a, $dev_b );
+    fail("sync c != a") if compare( "$dev_c/post", "$dev_a/post" ) != 0;
+    fail("sync c != b") if compare( "$dev_c/post", "$dev_b/post" ) != 0;
+    return;
 }
-print "All integration tests passed\n";
-exit 0;
+
+sub hard_links_refused {
+    print "== hard links are refused\n";
+    mount_array() or exit 1;
+
+    # Creating a hard link through the filesystem must fail: emuxfs cannot
+    # represent two names for one inode.
+    if ( system( "ln", "$mp/post", "$mp/hard" ) == 0 ) {
+        fail("hard link unexpectedly created through emuxfs");
+        system( "rm", "-f", "$mp/hard" );
+    }
+    unmount_array();
+
+    # A hard link introduced directly into a mirror must be detected by audit.
+    must_run( "make direct hard link", "ln", "$dev_a/post",
+        "$dev_a/post-hard" );
+    {
+        my ( $out, $st ) = capture( $EMUXFS, "audit", $dev_a, $dev_b );
+        fail("audit accepted a hard-linked device") if $st == 0;
+    }
+    system( "rm", "-f", "$dev_a/post-hard" );
+    must_run( "audit after hard link removal",
+        $EMUXFS, "audit", $dev_a, $dev_b );
+    return;
+}
+
+sub report_version {
+    print "== version\n";
+    must_run( "version", $EMUXFS, "version" );
+    return;
+}
