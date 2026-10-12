@@ -20,17 +20,18 @@
 use strict;
 use warnings;
 
-use Cwd        qw(getcwd);
-use File::Path qw(make_path remove_tree);
-use File::Temp qw(tempdir);
-use POSIX      qw(WNOHANG);
+use Cwd         qw(getcwd);
+use File::Path  qw(make_path remove_tree);
+use File::Temp  qw(tempdir);
+use POSIX       qw(WNOHANG);
+use Time::HiRes ();
 
 my $EMUXFS  = $ENV{EMUXFS}           // ( getcwd() . "/emuxfs" );
 my $WORKERS = $ENV{PARALLEL_WORKERS} // 32;
 my $ITERS   = $ENV{PARALLEL_ITERS}   // 20;
 my $TIMEOUT = $ENV{PARALLEL_TIMEOUT} // 900;
 
-unless ( -x $EMUXFS ) {
+if ( !-x $EMUXFS ) {
     print STDERR "emuxfs binary not found at $EMUXFS (set EMUXFS=...)\n";
     exit 2;
 }
@@ -41,22 +42,22 @@ if ( $> != 0 ) {
 }
 
 # Create the FUSE device node if the image did not populate /dev.
-unless ( -c "/dev/fuse0" ) {
+if ( !-c "/dev/fuse0" ) {
     system( "sh", "-c", "cd /dev && MAKEDEV fuse >/dev/null 2>&1" );
 }
-unless ( -c "/dev/fuse0" ) {
+if ( !-c "/dev/fuse0" ) {
     print STDERR "SKIP: /dev/fuse0 is not available\n";
     exit 0;
 }
 
-$| = 1;
+local $| = 1;
 
 my $tmpbase = $ENV{TMPDIR} // "/tmp";
-$tmpbase =~ s{/+$}{};
+$tmpbase =~ s{/+$}{}x;
 
 my $sandbox =
   tempdir( "emuxfs-parallel.XXXXXX", DIR => $tmpbase, CLEANUP => 0 );
-unless ( $sandbox =~ m{\A\Q$tmpbase\E/[^/]+\z} ) {
+if ( $sandbox !~ m{\A\Q$tmpbase\E/[^/]+\z}x ) {
     print STDERR "Refusing to run: sandbox '$sandbox' is outside '$tmpbase'\n";
     exit 2;
 }
@@ -75,19 +76,21 @@ sub fail {
     my ($msg) = @_;
     print STDERR "FAIL: $msg\n";
     $failures++;
+    return;
 }
 
 sub slurp {
     my ($path) = @_;
-    open( my $fh, "<", $path ) or return undef;
-    local $/;
+    open( my $fh, "<", $path ) or return;
+    local $/ = undef;
     my $data = <$fh>;
     close($fh);
     return $data;
 }
 
 sub run {
-    system(@_);
+    my (@cmd) = @_;
+    system(@cmd);
     return $?;
 }
 
@@ -115,23 +118,24 @@ sub cleanup {
         kill( "TERM", $daemon_pid );
         for ( my $i = 0 ; $i < 50 ; $i++ ) {
             last if waitpid( $daemon_pid, WNOHANG ) == $daemon_pid;
-            select( undef, undef, undef, 0.02 );
+            Time::HiRes::sleep(0.02);
         }
         kill( "KILL", $daemon_pid );
         waitpid( $daemon_pid, 0 );
         $daemon_pid = undef;
     }
-    if ( $sandbox =~ m{\A\Q$tmpbase\E/[^/]+\z} ) {
+    if ( $sandbox =~ m{\A\Q$tmpbase\E/[^/]+\z}x ) {
         remove_tree($sandbox);
     }
+    return;
 }
 END { cleanup() }
-$SIG{INT} = $SIG{TERM} = sub { cleanup(); exit 130 };
+local $SIG{INT} = local $SIG{TERM} = sub { cleanup(); exit 130 };
 
 sub state_fields {
     my ($dev) = @_;
     my $data = slurp("$dev/.muxfs/state.db");
-    return undef unless defined($data) && length($data) == 5 * 8;
+    return unless defined($data) && length($data) == 5 * 8;
     return [ unpack( "Q<5", $data ) ];
 }
 
@@ -141,7 +145,7 @@ sub wait_state_clean {
         my $st = state_fields($dev);
         return 1
           if defined($st) && $st->[1] == 0 && $st->[2] == 0 && $st->[3] == 0;
-        select( undef, undef, undef, 0.02 );
+        Time::HiRes::sleep(0.02);
     }
     return 0;
 }
@@ -157,9 +161,9 @@ sub mount_array {
         return 0;
     }
     if ( $pid == 0 ) {
-        open( STDOUT, ">", $mlog );
-        open( STDERR, ">&STDOUT" );
-        $ENV{EMUXFS_TRACE} = 1;
+        open( STDOUT, ">",  $mlog )    or POSIX::_exit(127);
+        open( STDERR, ">&", \*STDOUT ) or POSIX::_exit(127);
+        local $ENV{EMUXFS_TRACE} = 1;
         exec( $EMUXFS, "mount", "-f", $mp, $dev_a, $dev_b )
           or POSIX::_exit(127);
     }
@@ -173,7 +177,7 @@ sub mount_array {
             $ready = 1;
             last;
         }
-        select( undef, undef, undef, 0.02 );
+        Time::HiRes::sleep(0.02);
     }
     fail("mount did not become ready") unless $ready;
     return $ready;
@@ -200,17 +204,17 @@ sub reap_daemon {
     return unless defined $daemon_pid;
     waitpid( $daemon_pid, 0 );
     $daemon_pid = undef;
+    return;
 }
 
 # Unmount with a bound so that a wedged mount cannot hang the whole test.
 sub umount_array {
-    my $ok = 0;
-    eval {
+    my $ok = eval {
         local $SIG{ALRM} = sub { die "umount timeout\n" };
         alarm(30);
         system("umount $mp >/dev/null 2>&1");
         alarm(0);
-        $ok = 1;
+        1;
     };
     alarm(0);
     if ( !$ok ) {
@@ -304,7 +308,7 @@ sub worker {
     } or $err = ( $@ // "unknown failure\n" );
 
     if ( defined $err ) {
-        $err =~ s/\s+\z//;
+        $err =~ s/\s+\z//x;
         if ( open( my $eh, ">", "$sandbox/worker-$tag.err" ) ) {
             print $eh "$err\n";
             close($eh);
@@ -331,7 +335,7 @@ sub progress_line {
             ++$done;
             $iters += $ITERS;
         }
-        elsif ( $v =~ /\A[0-9]+\z/ ) {
+        elsif ( $v =~ /\A[0-9]+\z/x ) {
             $iters += $v;
         }
     }
@@ -343,24 +347,24 @@ sub progress_line {
 sub manifest {
     my ($root) = @_;
     my %m;
-    my @stack = ("");
+    my @stack = (q{});
 
     while (@stack) {
         my $rel = pop @stack;
-        my $dir = $rel eq "" ? $root : "$root/$rel";
-        opendir( my $dh, $dir ) or return undef;
+        my $dir = $rel eq q{} ? $root : "$root/$rel";
+        opendir( my $dh, $dir ) or return;
         my @ent = readdir($dh);
         closedir($dh);
         for my $e (@ent) {
-            next if $e eq "." || $e eq "..";
-            my $crel = $rel eq "" ? $e : "$rel/$e";
+            next if $e eq q{.} || $e eq q{..};
+            my $crel = $rel eq q{} ? $e : "$rel/$e";
             next if $crel eq ".muxfs";
             my @st = lstat("$root/$crel");
             next unless @st;
-            my $mode = $st[2] & 07777;
+            my $mode = $st[2] & oct(7777);
             if ( -l _ ) {
                 my $t = readlink("$root/$crel");
-                $m{$crel} = "l:" . ( defined($t) ? $t : "" );
+                $m{$crel} = "l:" . ( defined($t) ? $t : q{} );
             }
             elsif ( -d _ ) {
                 $m{$crel} = sprintf( "d:%04o", $mode );
@@ -410,9 +414,9 @@ for my $id ( 0 .. $WORKERS - 1 ) {
 }
 
 my %status;
-my %alive    = map { $_ => 1 } @pids;
-my $deadline = time() + $TIMEOUT;
-my $last     = time();
+my %alive       = map { $_ => 1 } @pids;
+my $deadline    = time() + $TIMEOUT;
+my $last_report = time();
 while (%alive) {
     for my $pid ( sort { $a <=> $b } keys %alive ) {
         my $r = waitpid( $pid, WNOHANG );
@@ -431,11 +435,11 @@ while (%alive) {
         %alive = ();
         last;
     }
-    if ( time() >= $last + 2 ) {
-        $last = time();
+    if ( time() >= $last_report + 2 ) {
+        $last_report = time();
         print progress_line(), "\n";
     }
-    select( undef, undef, undef, 0.05 );
+    Time::HiRes::sleep(0.05);
 }
 print progress_line(), "\n";
 
@@ -498,14 +502,14 @@ if ( !defined($ma) || !defined($mb) ) {
     fail("cannot build a device manifest");
 }
 else {
-    for my $k ( sort keys %$ma ) {
+    for my $k ( sort keys %{$ma} ) {
         if ( !exists $mb->{$k} ) {
             fail("only on dev_a: $k");
             next;
         }
         fail("mirrors differ: $k") if $ma->{$k} ne $mb->{$k};
     }
-    for my $k ( sort keys %$mb ) {
+    for my $k ( sort keys %{$mb} ) {
         fail("only on dev_b: $k") unless exists $ma->{$k};
     }
 }
@@ -513,8 +517,8 @@ else {
 if ( $failures != 0 ) {
     my $l = slurp($mlog);
     if ( defined $l ) {
-        my @all = split( /\n/, $l );
-        my @key = grep { /PHANTOM|: fail|stage=|readback:/ } @all;
+        my @all = split( /\n/x, $l );
+        my @key = grep { /PHANTOM|:\ fail|stage=|readback:/x } @all;
         @key = @key[ 0 .. 79 ] if @key > 80;
         if (@key) {
             print STDERR "diag: daemon failure lines:\n", join( "\n", @key ),
@@ -522,7 +526,8 @@ if ( $failures != 0 ) {
         }
         my $first = -1;
         for my $i ( 0 .. $#all ) {
-            if ( $all[$i] =~ /fail|readback:|dir_meta_recompute:|degraded=1/ ) {
+            if ( $all[$i] =~ /fail|readback:|dir_meta_recompute:|degraded=1/x )
+            {
                 $first = $i;
                 last;
             }

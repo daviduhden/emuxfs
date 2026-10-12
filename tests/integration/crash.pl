@@ -24,13 +24,14 @@ use Cwd           qw(getcwd);
 use File::Compare qw(compare);
 use File::Path    qw(make_path remove_tree);
 use File::Temp    qw(tempdir);
+use Time::HiRes   ();
 
 my $EMUXFS       = $ENV{EMUXFS}       // ( getcwd() . "/emuxfs" );
 my $EMUXFS_FAULT = $ENV{EMUXFS_FAULT} // ( getcwd() . "/emuxfs-fault" );
 my $FAULT_STATUS = 70;
 
 foreach my $bin ( $EMUXFS, $EMUXFS_FAULT ) {
-    unless ( -x $bin ) {
+    if ( !-x $bin ) {
         print STDERR "SKIP: missing binary $bin\n";
         exit 0;
     }
@@ -40,16 +41,16 @@ if ( $> != 0 ) {
     print STDERR "SKIP: crash tests require root\n";
     exit 0;
 }
-unless ( -c "/dev/fuse0" ) {
+if ( !-c "/dev/fuse0" ) {
     print STDERR "SKIP: /dev/fuse0 is not available\n";
     exit 0;
 }
 
 my $tmpbase = $ENV{TMPDIR} // "/tmp";
-$tmpbase =~ s{/+$}{};
+$tmpbase =~ s{/+$}{}x;
 
 my $sandbox = tempdir( "emuxfs-crash.XXXXXX", DIR => $tmpbase, CLEANUP => 0 );
-unless ( $sandbox =~ m{\A\Q$tmpbase\E/[^/]+\z} ) {
+if ( $sandbox !~ m{\A\Q$tmpbase\E/[^/]+\z}x ) {
     print STDERR "Refusing to run: sandbox '$sandbox' is outside '$tmpbase'\n";
     exit 2;
 }
@@ -65,11 +66,12 @@ sub fail {
     my ($msg) = @_;
     print STDERR "FAIL: $msg\n";
     $failures++;
+    return;
 }
 
 sub in_sandbox {
     my ($path) = @_;
-    return defined($path) && $path =~ m{\A\Q$tmpbase\E/[^/]};
+    return defined($path) && $path =~ m{\A\Q$tmpbase\E/[^/]}x;
 }
 
 my $cleaned = 0;
@@ -87,9 +89,10 @@ sub cleanup {
     else {
         print STDERR "Refusing to remove '" . ( $sandbox // "undef" ) . "'\n";
     }
+    return;
 }
 END { cleanup() }
-$SIG{INT} = $SIG{TERM} = sub { cleanup(); exit 130 };
+local $SIG{INT} = local $SIG{TERM} = sub { cleanup(); exit 130 };
 
 sub run {
     my (@cmd) = @_;
@@ -116,14 +119,17 @@ sub put {
         return 0;
     };
     print $fh $content;
-    close($fh);
+    close($fh) or do {
+        fail("cannot write $path: $!");
+        return 0;
+    };
     return 1;
 }
 
 sub slurp {
     my ($path) = @_;
-    open( my $fh, "<", $path ) or return undef;
-    local $/;
+    open( my $fh, "<", $path ) or return;
+    local $/ = undef;
     my $data = <$fh>;
     close($fh);
     return $data;
@@ -139,7 +145,7 @@ sub wait_state_clean {
             my @f = unpack( "Q<5", $db );
             return 1 if $f[1] == 0 && $f[2] == 0 && $f[3] == 0;
         }
-        select( undef, undef, undef, 0.02 );
+        Time::HiRes::sleep(0.02);
     }
     return 0;
 }
@@ -150,7 +156,7 @@ sub wait_state_clean {
 sub state_fields {
     my ($dev) = @_;
     my $data = slurp("$dev/.muxfs/state.db");
-    return undef
+    return
       unless defined($data) && length($data) == 5 * 8;
     return [ unpack( "Q<5", $data ) ];
 }
@@ -162,21 +168,21 @@ sub assert_clean {
         fail("cannot read state.db for $dev ($tag)");
         return;
     }
-    my ( $seq, $mounted, $working, $restoring, $degraded ) = @$st;
+    my ( $seq, $mounted_flag, $working, $restoring, $degraded ) = @{$st};
     fail("working=$working not cleared on $dev ($tag)")     if $working != 0;
     fail("restoring=$restoring not cleared on $dev ($tag)") if $restoring != 0;
     fail("degraded=$degraded on $dev ($tag)")               if $degraded != 0;
-    fail("mounted=$mounted on $dev ($tag)")                 if $mounted != 0;
+    fail("mounted=$mounted_flag on $dev ($tag)") if $mounted_flag != 0;
+    return;
 }
 
 # Run a command with a fault point armed, then disarm it.  Returns the exit
 # status (the high byte of $?).
 sub run_fault {
     my ( $point, @cmd ) = @_;
-    $ENV{EMUXFS_FAULT_POINT} = $point;
+    local $ENV{EMUXFS_FAULT_POINT} = $point;
     system(@cmd);
     my $st = $?;
-    delete $ENV{EMUXFS_FAULT_POINT};
     return $st >> 8;
 }
 
@@ -187,6 +193,7 @@ sub try_put {
     open( my $fh, ">", $path ) or return;
     print $fh $content;
     close($fh);
+    return;
 }
 
 # Mount the array in the foreground as a background shell job so that a fault
@@ -195,7 +202,7 @@ sub try_put {
 sub fuse_mount_bg {
     my ( $a, $b, $point, $log ) = @_;
     my $bin = defined($point) ? $EMUXFS_FAULT                  : $EMUXFS;
-    my $env = defined($point) ? "EMUXFS_FAULT_POINT='$point' " : "";
+    my $env = defined($point) ? "EMUXFS_FAULT_POINT='$point' " : q{};
 
     # Remove any previous log so readiness below cannot be satisfied by a
     # stale "entering fuse_loop" line from an earlier mount.
@@ -207,8 +214,9 @@ sub fuse_mount_bg {
     for ( my $i = 0 ; $i < 500 ; $i++ ) {
         my $l = slurp($log);
         last if defined($l) && $l =~ /entering fuse_loop/;
-        select( undef, undef, undef, 0.02 );
+        Time::HiRes::sleep(0.02);
     }
+    return;
 }
 
 # Unmount the foreground job.  After a fault the daemon has already exited and
@@ -218,6 +226,7 @@ sub fuse_umount {
     system("umount $mp >/dev/null 2>&1");
     system("umount -f $mp >/dev/null 2>&1");
     $mounted = 0;
+    return;
 }
 
 # Format a fresh pair, populate f=v0 through a normal mount, then interrupt an
@@ -243,7 +252,7 @@ sub fuse_fault_recover {
 
     fuse_mount_bg( $a, $b, $point, $log );
     $trigger->();
-    select( undef, undef, undef, 1.0 );    # let the daemon die and detach
+    Time::HiRes::sleep(1.0);    # let the daemon die and detach
     fuse_umount();
 
     must_run( "sync ($tag)",  $EMUXFS, "sync",  $a, $b );
@@ -251,6 +260,7 @@ sub fuse_fault_recover {
     $verify->( $a, $b );
     assert_clean( $a, $tag );
     assert_clean( $b, $tag );
+    return;
 }
 
 # ---------------------------------------------------------------------------
@@ -269,7 +279,7 @@ $mounted = 1;
 # returns ENXIO until then).
 for ( my $i = 0 ; $i < 500 ; $i++ ) {
     last if stat($mp);
-    select( undef, undef, undef, 0.02 );
+    Time::HiRes::sleep(0.02);
 }
 put( "$mp/r", "original\n" ) or fail("write r");
 must_run( "mkdir d", "mkdir", "$mp/d" );
@@ -285,6 +295,7 @@ sub corrupt {
     my $evil = sprintf( "evil-%s\n", $label );
     put( "$dev_a/r",   $evil ) or fail("corrupt r");
     put( "$dev_a/d/n", $evil ) or fail("corrupt n");
+    return;
 }
 
 sub recover_and_check {
@@ -299,9 +310,10 @@ sub recover_and_check {
     fail("n did not converge ($tag)")
       if compare( "$dev_a/d/n", "$dev_b/d/n" ) != 0;
     fail("r content wrong ($tag)")
-      unless ( slurp("$dev_a/r") // "" ) eq "original\n";
+      unless ( slurp("$dev_a/r") // q{} ) eq "original\n";
     fail("n content wrong ($tag)")
-      unless ( slurp("$dev_a/d/n") // "" ) eq "nested\n";
+      unless ( slurp("$dev_a/d/n") // q{} ) eq "nested\n";
+    return;
 }
 
 print "== fault at restore/before\n";
@@ -343,7 +355,7 @@ print "== sync clears a planted interrupted-operation marker\n";
         if ( open( my $fh, ">", "$dev_c/.muxfs/state.db" ) ) {
             binmode($fh);
             print $fh pack( "Q<5", $seq, 0, 1, 0, 0 );
-            close($fh);
+            close($fh) or fail("cannot plant interrupted marker: $!");
         }
         else {
             fail("cannot plant interrupted marker: $!");
@@ -367,7 +379,7 @@ fuse_fault_recover(
         my ( $a, $b ) = @_;
         fail("create not rolled back") if -e "$a/new" || -e "$b/new";
         fail("f changed by failed create")
-          unless ( slurp("$a/f") // "" ) eq "v0\n";
+          unless ( slurp("$a/f") // q{} ) eq "v0\n";
         fail("array did not converge after create fault")
           if compare( "$a/f", "$b/f" ) != 0;
     },
@@ -381,7 +393,7 @@ fuse_fault_recover(
     sub {
         my ( $a, $b ) = @_;
         fail("update not rolled back")
-          unless ( slurp("$a/f") // "" ) eq "v0\n";
+          unless ( slurp("$a/f") // q{} ) eq "v0\n";
         fail("array did not converge after update fault")
           if compare( "$a/f", "$b/f" ) != 0;
     },

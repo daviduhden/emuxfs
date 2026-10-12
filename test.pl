@@ -20,6 +20,8 @@ use File::Compare  qw(compare);
 use File::Copy     qw(copy);
 use File::Path     qw(make_path remove_tree);
 use File::Basename qw(dirname);
+use List::Util     qw(first);
+use Time::HiRes    ();
 
 my $EMUXFS = $ENV{EMUXFS} // "./emuxfs";
 
@@ -27,7 +29,7 @@ my $EMUXFS = $ENV{EMUXFS} // "./emuxfs";
 # Configuration
 # ---------------------------------------------------------------------------
 
-unless ( -e "test.conf" ) {
+if ( !-e "test.conf" ) {
     print STDERR "Please read test.conf.dist.\n";
     exit 1;
 }
@@ -35,34 +37,35 @@ unless ( -e "test.conf" ) {
 # Parse test.conf in Perl: 'key = value' lines, '#' comments, optional quotes.
 my %conf;
 open( my $cfh, "<", "test.conf" ) or die "test.conf: $!\n";
-while ( my $line = <$cfh> ) {
+my @conf_lines = <$cfh>;
+close($cfh);
+foreach my $line (@conf_lines) {
     chomp $line;
-    $line                        =~ s/\r\z//;    # tolerate CRLF
-    $line                        =~ s/\A\s+//;
-    $line                        =~ s/\s+\z//;
-    next if $line eq "" || $line =~ /\A#/;
-    my ( $key, $val ) = split( /\s*=\s*/, $line, 2 );
+    $line                         =~ s/\r\z//x;    # tolerate CRLF
+    $line                         =~ s/\A\s+//x;
+    $line                         =~ s/\s+\z//x;
+    next if $line eq q{} || $line =~ /\A\#/x;
+    my ( $key, $val ) = split( /\s*=\s*/x, $line, 2 );
     next unless defined $key && defined $val;
-    $val =~ s/\A(['"])(.*)\1\z/$2/;              # strip matching quotes
+    $val =~ s/\A(['"])(.*)\1\z/$2/x;               # strip matching quotes
     $conf{$key} = $val;
 }
-close($cfh);
 
-my $mp          = $conf{mp}          // "";
-my $dev_a       = $conf{dev_a}       // "";
-my $dev_b       = $conf{dev_b}       // "";
-my $dev_c       = $conf{dev_c}       // "";
-my $test_tmp    = $conf{test_tmp}    // "";
-my $unpriv_user = $conf{unpriv_user} // "";
+my $mp          = $conf{mp}          // q{};
+my $dev_a       = $conf{dev_a}       // q{};
+my $dev_b       = $conf{dev_b}       // q{};
+my $dev_c       = $conf{dev_c}       // q{};
+my $test_tmp    = $conf{test_tmp}    // q{};
+my $unpriv_user = $conf{unpriv_user} // q{};
 
 # Refuse to operate on unsafe or ambiguous paths.
 sub safe_path {
     my ( $name, $path ) = @_;
-    return "$name is not set" if $path eq "";
-    return "$name is not absolute: $path" unless $path =~ m{\A/};
-    return "$name is the root directory" if $path eq "/";
-    return "$name contains '..': $path"  if $path =~ m{(^|/)\.\.(/|\z)};
-    return undef;
+    return "$name is not set" if $path eq q{};
+    return "$name is not absolute: $path" unless $path =~ m{\A/}x;
+    return "$name is the root directory" if $path eq q{/};
+    return "$name contains '..': $path"  if $path =~ m{(^|/)\.\.(/|\z)}x;
+    return;
 }
 foreach my $pair (
     [ mp       => $mp ],
@@ -72,7 +75,7 @@ foreach my $pair (
     [ test_tmp => $test_tmp ]
   )
 {
-    my ( $name, $path ) = @$pair;
+    my ( $name, $path ) = @{$pair};
     my $err = safe_path( $name, $path );
     die "$err\n" if defined $err;
 }
@@ -94,7 +97,7 @@ my $started = 0;
 
 sub quiet {
     my (@cmd) = @_;
-    open( my $fh, "-|", @cmd ) or die "cannot run @cmd: $!\n";
+    open( my $fh, q{-|}, @cmd ) or die "cannot run @cmd: $!\n";
     while ( defined( my $line = <$fh> ) ) { }
     close($fh);
     return $? >> 8;
@@ -104,17 +107,19 @@ sub must_quiet {
     my ( $what, @cmd ) = @_;
     my $st = quiet(@cmd);
     die "$what failed: @cmd\n" if $st != 0;
+    return;
 }
 
 sub must_fail {
     my ( $what, @cmd ) = @_;
     my $st = quiet(@cmd);
     die "$what unexpectedly succeeded: @cmd\n" if $st == 0;
+    return;
 }
 
 sub capture {
     my (@cmd) = @_;
-    open( my $fh, "-|", @cmd ) or die "cannot run @cmd: $!\n";
+    open( my $fh, q{-|}, @cmd ) or die "cannot run @cmd: $!\n";
     my @lines = <$fh>;
     close($fh);
     my $st = $? >> 8;
@@ -125,7 +130,7 @@ sub capture {
 sub slurp {
     my ($path) = @_;
     open( my $fh, "<", $path ) or die "$path: $!\n";
-    local $/;
+    local $/ = undef;
     my $data = <$fh>;
     close($fh);
     return $data;
@@ -135,32 +140,34 @@ sub spit {
     my ( $path, $data ) = @_;
     open( my $fh, ">", $path ) or die "$path: $!\n";
     print $fh $data;
-    close($fh);
+    close($fh) or die "$path: $!\n";
+    return;
 }
 
 sub append_to {
     my ( $path, $data ) = @_;
     open( my $fh, ">>", $path ) or die "$path: $!\n";
     print $fh $data;
-    close($fh);
+    close($fh) or die "$path: $!\n";
+    return;
 }
 
 # Write $bytes of random data without depending on dd(1).
 sub make_random_file {
     my ( $path, $bytes ) = @_;
+    my $remaining = $bytes;
     open( my $in,  "<", "/dev/urandom" ) or die "/dev/urandom: $!\n";
     open( my $out, ">", $path )          or die "$path: $!\n";
-    my $left = $bytes;
-    while ( $left > 0 ) {
-        my $n = $left > 65536 ? 65536 : $left;
-        my $buf;
-        my $got = read( $in, $buf, $n );
-        die "short read from /dev/urandom\n" unless defined $got && $got > 0;
+    while ( $remaining > 0 ) {
+        my $got =
+          read( $in, my $buf, $remaining > 65_536 ? 65_536 : $remaining )
+          or die "short read from /dev/urandom\n";
         print $out $buf;
-        $left -= $got;
+        $remaining -= $got;
     }
-    close($out);
-    close($in);
+    close($in)  or die "/dev/urandom: $!\n";
+    close($out) or die "$path: $!\n";
+    return;
 }
 
 sub must_emuxfs {
@@ -168,17 +175,19 @@ sub must_emuxfs {
     my @cmd    = ( $EMUXFS, @args );
     my $st     = quiet(@cmd);
     die "emuxfs @args failed (exit $st)\n" if $st != 0;
+    return;
 }
 
 sub sleep_tick {
-    select( undef, undef, undef, 0.01 );
+    Time::HiRes::sleep(0.01);
+    return;
 }
 
 sub list_dir {
     my ($dir) = @_;
     my ( $lines, $st ) = capture( "ls", $dir );
-    return "" if $st != 0;
-    return join( " ", @$lines );
+    return q{} if $st != 0;
+    return join( q{ }, @{$lines} );
 }
 
 # ---------------------------------------------------------------------------
@@ -187,7 +196,7 @@ sub list_dir {
 
 sub testsuite_init {
     my ( $running, $st ) = capture( "pgrep", "emuxfs" );
-    if ( $st == 0 && @$running ) {
+    if ( $st == 0 && @{$running} ) {
         die "emuxfs already running\n";
     }
     foreach my $path ( $test_tmp, $dev_a, $dev_b, $dev_c, $mp ) {
@@ -195,11 +204,13 @@ sub testsuite_init {
     }
     make_path($mp);
     $started = 1;
+    return;
 }
 
 sub testsuite_final {
     rmdir($mp) if -d $mp;
     $started = 0;
+    return;
 }
 
 sub pre_test {
@@ -207,11 +218,13 @@ sub pre_test {
     must_emuxfs( "format", "-a", $chk_alg, $dev_a, $dev_b );
     must_emuxfs( "mount", $mp, $dev_a, $dev_b );
     $mounted = 1;
+    return;
 }
 
 sub post_test {
     whether_mounted();
     remove_tree( $test_tmp, $dev_a, $dev_b, { safe => 1 } );
+    return;
 }
 
 sub whether_mounted {
@@ -219,6 +232,7 @@ sub whether_mounted {
         quiet( "umount", $mp );
         $mounted = 0;
     }
+    return;
 }
 
 END {
@@ -234,7 +248,7 @@ my %TESTS;
 # --- basic operations -------------------------------------------------------
 
 $TESTS{test_mknod} = sub {
-    spit( "$mp/r", "" );
+    spit( "$mp/r", q{} );
     quiet( "cat", "$dev_a/r" ) == 0 or die "cat dev_a/r\n";
     quiet( "cat", "$dev_b/r" ) == 0 or die "cat dev_b/r\n";
     must_quiet( "ls -l", "ls", "-l", $mp );
@@ -255,26 +269,26 @@ $TESTS{test_symlink} = sub {
 };
 
 $TESTS{test_getattr} = sub {
-    spit( "$mp/r", "" );
+    spit( "$mp/r", q{} );
     mkdir("$mp/d")            or die "mkdir: $!\n";
     symlink( "foo", "$mp/l" ) or die "symlink: $!\n";
     must_quiet( "ls -l", "ls", "-l", $mp );
 };
 
 $TESTS{test_write} = sub {
-    spit( "$mp/r", "" );
+    spit( "$mp/r", q{} );
     spit( "$mp/r", "foo\n" );
     must_quiet( "ls -l", "ls", "-l", $mp );
 };
 
 $TESTS{test_truncate} = sub {
     spit( "$mp/r", "foo\n" );
-    spit( "$mp/r", "" );
+    spit( "$mp/r", q{} );
     must_quiet( "ls -l", "ls", "-l", $mp );
 };
 
 $TESTS{test_chmod_reg} = sub {
-    spit( "$mp/r", "" );
+    spit( "$mp/r", q{} );
     chmod( 0700, "$mp/r" ) or die "chmod: $!\n";
     must_quiet( "ls -l", "ls", "-l", $mp );
 };
@@ -292,7 +306,7 @@ $TESTS{test_chmod_lnk} = sub {
 };
 
 $TESTS{test_chown_reg} = sub {
-    spit( "$mp/r", "" );
+    spit( "$mp/r", q{} );
     must_quiet( "chown", "chown", $unpriv_user, "$mp/r" );
     must_quiet( "ls -l", "ls",    "-l",         $mp );
 };
@@ -310,7 +324,7 @@ $TESTS{test_chown_lnk} = sub {
 };
 
 $TESTS{test_rename} = sub {
-    spit( "$mp/r", "" );
+    spit( "$mp/r", q{} );
     rename( "$mp/r", "$mp/r2" ) or die "rename: $!\n";
     quiet( "cat", "$dev_a/r2" ) == 0 or die "cat a/r2\n";
     quiet( "cat", "$dev_b/r2" ) == 0 or die "cat b/r2\n";
@@ -329,14 +343,14 @@ $TESTS{test_readlink} = sub {
 };
 
 $TESTS{test_readdir} = sub {
-    spit( "$mp/r", "" );
+    spit( "$mp/r", q{} );
     mkdir("$mp/d")            or die "mkdir: $!\n";
     symlink( "foo", "$mp/l" ) or die "symlink: $!\n";
     must_quiet( "ls -l", "ls", "-l", $mp );
 };
 
 $TESTS{test_unlink_reg} = sub {
-    spit( "$mp/r", "" );
+    spit( "$mp/r", q{} );
     unlink("$mp/r") or die "unlink: $!\n";
     must_quiet( "ls -l", "ls", "-l", $mp );
 };
@@ -513,14 +527,14 @@ sub as_unpriv {
 }
 
 $TESTS{test_permission_cat} = sub {
-    spit( "$mp/r", "" );
+    spit( "$mp/r", q{} );
     chmod( 0700, "$mp/r" ) or die "chmod: $!\n";
     die "permission cat\n"
       if as_unpriv("cat $mp/r >/dev/null 2>&1") == 0;
 };
 
 $TESTS{test_permission_append} = sub {
-    spit( "$mp/r", "" );
+    spit( "$mp/r", q{} );
     chmod( 0700, "$mp/r" ) or die "chmod: $!\n";
     die "permission append\n"
       if as_unpriv("echo bar >>$mp/r >/dev/null 2>&1") == 0;
@@ -528,36 +542,36 @@ $TESTS{test_permission_append} = sub {
 
 $TESTS{test_permission_ls} = sub {
     mkdir("$mp/d") or die "mkdir: $!\n";
-    spit( "$mp/d/r1", "" );
-    spit( "$mp/d/r2", "" );
+    spit( "$mp/d/r1", q{} );
+    spit( "$mp/d/r2", q{} );
     chmod( 0700, "$mp/d" ) or die "chmod: $!\n";
     die "permission ls\n"
       if as_unpriv("ls $mp/d >/dev/null 2>&1") == 0;
 };
 
 $TESTS{test_permission_mv} = sub {
-    spit( "$mp/r", "" );
+    spit( "$mp/r", q{} );
     chmod( 0700, "$mp/r" ) or die "chmod: $!\n";
     die "permission mv\n"
       if as_unpriv("mv $mp/r $mp/r2 >/dev/null 2>&1") == 0;
 };
 
 $TESTS{test_permission_rm} = sub {
-    spit( "$mp/r", "" );
+    spit( "$mp/r", q{} );
     chmod( 0700, "$mp/r" ) or die "chmod: $!\n";
     die "permission rm\n"
       if as_unpriv("rm -f $mp/r >/dev/null 2>&1") == 0;
 };
 
 $TESTS{test_permission_chmod} = sub {
-    spit( "$mp/r", "" );
+    spit( "$mp/r", q{} );
     chmod( 0700, "$mp/r" ) or die "chmod: $!\n";
     die "permission chmod\n"
       if as_unpriv("chmod 0777 $mp/r >/dev/null 2>&1") == 0;
 };
 
 $TESTS{test_permission_chown} = sub {
-    spit( "$mp/r", "" );
+    spit( "$mp/r", q{} );
     chmod( 0700, "$mp/r" ) or die "chmod: $!\n";
     die "permission chown\n"
       if as_unpriv("chown $unpriv_user $mp/r >/dev/null 2>&1") == 0;
@@ -569,7 +583,7 @@ $TESTS{test_permission_suid_chown} = sub {
     must_quiet( "chown", "chown", $unpriv_user, "$mp/r" );
     my ( $out, $st ) = capture( "stat", "-f", "%Sp", "$mp/r" );
     die "suid chown\n"
-      unless $st == 0 && @$out && $out->[0] eq "-rw-r--r--";
+      unless $st == 0 && @{$out} && $out->[0] eq "-rw-r--r--";
 };
 
 $TESTS{test_permission_sgid_chown} = sub {
@@ -578,7 +592,7 @@ $TESTS{test_permission_sgid_chown} = sub {
     must_quiet( "chown", "chown", $unpriv_user, "$mp/r" );
     my ( $out, $st ) = capture( "stat", "-f", "%Sp", "$mp/r" );
     die "sgid chown\n"
-      unless $st == 0 && @$out && $out->[0] eq "-rw-r--r--";
+      unless $st == 0 && @{$out} && $out->[0] eq "-rw-r--r--";
 };
 
 # --- audit / heal / sync ----------------------------------------------------
@@ -598,9 +612,9 @@ $TESTS{test_audit} = sub {
     append_to( "$dev_a/d1/r2", "badline\n" );
 
     my ( $lines, $st ) = capture( $EMUXFS, "audit", $dev_a, $dev_b );
-    my $pat = qr{\A\Q$dev_a\E/d1/r2\z};
+    my $pat = qr{\A\Q$dev_a\E/d1/r2\z}x;
     die "audit did not report d1/r2\n"
-      unless $st == 0 && grep { $_ =~ $pat } @$lines;
+      unless $st == 0 && first { $_ =~ $pat } @{$lines};
 
     remove_tree( $dev_a, $dev_b, $test_tmp, { safe => 1 } );
 };
@@ -620,9 +634,9 @@ $TESTS{test_heal} = sub {
     append_to( "$dev_a/d1/r2", "badline\n" );
 
     my ( $lines, $st ) = capture( $EMUXFS, "heal", $dev_a, $dev_b );
-    my $pat = qr{\A\Q$dev_a\E/d1/r2\z};
+    my $pat = qr{\A\Q$dev_a\E/d1/r2\z}x;
     die "heal did not report d1/r2\n"
-      unless $st == 0 && grep { $_ =~ $pat } @$lines;
+      unless $st == 0 && first { $_ =~ $pat } @{$lines};
 
     my $diff = quiet( "diff", "-r", "-x", ".muxfs", $dev_a, $dev_b );
     die "diff after heal\n" if $diff != 0;
@@ -697,6 +711,7 @@ sub run_tests {
         $TESTS{$name}->();
         post_test();
     }
+    return;
 }
 
 $TESTS{test_basics}      = sub { run_tests(@basic_tests) };
@@ -704,7 +719,7 @@ $TESTS{test_resiliance}  = sub { run_tests(@resiliance_tests) };
 $TESTS{test_restoration} = sub { run_tests(@restoration_tests) };
 $TESTS{test_negatives}   = sub { run_tests(@negative_tests) };
 $TESTS{test_permissions} = sub {
-    if ( $unpriv_user eq "" ) {
+    if ( $unpriv_user eq q{} ) {
         print "SKIP: unpriv_user is not set; permission tests skipped\n";
         return;
     }
@@ -737,7 +752,7 @@ my $ok = eval {
 };
 if ( !$ok ) {
     my $err = $@ // "unknown failure";
-    $err =~ s/\n\z//;
+    $err =~ s/\n\z//x;
     print STDERR "$err\n";
     whether_mounted();
     exit 1;
