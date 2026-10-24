@@ -15,9 +15,12 @@ format remains version 1; no persistent byte layout changed.
   refused at open time.
 * Hard links are refused by update and rename as well as create, delete and
   restore.
-* Rename clears the metadata, assignment and large-file checksum tree of a
-  replaced destination, rejects a hard-linked destination, handles `from ==
-  to` as a no-op, and has `rename/after_vacate` / `rename/after` fault points.
+* Rename vacates the source and a replaced destination into separate private
+  temporaries, updates ancestors one entry at a time, clears the replaced
+  node's metadata, assignment and large-file tree, rejects a hard-linked
+  destination, handles `from == to` as a no-op, and has
+  `rename/after_vacate`, `rename/after_dest` and `rename/after` fault points.
+  `sync` removes both temporaries.
 * `update/after_meta` is now after both content and metadata are fsynced.
 * Restore fsyncs the large-file checksum tree and the `lfile` directory before
   committing metadata and assignment.

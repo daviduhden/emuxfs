@@ -147,10 +147,21 @@ emuxfs_sync_main(int argc, char *argv[])
 	if (emuxfs_dev_state_write_fd(ddev->state_fd, &ddev->state))
 		exit(-1);
 
+	/*
+	 * A rename uses two private temporaries: one for the source and, when
+	 * it replaces an existing name, one for the old destination.  Either
+	 * can survive a crash; remove both while rebuilding.
+	 */
 	if (emuxfs_existsat(&exists, ddev->muxfs_fd, "rename.tmp"))
 		exit(-1);
 	if (exists) {
 		if (emuxfs_removeat(ddev->muxfs_fd, "rename.tmp"))
+			exit(-1);
+	}
+	if (emuxfs_existsat(&exists, ddev->muxfs_fd, "rename.dest.tmp"))
+		exit(-1);
+	if (exists) {
+		if (emuxfs_removeat(ddev->muxfs_fd, "rename.dest.tmp"))
 			exit(-1);
 	}
 

@@ -235,6 +235,7 @@ That models a process crash faithfully, and, because every state transition is
 `fsync`ed, it also exercises the recovery decisions that a power loss would
 trigger.  It does **not** model torn sectors, controller write caching or
 storage reordering.  The suite is a *crash-recovery* suite, not a proof of
-power-loss safety.  Rename has two points (`rename/after_vacate` and
-`rename/after`); a crash between them can leave a node in
-`.muxfs/rename.tmp`, which `sync` removes while rebuilding.
+power-loss safety.  Rename has three points (`rename/after_vacate`,
+`rename/after_dest` and `rename/after`); a crash between them can leave the
+source in `.muxfs/rename.tmp` and a replaced destination in
+`.muxfs/rename.dest.tmp`, both of which `sync` removes while rebuilding.

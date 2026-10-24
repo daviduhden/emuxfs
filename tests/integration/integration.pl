@@ -106,7 +106,12 @@ sub cleanup {
     }
     return;
 }
-END { cleanup() }
+END {
+    cleanup();
+    # Even if a helper exits early, a recorded failure must not produce a
+    # successful process status.
+    exit 1 if defined($failures) && $failures > 0;
+}
 local $SIG{INT} = local $SIG{TERM} = sub { cleanup(); exit 130 };
 
 sub run {

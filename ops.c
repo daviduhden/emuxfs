@@ -2450,10 +2450,13 @@ emuxfs_rename(const char *from, const char *to)
 			goto fail;
 
 		/*
-		 * A rename may replace an existing destination.  That inode is
-		 * unlinked by rename(2), so its metadata and assignment must be
-		 * cleared explicitly; otherwise they describe an inode that no
-		 * longer has a name and may be reused by a later create.
+		 * A rename may replace an existing destination.  Validate the
+		 * destination first, then vacate the source and (if present)
+		 * the destination one at a time.  The ancestor-recompute
+		 * protocol handles exactly one directory-entry change per step;
+		 * replacing a destination directly would make the pre-image
+		 * ambiguous because the source entry would already stand where
+		 * the old destination used to be.
 		 */
 		dest_exists = false;
 		if (fstatat(fd, to, &dest_st, AT_SYMLINK_NOFOLLOW) == 0) {
@@ -2471,6 +2474,65 @@ emuxfs_rename(const char *from, const char *to)
 			if (dest_meta.header.flags != MF_ASSIGNED)
 				goto fail;
 			dest_eno = dest_meta.header.eno;
+
+			/*
+			 * Preserve rename(2)'s type rules: a file cannot
+			 * replace a directory and a directory cannot replace a
+			 * non-directory.  Both directions are checked before
+			 * any name is vacated.
+			 */
+			if (S_ISDIR(dest_st.st_mode) !=
+			    S_ISDIR(prewr_st.st_mode)) {
+				if (has_write)
+					goto fail;
+				rc = S_ISDIR(dest_st.st_mode) ? -EISDIR :
+							       -ENOTDIR;
+				goto early;
+			}
+
+			/*
+			 * rename(2) replaces only an empty directory.  Check
+			 * that before moving anything so a non-empty
+			 * destination is not silently replaced.
+			 */
+			if (S_ISDIR(dest_st.st_mode)) {
+				struct emuxfs_dir ddir;
+				struct dirent	  *de;
+				size_t		   di;
+				bool		   empty;
+
+				if (emuxfs_pushdir(&ddir, fd, to)) {
+					if (has_write)
+						goto fail;
+					rc = -EIO;
+					goto early;
+				}
+				empty = true;
+				for (di = 0; di < ddir.ent_count; ++di) {
+					de = ddir.ent_array[di];
+					if ((de->d_namlen == 1) &&
+					    (de->d_name[0] == '.'))
+						continue;
+					if ((de->d_namlen == 2) &&
+					    (de->d_name[0] == '.') &&
+					    (de->d_name[1] == '.'))
+						continue;
+					/*
+					 * Do not skip .muxfs here: a
+					 * destination directory containing
+					 * one is not empty for rename(2)'s
+					 * purposes and must be refused.
+					 */
+					empty = false;
+					break;
+				}
+				if (emuxfs_popdir(&ddir))
+					exit(-1);
+				if (!empty) {
+					rc = -ENOTEMPTY;
+					goto early;
+				}
+			}
 		} else if (errno != ENOENT) {
 			if (has_write)
 				goto fail;
@@ -2479,38 +2541,21 @@ emuxfs_rename(const char *from, const char *to)
 		}
 
 		/*
-		 * The renameing process juggles the file to achieve 3 separate
-		 * objectives.
-		 *
-		 * The first rename tests if the requested operation is
-		 * possible.
+		 * First move the source out of the tree.  Its old destination
+		 * (if any) is still present, so the ancestor patch for 'from'
+		 * sees exactly the expected pre-image.
 		 */
-		emuxfs_eids_set();
-		subrc = renameat(fd, from, fd, to);
-		err = errno;
-		emuxfs_eids_reset();
-		if (subrc) {
-			if (has_write)
-				goto fail;
-			rc = -err;
-			goto early;
-		}
-
-		/*
-		 * The second rename moves the file out of the tree so that the
-		 * meta entries for the ancestors of 'from' can be recomputed
-		 * without colliding with 'to', its ancestors, and their
-		 * meta entries.
-		 */
-		if (renameat(fd, to, dev->muxfs_fd, "rename.tmp"))
+		if (renameat(fd, from, dev->muxfs_fd, "rename.tmp"))
 			goto fail;
+		if (fsync(dev->muxfs_fd))
+			exit(-1);
 		if (fstatat(fd, from, &postwr_st, AT_SYMLINK_NOFOLLOW) != -1)
 			goto fail;
 		if (errno != ENOENT)
 			goto fail;
 		/*
 		 * The namespace has changed but the operation is not
-		 * committed.  A crash here leaves the node in
+		 * committed.  A crash here leaves the source in
 		 * '.muxfs/rename.tmp' and 'working = 1'; 'sync' removes the
 		 * temporary and rebuilds the device.
 		 */
@@ -2522,19 +2567,62 @@ emuxfs_rename(const char *from, const char *to)
 			goto fail;
 
 		/*
-		 * The third rename moves the file back to its destination; at
-		 * this point the ancestors of 'to' can be recomputed.
+		 * If a destination existed, move it to a second temporary and
+		 * account for its deletion.  The source is already out of the
+		 * tree, so the root now changes by one entry.
+		 */
+		if (dest_exists) {
+			if (renameat(fd, to, dev->muxfs_fd,
+				"rename.dest.tmp"))
+				goto fail;
+			if (fsync(dev->muxfs_fd))
+				exit(-1);
+			if (fstatat(fd, to, &postwr_st,
+				AT_SYMLINK_NOFOLLOW) != -1)
+				goto fail;
+			if (errno != ENOENT)
+				goto fail;
+			cud.type = EMUXFS_CUD_DELETE;
+			cud.path = to;
+			cud.pre_meta = dest_meta;
+			if (emuxfs_ancestors_meta_recompute(i, &cud))
+				goto fail;
+			emuxfs_fault_point("rename/after_dest");
+		}
+
+		/*
+		 * The source moves back to its destination.  The destination
+		 * (if any) is in the private directory, so the root changes by
+		 * one entry again.
 		 */
 		if (renameat(dev->muxfs_fd, "rename.tmp", fd, to))
 			goto fail;
+		if (fsync(dev->muxfs_fd))
+			exit(-1);
 		if (emuxfs_fsync_parent(fd, from))
 			goto fail;
 		if (emuxfs_fsync_parent(fd, to))
 			goto fail;
 
+		if (emuxfs_readback(i, to, 0, &prewr_meta))
+			goto fail;
+		cud.type = EMUXFS_CUD_CREATE;
+		cud.path = to;
+		cud.pre_meta = prewr_meta;
+		if (emuxfs_ancestors_meta_recompute(i, &cud))
+			goto fail;
+
+		/*
+		 * The destination is now committed.  Drop the replaced inode's
+		 * large-file tree, metadata and assignment, then remove its
+		 * private temporary.  A crash before this block leaves
+		 * 'working = 1', so sync rebuilds the device and removes the
+		 * temporary.
+		 */
 		if (dest_exists) {
 			struct emuxfs_meta   zero_meta;
 			struct emuxfs_assign zero_assign;
+			int		      rmflags;
 
 			if (S_ISREG(dest_st.st_mode) &&
 			    ((size_t)dest_st.st_size > EMUXFS_BLOCK_SIZE) &&
@@ -2550,15 +2638,12 @@ emuxfs_rename(const char *from, const char *to)
 				exit(-1);
 			if (fsync(dev->assign_fd))
 				exit(-1);
+			rmflags = S_ISDIR(dest_st.st_mode) ? AT_REMOVEDIR : 0;
+			if (unlinkat(dev->muxfs_fd, "rename.dest.tmp", rmflags))
+				goto fail;
+			if (fsync(dev->muxfs_fd))
+				exit(-1);
 		}
-
-		if (emuxfs_readback(i, to, 0, &prewr_meta))
-			goto fail;
-		cud.type = EMUXFS_CUD_CREATE;
-		cud.path = to;
-		cud.pre_meta = prewr_meta;
-		if (emuxfs_ancestors_meta_recompute(i, &cud))
-			goto fail;
 
 		emuxfs_fault_point("rename/after");
 		has_write = true;

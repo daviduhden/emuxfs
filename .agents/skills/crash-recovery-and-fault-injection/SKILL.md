@@ -102,7 +102,8 @@ durability.
 | `restore/before` | before a restoration begins |
 | `restore/after_meta` | after restoring metadata, before assignment |
 | `restore/after` | after a restoration is verified (including deletes) |
-| `rename/after_vacate` | after the node is moved to `.muxfs/rename.tmp` |
+| `rename/after_vacate` | after the source is moved to `.muxfs/rename.tmp` |
+| `rename/after_dest` | after a replaced destination is moved to `.muxfs/rename.dest.tmp` |
 | `rename/after` | after the destination is read back and verified |
 
 `emuxfs_fault_point(name)` is a normal function whose body is inert unless

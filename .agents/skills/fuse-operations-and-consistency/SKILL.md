@@ -84,8 +84,10 @@ Per-operation deviations that are intentional:
 - delete unlinks before clearing metadata and deletes the large-file tree
   after the name is gone;
 - update writes no assignment and fsyncs content after metadata;
-- rename uses a temporary under `.muxfs/rename.tmp`, writes no node metadata
-  or assignment for the moved inode, and clears a replaced destination.
+- rename vacates the source to `.muxfs/rename.tmp` and a replaced destination
+  to `.muxfs/rename.dest.tmp`, updates ancestors one entry at a time, writes
+  no node metadata or assignment for the moved inode, and clears a replaced
+  destination after the commit.
 
 ## Read path
 
@@ -142,7 +144,9 @@ an overflow check.
 - Moving `working_pop` before every durable write, or calling it on a path
   that has not mutated.  Use `working_cancel` for the latter.
 - Forgetting to clear a replaced destination's metadata, assignment and large
-  file tree on rename.  This leaves orphan records and can break inode reuse.
+  file tree on rename, or trying to replace it in one step.  Clear it after
+  the commit and keep each ancestor update to one directory-entry change.
+  This leaves orphan records and can break inode reuse otherwise.
 - Treating a failed write/truncate as safely cancellable.  It may have
   partially changed the file.
 - Returning `-EIO` for every read failure without distinguishing `ENOENT`,

@@ -476,6 +476,26 @@ sub test_fuse_callback_faults {
         "rename_vacate"
     );
 
+    print "== fault at rename/after_dest (FUSE)\n";
+    fuse_fault_recover(
+        "rename/after_dest",
+        sub {
+            put( "$mp/g", "old\n" );
+            rename( "$mp/f", "$mp/g" );
+        },
+        sub {
+            my ( $a, $b ) = @_;
+            fail("rename over destination not rolled back")
+              unless ( slurp("$a/f") // q{} ) eq "v0\n";
+            fail("replaced destination not restored")
+              unless ( slurp("$a/g") // q{} ) eq "old\n";
+            fail("array did not converge after rename/dest fault")
+              if compare( "$a/f", "$b/f" ) != 0
+              || compare( "$a/g", "$b/g" ) != 0;
+        },
+        "rename_dest"
+    );
+
     print "== fault at rename/after (FUSE)\n";
     fuse_fault_recover(
         "rename/after",

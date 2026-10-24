@@ -71,7 +71,18 @@ jobs:
             echo "== FUSE integration tests =="
             if [ -c /dev/fuse0 ]; then
                 make
-                EMUXFS="$PWD/emuxfs" perl tests/integration/integration.pl
+                if ! EMUXFS="$PWD/emuxfs" \
+                    perl tests/integration/integration.pl \
+                    >integration.log 2>&1; then
+                    cat integration.log
+                    exit 1
+                fi
+                cat integration.log
+                if grep -q '^FAIL:' integration.log; then
+                    echo "integration reported failures"
+                    exit 1
+                fi
+                rm -f integration.log
             else
                 echo "SKIP: /dev/fuse0 is not available on this architecture"
             fi
@@ -181,7 +192,18 @@ jobs:
             echo "== FUSE integration tests =="
             if [ -c /dev/fuse0 ]; then
                 make
-                EMUXFS="$PWD/emuxfs" perl tests/integration/integration.pl
+                if ! EMUXFS="$PWD/emuxfs" \
+                    perl tests/integration/integration.pl \
+                    >integration.log 2>&1; then
+                    cat integration.log
+                    exit 1
+                fi
+                cat integration.log
+                if grep -q '^FAIL:' integration.log; then
+                    echo "integration reported failures"
+                    exit 1
+                fi
+                rm -f integration.log
             else
                 echo "SKIP: /dev/fuse0 is not available on this architecture"
             fi

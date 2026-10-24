@@ -141,7 +141,8 @@ Fault points currently exist at:
 | `restore/before`      | before a restoration begins                         |
 | `restore/after_meta`  | after restoring metadata, before its assign entry   |
 | `restore/after`       | after a restoration has been verified               |
-| `rename/after_vacate` | after the node is moved to `.muxfs/rename.tmp`      |
+| `rename/after_vacate` | after the source is moved to `.muxfs/rename.tmp`    |
+| `rename/after_dest`   | after a replaced destination is moved to `.muxfs/rename.dest.tmp` |
 | `rename/after`        | after the destination is read back and verified     |
 
 For `create/after_meta`, the metadata entry is written but the assign entry is
