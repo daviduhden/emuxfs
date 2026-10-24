@@ -65,6 +65,7 @@ my $mp       = "$sandbox/mp";
 my $work     = "$sandbox/work";
 my $mounted  = 0;
 my $failures = 0;
+my $daemon_pid;
 
 sub fail {
     my ($msg) = @_;
@@ -85,6 +86,11 @@ sub cleanup {
     if ($mounted) {
         system( "umount", $mp );
         $mounted = 0;
+    }
+    if ( defined $daemon_pid ) {
+        kill( "TERM", $daemon_pid );
+        waitpid( $daemon_pid, 0 );
+        $daemon_pid = undef;
     }
 
     # Re-prove the sandbox before removing anything.
@@ -176,21 +182,43 @@ sub state_mounted {
 
 sub mount_array {
     my $mlog = "$sandbox/mount-fg.log";
+    my $ready = 0;
 
     # Remove any previous log so readiness below cannot be satisfied by a
     # stale "entering fuse_loop" line from an earlier mount.
     unlink($mlog);
 
-    # Run in the foreground (as a background shell job) so the daemon's
-    # standard error, including the trace output, is captured.
-    system("EMUXFS_TRACE=1 $EMUXFS mount -f $mp $dev_a $dev_b >'$mlog' 2>&1 &");
-    $mounted = 1;
+    # Use fork/exec rather than a shell string so paths are passed as
+    # arguments and the daemon has a pid that cleanup can reap.
+    my $pid = fork();
+    if ( !defined $pid ) {
+        fail("cannot fork mount daemon: $!");
+        return 0;
+    }
+    if ( $pid == 0 ) {
+        open( STDOUT, ">", $mlog ) or POSIX::_exit(127);
+        open( STDERR, ">&STDOUT" ) or POSIX::_exit(127);
+        $ENV{EMUXFS_TRACE} = 1;
+        exec( $EMUXFS, "mount", "-f", $mp, $dev_a, $dev_b )
+          or POSIX::_exit(127);
+    }
+    $daemon_pid = $pid;
+    $mounted    = 1;
 
-    # Wait until the daemon has entered its event loop.
+    # Wait until the daemon has entered its event loop.  A timeout is a hard
+    # failure; returning success here would let every later check fail for the
+    # wrong reason.
     for ( my $i = 0 ; $i < 500 ; $i++ ) {
         my $l = slurp($mlog);
-        last if defined($l) && $l =~ /entering fuse_loop/;
+        if ( defined($l) && $l =~ /entering fuse_loop/ ) {
+            $ready = 1;
+            last;
+        }
         Time::HiRes::sleep(0.02);
+    }
+    if ( !$ready ) {
+        fail("mount daemon did not enter fuse_loop");
+        return 0;
     }
     return 1;
 }
@@ -198,6 +226,10 @@ sub mount_array {
 sub unmount_array {
     must_run( "umount", "umount", $mp );
     $mounted = 0;
+    if ( defined $daemon_pid ) {
+        waitpid( $daemon_pid, 0 );
+        $daemon_pid = undef;
+    }
     my $clean_a = wait_state_clean($dev_a);
     my $clean_b = wait_state_clean($dev_b);
     if ( !$clean_a || !$clean_b ) {
@@ -277,6 +309,13 @@ sub basic_operations {
     fail("read-back content") unless ( slurp("$mp/reg")    // q{} ) eq "foo\n";
     fail("mirror a content")  unless ( slurp("$dev_a/reg") // q{} ) eq "foo\n";
     fail("mirror b content")  unless ( slurp("$dev_b/reg") // q{} ) eq "foo\n";
+
+    # st_blocks is reported in 512-byte units, not emuxfs blocks.
+    {
+        my @st = stat("$mp/reg");
+        fail("cannot stat reg") unless @st;
+        fail("st_blocks has the wrong unit") unless $st[12] == 1;
+    }
     return;
 }
 
@@ -325,6 +364,17 @@ sub file_operations {
 
     must_run( "rename", "mv", "$mp/reg", "$mp/reg2" );
     fail("rename not mirrored") unless -f "$dev_a/reg2";
+
+    # Renaming over an existing name must clear the replaced node's
+    # metadata/assignment as well as replace the directory entry.
+    open( my $rfh, ">", "$mp/reg3" ) or fail("create rename target: $!");
+    print $rfh "replacement\n";
+    close($rfh) or fail("create rename target: $!");
+    must_run( "rename over existing", "mv", "$mp/reg3", "$mp/reg2" );
+    fail("rename over existing not mirrored")
+      unless ( slurp("$dev_a/reg2") // q{} ) eq "replacement\n";
+    fail("rename over existing not mirrored to b")
+      unless ( slurp("$dev_b/reg2") // q{} ) eq "replacement\n";
 
     must_run( "unlink", "rm", "$mp/reg2" );
     fail("unlink not mirrored") if -e "$dev_a/reg2";

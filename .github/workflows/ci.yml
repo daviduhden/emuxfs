@@ -65,7 +65,7 @@ jobs:
             make check
 
             echo "== Unit tests =="
-            make unittest
+            make test
             ./tests/unit/test_core
 
             echo "== FUSE integration tests =="
@@ -175,7 +175,7 @@ jobs:
             make check
 
             echo "== Unit tests =="
-            make unittest
+            make test
             ./tests/unit/test_core
 
             echo "== FUSE integration tests =="

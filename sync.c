@@ -71,6 +71,28 @@ emuxfs_sync_main(int argc, char *argv[])
 	if (emuxfs_dev_get(&sdev, sdev_index, 0))
 		exit(-1);
 
+	/*
+	 * Every source must be usable.  A degraded later source would
+	 * otherwise be skipped silently by the restore source scan, producing
+	 * a destination that is complete only for the paths the remaining
+	 * sources happened to have.
+	 */
+	{
+		dind si;
+		struct emuxfs_dev *tmp;
+
+		for (si = 1; si < emuxfs_dev_count(); ++si) {
+			if (emuxfs_dev_get(&tmp, si, 0)) {
+				dprintf(2,
+				    "Error: source device %lu is not "
+				    "usable.\n",
+				    (unsigned long)si);
+				emuxfs_final();
+				exit(1);
+			}
+		}
+	}
+
 	ddev_path = ddev->root_path;
 	alg = sdev->conf.chk_alg_type;
 	chksz = emuxfs_chk_size(alg);
@@ -94,7 +116,15 @@ emuxfs_sync_main(int argc, char *argv[])
 		exit(-1);
 	if (emuxfs_state_restore_push_back(ddev_index, "."))
 		exit(-1);
-	emuxfs_restore_now();
+	/*
+	 * A zero exit status must mean that the destination was actually
+	 * rebuilt.  Propagate a restore failure instead of writing a clean
+	 * state record over a device that may still be inconsistent.
+	 */
+	if (emuxfs_restore_now()) {
+		emuxfs_final();
+		exit(1);
+	}
 
 	if (emuxfs_dev_get(&ddev, ddev_index, 0))
 		exit(-1);

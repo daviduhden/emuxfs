@@ -214,6 +214,13 @@ EMUXFS int		 emuxfs_meta_assign_check(dind, size_t *);
 
 EMUXFS int emuxfs_working_push(dind);
 EMUXFS int emuxfs_working_pop(dind, time_t);
+/*
+ * Cancel an operation that has not mutated the device.  Like
+ * emuxfs_working_pop(), this clears the durable 'working' marker, but it does
+ * not advance 'seq': a failure before the first mutation is not a commit and
+ * must not make the array look interrupted.
+ */
+EMUXFS int emuxfs_working_cancel(dind);
 
 EMUXFS int emuxfs_restoring_push(dind);
 EMUXFS int emuxfs_restoring_pop(dind);
@@ -385,15 +392,19 @@ EMUXFS int		 emuxfs_pushdir(struct emuxfs_dir *, int, const char *);
 EMUXFS int		 emuxfs_popdir(struct emuxfs_dir *);
 [[nodiscard]] EMUXFS int emuxfs_readback(
     dind, const char *, bool, const struct emuxfs_meta *);
-EMUXFS int emuxfs_parent_readback(dind, const char *);
 EMUXFS int emuxfs_ancestors_meta_recompute(dind, struct emuxfs_cud *);
 EMUXFS int emuxfs_dir_meta_recompute(
     struct emuxfs_cud *, dind, const struct emuxfs_cud *);
-EMUXFS int    emuxfs_parent_gid(gid_t *, const char *);
 EMUXFS int    emuxfs_dir_content_chk(uint8_t *, dind, struct emuxfs_dir *);
 EMUXFS size_t emuxfs_align_up(size_t, size_t);
 EMUXFS size_t emuxfs_align_down(size_t, size_t);
-EMUXFS void   emuxfs_restore_now(void);
+/*
+ * Drain the restore queue.  Returns 0 when every queued repair succeeded (or
+ * was unnecessary), and 1 when at least one repair failed, was refused as
+ * ambiguous, or could not start because the device was unavailable.  Callers
+ * that report success to an operator (heal, sync) must propagate the failure.
+ */
+EMUXFS int emuxfs_restore_now(void);
 
 /*
  * True when 'st' describes a regular file with more than one hard link.

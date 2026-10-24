@@ -25,6 +25,18 @@ use Time::HiRes    ();
 
 my $EMUXFS = $ENV{EMUXFS} // "./emuxfs";
 
+# The legacy suite formats and mounts an array, so it has the same privilege
+# and FUSE-device requirements as the other FUSE suites.  Check before touching
+# any configured path.
+if ( $> != 0 ) {
+    print STDERR "SKIP: legacy tests require root\n";
+    exit 0;
+}
+if ( !-c "/dev/fuse0" ) {
+    print STDERR "SKIP: /dev/fuse0 is not available\n";
+    exit 0;
+}
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------

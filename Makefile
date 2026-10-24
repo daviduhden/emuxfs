@@ -216,13 +216,13 @@ faulttest: ${PROG} emuxfs-fault
 	EMUXFS="$(pwd)/emuxfs" EMUXFS_FAULT="$(pwd)/emuxfs-fault" \
 	    perl tests/integration/crash.pl
 
-# Complete pre-release validation.  CI runs the same sequence on OpenBSD 7.9
-# amd64 and arm64; this target is the local equivalent.  The FUSE suites
-# require root and /dev/fuse0 and skip themselves when unavailable; fuzzing
-# needs a clang with libFuzzer.  Nothing else may be claimed as "stable"
-# until this passes.
+# Complete pre-release validation.  CI runs the same core sequence on OpenBSD
+# 8.0 amd64 and arm64, plus installation, mandoc, linkage checks, the fallback
+# allocator build and a final clean rebuild.  The FUSE suites require root and
+# /dev/fuse0 and skip themselves when unavailable; fuzzing needs a clang with
+# libFuzzer.  Nothing else may be claimed as "stable" until this passes.
 stability: check
-	${MAKE} unittest
+	${MAKE} test
 	./tests/unit/test_core
 	${MAKE} integration
 	${MAKE} paralleltest

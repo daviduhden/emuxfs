@@ -24,6 +24,7 @@ use Cwd           qw(getcwd);
 use File::Compare qw(compare);
 use File::Path    qw(make_path remove_tree);
 use File::Temp    qw(tempdir);
+use POSIX         ();
 use Time::HiRes   ();
 
 my $EMUXFS       = $ENV{EMUXFS}       // ( getcwd() . "/emuxfs" );
@@ -61,6 +62,7 @@ my $dev_c    = "$sandbox/dev_c";
 my $mp       = "$sandbox/mp";
 my $mounted  = 0;
 my $failures = 0;
+my $daemon_pid;
 
 sub fail {
     my ($msg) = @_;
@@ -81,6 +83,11 @@ sub cleanup {
     if ($mounted) {
         system( "umount", $mp );
         $mounted = 0;
+    }
+    if ( defined $daemon_pid ) {
+        kill( "TERM", $daemon_pid );
+        waitpid( $daemon_pid, 0 );
+        $daemon_pid = undef;
     }
     if ( defined($sandbox) && in_sandbox($sandbox) ) {
         my $err;
@@ -201,21 +208,39 @@ sub try_put {
 # normal binary is used.
 sub fuse_mount_bg {
     my ( $a, $b, $point, $log ) = @_;
-    my $bin = defined($point) ? $EMUXFS_FAULT                  : $EMUXFS;
-    my $env = defined($point) ? "EMUXFS_FAULT_POINT='$point' " : q{};
+    my $bin   = defined($point) ? $EMUXFS_FAULT : $EMUXFS;
+    my $ready = 0;
 
     # Remove any previous log so readiness below cannot be satisfied by a
     # stale "entering fuse_loop" line from an earlier mount.
     unlink($log);
-    system("EMUXFS_TRACE=1 $env$bin mount -f $mp $a $b >'$log' 2>&1 &");
-    $mounted = 1;
+    my $pid = fork();
+    if ( !defined $pid ) {
+        fail("cannot fork mount daemon: $!");
+        return;
+    }
+    if ( $pid == 0 ) {
+        open( STDOUT, ">", $log ) or POSIX::_exit(127);
+        open( STDERR, ">&STDOUT" ) or POSIX::_exit(127);
+        $ENV{EMUXFS_TRACE} = 1;
+        $ENV{EMUXFS_FAULT_POINT} = $point if defined($point);
+        exec( $bin, "mount", "-f", $mp, $a, $b )
+          or POSIX::_exit(127);
+    }
+    $daemon_pid = $pid;
+    $mounted    = 1;
 
-    # Wait until the daemon has entered its event loop.
+    # Wait until the daemon has entered its event loop.  A timeout is a hard
+    # failure; otherwise the test would proceed against an unmounted tree.
     for ( my $i = 0 ; $i < 500 ; $i++ ) {
         my $l = slurp($log);
-        last if defined($l) && $l =~ /entering fuse_loop/;
+        if ( defined($l) && $l =~ /entering fuse_loop/ ) {
+            $ready = 1;
+            last;
+        }
         Time::HiRes::sleep(0.02);
     }
+    fail("mount daemon did not enter fuse_loop ($log)") if !$ready;
     return;
 }
 
@@ -223,9 +248,13 @@ sub fuse_mount_bg {
 # the kernel detaches the filesystem, so both forms are attempted and the
 # failure of the second is expected and ignored.
 sub fuse_umount {
-    system("umount $mp >/dev/null 2>&1");
-    system("umount -f $mp >/dev/null 2>&1");
+    system( "umount", $mp );
+    system( "umount", "-f", $mp );
     $mounted = 0;
+    if ( defined $daemon_pid ) {
+        waitpid( $daemon_pid, 0 );
+        $daemon_pid = undef;
+    }
     return;
 }
 
@@ -318,6 +347,8 @@ sub recover_and_check {
       unless ( slurp("$dev_a/r") // q{} ) eq "original\n";
     fail("n content wrong ($tag)")
       unless ( slurp("$dev_a/d/n") // q{} ) eq "nested\n";
+    assert_clean( $dev_a, "recovered destination $tag" );
+    assert_clean( $dev_b, "intact source $tag" );
     return;
 }
 
@@ -428,6 +459,36 @@ sub test_fuse_callback_faults {
               if compare( "$a/f", "$b/f" ) != 0;
         },
         "delete"
+    );
+
+    print "== fault at rename/after_vacate (FUSE)\n";
+    fuse_fault_recover(
+        "rename/after_vacate",
+        sub { rename( "$mp/f", "$mp/g" ); },
+        sub {
+            my ( $a, $b ) = @_;
+            fail("rename not rolled back") if -e "$a/g" || -e "$b/g";
+            fail("rename lost the source")
+              unless ( slurp("$a/f") // q{} ) eq "v0\n";
+            fail("array did not converge after rename fault")
+              if compare( "$a/f", "$b/f" ) != 0;
+        },
+        "rename_vacate"
+    );
+
+    print "== fault at rename/after (FUSE)\n";
+    fuse_fault_recover(
+        "rename/after",
+        sub { rename( "$mp/f", "$mp/g" ); },
+        sub {
+            my ( $a, $b ) = @_;
+            fail("rename not rolled back") if -e "$a/g" || -e "$b/g";
+            fail("rename lost the source")
+              unless ( slurp("$a/f") // q{} ) eq "v0\n";
+            fail("array did not converge after rename fault")
+              if compare( "$a/f", "$b/f" ) != 0;
+        },
+        "rename_after"
     );
     return;
 }

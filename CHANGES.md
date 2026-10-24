@@ -1,5 +1,52 @@
 # Change log
 
+## Integrity and recovery audit (2026-10-24)
+
+A static audit of the write, read, recovery and test paths.  The on-disk
+format remains version 1; no persistent byte layout changed.
+
+* A failed operation that has not mutated a device now clears `working`
+  without advancing `seq` (`emuxfs_working_cancel`), so an ordinary rejection
+  no longer looks like an interrupted commit.  Failures after a truncate or
+  write are treated as partial mutations and degrade the device.
+* `mount` finalizes the devices before exiting on a sequence mismatch, so the
+  failed attempt no longer leaves `mounted = 1` behind.
+* A device whose checksum algorithm differs from the rest of the array is
+  refused at open time.
+* Hard links are refused by update and rename as well as create, delete and
+  restore.
+* Rename clears the metadata, assignment and large-file checksum tree of a
+  replaced destination, rejects a hard-linked destination, handles `from ==
+  to` as a no-op, and has `rename/after_vacate` / `rename/after` fault points.
+* `update/after_meta` is now after both content and metadata are fsynced.
+* Restore fsyncs the large-file checksum tree and the `lfile` directory before
+  committing metadata and assignment.
+* Reads use `O_NOFOLLOW`, treat a node missing on one mirror as a damaged
+  copy when another mirror serves it, return `ENOENT` when every mirror
+  reports it missing, try the next mirror after I/O/consistency errors, and
+  drain the restore queue when every mirror fails.
+* `emuxfs_readback` requires `MF_ASSIGNED`; `audit`/`heal` also see a cleared
+  metadata entry.
+* `sync` refuses any unusable source and returns non-zero when a restore fails
+  or is ambiguous instead of committing a clean state record.  `heal`
+  propagates restore failures.
+* Coherent-divergence detection includes the destination, so a two-device
+  array can detect disagreement between two valid copies.
+* `readdir` uses entry-index cookies and stops when the reply buffer is full.
+* Writes are committed directly instead of through the global sequential
+  buffer, which reported success before touching a device, flushed another
+  file's data, and exited on a deferred failure.
+* Large-file checksum trees reject a stale tree on inode reuse, open with
+  `O_NOFOLLOW`/`O_CLOEXEC`, and are size-checked before `mmap`.
+* Create derives owner, group and mode from the node that was actually
+  created instead of forcing the parent's group with a root chown, which
+  avoids re-adding setuid bits.  `statfs` uses checked byte arithmetic;
+  `getattr` reports `st_blocks` in 512-byte units.
+* `mount` rejects nested or duplicate array directories.
+* Documentation now matches the actual OpenBSD 8.0 CI target and the
+  per-operation commit order; `ON_DISK_FORMAT.md` records the v2 migration
+  protocol as a proposal only.
+
 ## Checked-arithmetic audit (2026-10-11)
 
 * Audited `compat/stdckdint.h` against ISO C23 7.20 and the compiler overflow

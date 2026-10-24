@@ -9,8 +9,10 @@ checksum databases to validate and restore files automatically.
 > The on-disk format is frozen at version 1, and the complete validation
 > suite — strict-warning build, unit tests, FUSE integration, a 32-worker
 > parallel-load stress test, fault-injection recovery and a bounded parser
-> fuzz run — passes in CI on OpenBSD 7.9, on both amd64 and arm64.
-> `make stability` reproduces that evidence locally.
+> fuzz run — passes in CI on OpenBSD 8.0, on both amd64 and arm64.
+> `make stability` reproduces the core sequence locally; CI additionally
+> installs, lints the manual page, checks linkage, rebuilds with the fallback
+> allocator and performs a final clean rebuild.
 >
 > As with any mirror, a mirror is not a backup: keep at least one independent
 > copy of anything irreplaceable.  The operational notes in
@@ -43,16 +45,19 @@ Stability is described in terms of evidence rather than aspiration:
   heal and sync), repeated mount/unmount cycles and a bounded parser fuzz run
   pass, and the on-disk format is frozen.
 
-The evidence for both levels is one command, `make stability`: strict-warning
-build, headless unit tests, the FUSE integration suite, the parallel-load
-stress test, the fault-injection suite and a bounded parser fuzz run (libFuzzer
-where available, otherwise the standalone mutation driver).
-`.github/workflows/ci.yml` runs the same sequence on OpenBSD 7.9 amd64 and
-arm64.  A stability claim is never made from static analysis alone.
+The core evidence is one command, `make stability`: strict-warning build,
+headless unit tests, the FUSE integration suite, the parallel-load stress test,
+the fault-injection suite and a bounded parser fuzz run (libFuzzer where
+available, otherwise the standalone mutation driver).
+`.github/workflows/ci.yml` runs that sequence, plus installation, manual-page
+linting, linkage checks, a fallback-allocator rebuild and a final clean
+rebuild, on OpenBSD 8.0 amd64 and arm64.  A stability claim is never made from
+static analysis alone.
 
-emuxfs is **Tested and Hardened**: the CI run above is green on OpenBSD 7.9
+emuxfs is **Tested and Hardened**: the CI run above is green on OpenBSD 8.0
 amd64 and arm64 for the full sequence, including the 32-worker parallel-load
-stress test with a clean `audit` and byte-identical mirrors, fault-injection
+stress test with a clean `audit` and mirror trees that compare equal in
+content, mode, size and symlink target, fault-injection
 recovery from an interrupted create, update, delete, heal and sync, repeated
 mount/unmount cycles, the refusal of a second mount of a mounted array, and
 the bounded parser fuzz run.  The on-disk format is frozen at version 1.
@@ -98,9 +103,11 @@ Refer to the [emuxfs(1)](emuxfs.1) manual page for details.
 | [`RECOVERY.md`](RECOVERY.md) | expected state after failures and how to recover |
 | [`SECURITY.md`](SECURITY.md) | threat model, pledge/unveil policy, privilege model |
 | [`TESTING.md`](TESTING.md) | unit, integration, crash and fuzz tests |
-| [`COMPATIBILITY.md`](COMPATIBILITY.md) | OpenBSD 7.9, FUSE and format compatibility |
+| [`COMPATIBILITY.md`](COMPATIBILITY.md) | OpenBSD 8.0, FUSE and format compatibility |
 | [`NOTICE.md`](NOTICE.md) | provenance and licensing |
 | [`CHANGES.md`](CHANGES.md) | change log |
+| [`AGENTS.md`](AGENTS.md) | instructions for coding agents |
+| [`.agents/skills/`](.agents/skills/) | task-specific agent skills |
 
 ## Contributing
 
@@ -108,7 +115,9 @@ Bug reports, usability reports and patches are welcome; please use the project
 repository.
 
 If you want to read the code then start with [`GLOSSARY.md`](GLOSSARY.md), then
-[`emuxfs.h`](emuxfs.h), then [`ARCHITECTURE.md`](ARCHITECTURE.md).
+[`emuxfs.h`](emuxfs.h), then [`ARCHITECTURE.md`](ARCHITECTURE.md).  Coding
+agents must read [`AGENTS.md`](AGENTS.md) first and load the skill that
+matches the change.
 
 ## Authors
 

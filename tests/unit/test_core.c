@@ -583,6 +583,10 @@ test_dev_format_mount(void)
 	CHECK(range.blk_index_end == 2);
 
 	CHECK(emuxfs_working_push(i) == 0);
+	CHECK(emuxfs_working_cancel(i) == 0);
+	CHECK(dev->state.working == 0);
+	CHECK(dev->state.seq == 0);
+	CHECK(emuxfs_working_push(i) == 0);
 	CHECK(emuxfs_working_pop(i, now) == 0);
 	CHECK(dev->state.seq == 1);
 	fprintf(stderr, "  working ok\n");
@@ -833,6 +837,20 @@ test_assign_crosscheck(void)
 	}
 
 	/* Consistent mapping. */
+	CHECK(emuxfs_meta_assign_check(0, &bad) == 0 && bad == 0);
+	CHECK(emuxfs_readback(0, "x", 0, nullptr) == 0);
+
+	/*
+	 * MF_ASSIGNED is outside the metadata checksum.  A cleared flag must
+	 * be rejected by both readback and the whole-database cross-check.
+	 */
+	CHECK(emuxfs_meta_read(&meta, 0, st.st_ino) == 0);
+	meta.header.flags = 0;
+	CHECK(emuxfs_meta_write(&meta, 0, st.st_ino) == 0);
+	CHECK(emuxfs_readback(0, "x", 0, nullptr) != 0);
+	CHECK(emuxfs_meta_assign_check(0, &bad) == 0 && bad >= 1);
+	meta.header.flags = MF_ASSIGNED;
+	CHECK(emuxfs_meta_write(&meta, 0, st.st_ino) == 0);
 	CHECK(emuxfs_meta_assign_check(0, &bad) == 0 && bad == 0);
 	CHECK(emuxfs_readback(0, "x", 0, nullptr) == 0);
 

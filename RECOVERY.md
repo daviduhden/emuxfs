@@ -23,7 +23,10 @@ For each device, a create/update/delete/rename does:
 7. `emuxfs_working_pop`: write `working -= 1` and `seq += 1`.
 
 All devices are visited in turn.  Nothing about the array is considered
-committed until every device has reached step 7.
+committed until every device has reached step 7.  A failure before any
+mutation clears `working` without advancing `seq`; a failure after a mutation
+marks the device degraded and still advances `seq`, so the next mount cannot
+mistake the partial operation for a clean commit.
 
 ## Failure points
 
@@ -32,11 +35,11 @@ committed until every device has reached step 7.
 | before any device's step 1                | unchanged; `seq` equal, `working` 0        | nothing to do |
 | after step 1, before step 7 on some devices | `working != 0` on those devices; `seq` may differ | `sync` the affected devices from a good one |
 | after first device's step 7, before second's | `seq` differs between devices            | `sync` the lagging device from a leading one |
-| between content write (2) and meta write (3) | content and `meta.db` disagree          | `audit`/`heal`; if `seq` agrees and the sources agree, `heal` repairs from another device |
-| between meta write (3) and ancestor recompute (6) | ancestor directory checksums are stale | `audit` reports ancestors; `heal` recomputes them |
-| before `fsync` of data/meta                | change may be lost after power loss       | checksums detect it; `heal` restores |
+| between content write (2) and meta write (3) | `working = 1`; content and `meta.db` disagree | `sync` from an intact device |
+| between meta write (3) and ancestor recompute (6) | `working = 1`; ancestor checksums are stale | `sync`; an uninterrupted `heal` only after the marker is clear |
+| before `fsync` of data/meta                | `working = 1`; change may be lost         | `sync`; checksums then decide |
 | after `fsync`, before `seq` commit (7)     | `working != 0`; `seq` unchanged           | as for "after step 1" |
-| during restoration                         | `restoring != 0`                          | re-run `heal` (restoration is idempotent) |
+| during restoration                         | `restoring != 0`                          | `sync` (or rerun `heal` after recovery; restoration is idempotent) |
 | device removed or lost                     | `seq` mismatch; missing file              | `sync` a replacement device from the survivors |
 | external modification of one device        | content/metadata checksum mismatch        | reads self-heal; or `audit` then `heal` |
 | several valid but different copies          | every copy matches its own checksums      | ambiguous: **no repair**; resolve with `sync` |
@@ -67,7 +70,8 @@ or restoring one name would silently change the other.  The array therefore
 refuses them:
 
 * creating a hard link through the filesystem fails with `EOPNOTSUPP`;
-* deleting a name of a hard-linked file fails with `EOPNOTSUPP`;
+* deleting, renaming, writing, truncating or changing the metadata of a
+  hard-linked file fails with `EOPNOTSUPP`;
 * `audit` and `heal` report `Unsupported hard link` and fail;
 * restoration refuses to create or overwrite a hard-linked node.
 
@@ -79,9 +83,9 @@ array by other means.
 ## Ambiguous copies (coherent divergence)
 
 A checksum proves that a copy matches its own metadata; it does not prove that
-the copy is the newest or the correct one.  When two or more devices hold an
-internally valid but different copy of the same path, emuxfs refuses to
-choose:
+the copy is the newest or the correct one.  When two or more devices (including
+the destination) hold an internally valid but different copy of the same path,
+emuxfs refuses to choose:
 
 * automatic restoration is not performed;
 * an alert is logged and the device is marked degraded;
@@ -129,12 +133,14 @@ treated as merely dirty.
 `sync` is the explicit recovery path.  It reopens the destination with force —
 accepting both a dirty device and a structurally impossible record, with a
 warning — and also reopens the sources with force, because a crash leaves
-every device that was open marked `mounted`.  It rebuilds the destination
-from the source, and then commits a fresh, valid `state.db` with
-`working = 0` and `restoring = 0`.  A device left interrupted, or left with a
-torn/invalid record, therefore becomes mountable again.  A `degraded` source
-is still refused.  `sync` does not clear `degraded` on the destination; that
-requires `format` (or replacing the directory).
+every device that was open marked `mounted`.  Every source must be usable; a
+degraded source is refused.  It rebuilds the destination from the sources,
+then commits a fresh `state.db` with `working = 0`, `restoring = 0` and the
+source's `seq`.  A device left interrupted therefore becomes mountable again.
+A wrong-size `state.db` is not force-accepted, and `sync` does not clear
+`degraded`; that requires `format` (or replacing the directory).  A restore
+failure or an ambiguous copy makes `sync` exit non-zero instead of writing a
+clean state record.
 
 `audit` is **read-only**: it opens the devices read-only, does not set
 `mounted`, and does not modify `state.db` or any other persistent byte.
@@ -229,4 +235,6 @@ That models a process crash faithfully, and, because every state transition is
 `fsync`ed, it also exercises the recovery decisions that a power loss would
 trigger.  It does **not** model torn sectors, controller write caching or
 storage reordering.  The suite is a *crash-recovery* suite, not a proof of
-power-loss safety.
+power-loss safety.  Rename has two points (`rename/after_vacate` and
+`rename/after`); a crash between them can leave a node in
+`.muxfs/rename.tmp`, which `sync` removes while rebuilding.

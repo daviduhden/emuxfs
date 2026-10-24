@@ -31,12 +31,15 @@
  *   wpath   openat for write, truncate
  *   cpath   mkdirat, unlinkat, renameat, symlinkat
  *   fattr   fchmodat, utimensat
- *   chown   fchownat with an arbitrary uid/gid (used only when restoring)
+ *   chown   fchownat with an arbitrary uid/gid (format, restore and the
+ *           chown operation)
  *   id      seteuid/setegid/setgroups (the FUSE callbacks impersonate the
  *           caller and drop root's supplementary groups)
  *   unix    syslog(3) AF_UNIX socket operations
  *
- * mount(2)/unmount(2) are performed by libfuse before any pledge is taken.
+ * mount(2) is performed by libfuse before any pledge is taken.  unmount(2) is
+ * never called: the kernel detaches the filesystem when the process closes
+ * the FUSE device on exit.
  */
 
 #ifndef _SANDBOX_H_

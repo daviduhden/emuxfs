@@ -524,7 +524,19 @@ sub unmount_and_audit {
     wait_state_clean($dev_a) or fail("dev_a not clean after umount");
     wait_state_clean($dev_b) or fail("dev_b not clean after umount");
 
-    must_run( "audit", $EMUXFS, "audit", $dev_a, $dev_b );
+    # audit reports corrupt paths on stdout but still exits 0, so checking the
+    # exit status alone would not prove that the committed tree is clean.
+    my $audit_out = q{};
+    open( my $afh, "-|", $EMUXFS, "audit", $dev_a, $dev_b )
+      or fail("cannot run audit: $!");
+    while ( my $line = <$afh> ) {
+        $audit_out .= $line;
+    }
+    close($afh);
+    my $audit_st = $?;
+    fail( "audit failed (exit " . ( $audit_st >> 8 ) . ")" )
+      if $audit_st != 0;
+    fail("audit reported corrupt paths:\n$audit_out") if $audit_out ne q{};
 
     for my $id ( 0 .. $WORKERS - 1 ) {
         my $tag = sprintf( "w%02d", $id );

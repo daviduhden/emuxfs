@@ -55,7 +55,8 @@
 * **ub** — Upper bound.
 * **unity** — A unity build is a compilation technique whereby all modules are
   concatenated into a single module.  emuxfs no longer uses one: each `.c` is a
-  translation unit and the fault-injection build reuses the same objects.
+  translation unit; the fault-injection build compiles the same modules into
+  separate `.fault.o` objects with `-DEMUXFS_FAULT_INJECTION`.
 * **wr** — Write.
 
 ## Terms introduced by emuxfs

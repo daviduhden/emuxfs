@@ -1,14 +1,19 @@
 # Testing emuxfs
 
-All tests create their own temporary sandboxes and refuse to touch anything
-outside them.  The integration and crash suites require root and a working
-`/dev/fuse0`; they skip and exit 0 if those are unavailable.
+The unit, integration, parallel-load and crash suites create their own
+temporary sandboxes and refuse to touch anything outside them.  The legacy
+`test.pl` suite is the exception: it uses the dedicated paths in `test.conf`
+and recursively deletes them, so those paths must be unused scratch
+directories.  The integration, parallel-load and crash suites require root and
+a working `/dev/fuse0`; they skip and exit 0 if those are unavailable.
 
 ## Test tooling
 
 The complex test suites are written in Perl (using Perl's string handling) and
-run with the base-system `perl(1)`.  Any remaining shell code targets **ksh**,
-not POSIX `sh`; the Makefile executes recipes with `/bin/ksh`.
+run with the base-system `perl(1)`.  Perl scripts use `strict` and `warnings`.
+Shell helpers are mixed: the stdckdint compile-fail test is POSIX `sh`, while
+the legacy permission tests invoke `/bin/ksh`; do not assume a single shell
+for every script.
 
 ## Build policy (Clang, C23, strict warnings)
 
@@ -80,11 +85,14 @@ a replacement device, the refusal of hard links (both through the filesystem
 and as a direct modification detected by `audit`), the read-only property of
 `audit` (`muxfs.conf`, `state.db`, `meta.db` and `assign.db` are
 byte-identical before and after), the reproduction of source timestamps by a
-repair, five repeated mount/unmount cycles, and `version`.
+repair, renaming over an existing name, the 512-byte unit of `st_blocks`,
+five repeated mount/unmount cycles, and `version`.
 
 A second Perl suite, `test.pl`, is the end-to-end suite ported from the
 original shell tests.  Unlike the integration suite it uses the dedicated
-scratch paths from `test.conf`:
+scratch paths from `test.conf` and deletes them recursively.  It checks for
+root and `/dev/fuse0` and skips when either is missing, but those paths must
+still be disposable:
 
 ```
 cp test.conf.dist test.conf   # edit the paths first
@@ -127,16 +135,21 @@ Fault points currently exist at:
 | `create/before_meta`  | before writing metadata for a new node              |
 | `create/after_meta`   | after metadata, before the assign entry             |
 | `update/before_meta`  | after content write, before metadata write          |
-| `update/after_meta`   | after metadata write and fsync                      |
+| `update/after_meta`   | after content and metadata are both fsynced         |
 | `delete/after_unlink` | after unlink, before clearing metadata              |
 | `delete/after_meta`   | after clearing metadata, before the assign entry    |
 | `restore/before`      | before a restoration begins                         |
 | `restore/after_meta`  | after restoring metadata, before its assign entry   |
 | `restore/after`       | after a restoration has been verified               |
+| `rename/after_vacate` | after the node is moved to `.muxfs/rename.tmp`      |
+| `rename/after`        | after the destination is read back and verified     |
 
-The `*/after_meta` points are specifically designed to leave metadata written
-but the assign entry missing, which the meta/assign cross-check must then
-detect.
+For `create/after_meta`, the metadata entry is written but the assign entry is
+missing, which the meta/assign cross-check must detect.  `delete/after_meta`
+leaves a stale assignment for a cleared metadata entry; `update/after_meta`
+does not write an assignment at all because the inode does not change.  All
+three are still protected by the durable `working = 1` marker, so mount,
+audit and heal refuse the device and `sync` is the recovery path.
 
 `crash.pl` corrupts a device, interrupts `heal`/`sync` at `restore/before`
 and `restore/after`, and then checks that an uninterrupted run converges, that
@@ -146,12 +159,14 @@ clean (`working = restoring = degraded = mounted = 0`).  It also plants a
 operation — and requires `sync` to clear it, which is the documented
 post-power-loss recovery path.
 
-The FUSE-time points are automated too: the suite mounts the fault build,
+The FUSE-time points are automated too: the suite mounts the fault build and
 performs a create, an update and a delete that are each interrupted at
-`*/after_meta`, and requires `sync` to rebuild the interrupted device from the
+`*/after_meta`, plus renames interrupted at `rename/after_vacate` and
+`rename/after`.  It requires `sync` to rebuild the interrupted device from the
 intact mirror and `audit` to be clean.  Because the interrupted operation had
 not committed, reverting it is the correct outcome: the created file is gone,
-the updated file has its old content, and the deleted file is back.
+the updated file has its old content, the deleted file is back and a renamed
+file keeps its original name.
 
 Fault injection is compiled out of normal builds.  The fault points model a
 process crash (`_exit`), not torn sectors, controller caches or storage
@@ -194,27 +209,33 @@ Fuzzing is never enabled by the default build.
 make stability
 ```
 
-`make stability` is the local equivalent of the CI sequence: strict-warning
-build (`make check`), unit tests, the FUSE integration suite, the
-fault-injection suite and the bounded fuzz run.  The FUSE steps require root
-and `/dev/fuse0` and skip themselves when either is missing.  This is the
+`make stability` is the core local sequence: strict-warning build
+(`make check`), unit tests, the FUSE integration suite, the parallel-load
+stress test, the fault-injection suite and the bounded fuzz run.  The FUSE
+steps require root and `/dev/fuse0` and skip themselves when either is
+missing.  It is not byte-for-byte the CI sequence: CI also installs, lints the
+manual page, checks linkage, rebuilds with the fallback allocator and does a
+final clean rebuild.  It also does not run the legacy suite.  This is the
 evidence that the stability levels in README.md refer to; nothing should be
 described as Tested or Hardened on the strength of static analysis alone.
 
 ## Continuous integration
 
 `.github/workflows/ci.yml` runs on `ubuntu-latest` but executes inside a real
-OpenBSD virtual machine through `vmactions/openbsd-vm@v1`.  The target is
-**OpenBSD 7.9**, on two architectures: **amd64** and **arm64**
-(`arch: aarch64`).  Both run the same full sequence: build (clang, C23),
-strict warnings (`make check`, `-Werror`), unit tests, FUSE integration tests,
+OpenBSD virtual machine through `vmactions/openbsd-vm@v1.4.9`.  The target is
+**OpenBSD 8.0**, on two architectures: **amd64** and **arm64**
+(`arch: aarch64`).  Both run the same sequence: build (clang, C23), strict
+warnings (`make check`, `-Werror`), unit tests (`make test` and
+`test_core`, including the stdckdint conformance and compile-fail checks),
+FUSE integration tests, the parallel-load stress test,
 fault-injection tests, bounded parser fuzzing, install, manual page
-(`mandoc -T lint`), linkage, and a final clean rebuild.  The FUSE integration
-step is skipped (not failed) where `/dev/fuse0` is unavailable.  No external
-FUSE package is needed because the FUSE implementation is part of the OpenBSD
-base system.
+(`mandoc -T lint`), linkage, a fallback-allocator rebuild and unit test, and a
+final clean rebuild.  The FUSE steps are skipped (not failed) where
+`/dev/fuse0` is unavailable.  No external FUSE package is needed because the
+FUSE implementation is part of the OpenBSD base system.
 
-Only the OpenBSD 7.9 vmactions image is used; 8.0 is not prepared.
+CI does not run `make stability`, the legacy suite or `yamllint`; those are
+local/manual gates.
 
 ## Verification workflow
 

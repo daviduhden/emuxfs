@@ -50,7 +50,8 @@ frontend to the device layer and back.
     is defined at compile time.
 
 `version.c` holds the program version.  There is no unity build: every `.c` is
-its own translation unit, and the fault-injection build uses the same objects.
+its own translation unit.  The fault-injection build compiles the same modules
+again into separate `.fault.o` objects with `-DEMUXFS_FAULT_INJECTION`.
 
 ## Identity: internal vs external inodes
 
@@ -70,52 +71,77 @@ the authoritative map from logical identity to physical inode.
 
 ## Write path
 
-Every write operation (create, update, delete, rename) is applied to each
-mounted dev in turn.  For each dev the sequence is:
+Every mutating operation (create, update, delete, rename) is applied to each
+usable dev in index order.  Each device runs its own durable transaction:
 
-1. `emuxfs_working_push(dev)` increments a persistent *working* counter in
-   `state.db`, so an interrupted operation is visible at the next mount.
+1. `emuxfs_working_push(dev)` sets a persistent *working* marker in
+   `state.db` and `fsync`s it, so an interrupted operation is visible at the
+   next mount.
 2. The change is applied to the tree.
-3. The affected `meta.db` and `assign.db` entries are written and `fsync`ed.
-4. The content (for large files, the `lfile` checksum tree too) is `fsync`ed.
-5. The parent directory is `fsync`ed for create/rename/unlink.
-6. `emuxfs_readback` re-reads and verifies the node.
-7. `emuxfs_ancestors_meta_recompute` updates the metadata checksums of all
+3. The affected `meta.db` entry is written; create and delete also write
+   `assign.db`.  Update does not change the mapping, and rename preserves the
+   inode and `eno` of the moved node (but clears the metadata and assignment
+   of a replaced destination).
+4. Content, the `lfile` tree when present, `meta.db`, `assign.db` and the
+   affected parent directories are `fsync`ed.
+5. `emuxfs_readback` re-reads and verifies the node.
+6. `emuxfs_ancestors_meta_recompute` updates the metadata checksums of all
    ancestor directories up to the root.
-8. `emuxfs_working_pop(dev)` decrements *working* and increments the array
-   sequence number in `state.db`.
+7. `emuxfs_working_pop(dev)` clears *working* and increments that device's
+   sequence number.
+
+The exact order differs slightly by operation: create fsyncs the new node
+before writing metadata, delete unlinks before clearing metadata, and update
+fsyncs content after writing metadata.  All of them keep `working = 1`
+durable from before the first mutation until every record, checksum and
+namespace change is durable.
 
 The sequence number is the ordering token: all devs must agree on it before
-an array may be mounted, audited or healed.  Writing only at step 8 means an
-interrupted operation leaves some devs at sequence *n* and others at *n+1*,
-which is detected as a mismatch and requires a `sync`.
+an array may be mounted, audited or healed.  Each device advances its own
+sequence in step 7, so an interrupted operation leaves some devs at sequence
+*n* and others at *n+1*, which is detected as a mismatch and requires a
+`sync`.  There is no rollback: a device that fails after mutating is marked
+degraded, the remaining devices are still attempted, and the call succeeds if
+at least one device completed.  A failure before the first mutation clears
+*working* without advancing the sequence, so a rejected operation does not
+look like an interrupted commit.
 
 ## Read path and self-healing
 
-A read verifies the node's metadata checksum and its content checksum.  If
-either fails, the path is pushed onto the restore queue and the next dev is
-tried.  If no dev has an intact copy, the operation fails.  After a
-successful read, any queued corruption is drained by `emuxfs_restore_now()`,
-which chooses a source dev, restores the damaged copy and recomputes ancestor
-metadata.
+A read verifies the node's metadata checksum, its content checksum (for a
+large file, the leaves covering the requested range, not the whole tree) and
+the `meta.db`/`assign.db` mapping.  If any check fails, the path is pushed
+onto the restore queue and the next dev is tried.  A missing node on one
+mirror is remembered rather than returned immediately; if another dev serves
+it, the missing copy is queued for repair, and if every dev reports it missing
+the result is `ENOENT` without starting a repair.  Permission errors try the
+next mirror and return the last error if none succeeds.  I/O and consistency
+errors are queued.  If no dev has an intact copy, the queue is still drained
+and the operation fails.
+
+After a successful read, any queued corruption is drained by
+`emuxfs_restore_now()`, which chooses a source dev, restores the damaged copy
+and recomputes ancestor metadata.  A successful repair does not retroactively
+satisfy the failed read; the next access observes the repaired tree.
 
 Before a source is chosen, `emuxfs_restore_now()` checks for *coherent
-divergence*: if two or more mounted devices hold an internally valid but
-different copy of the path, no repair is performed, an alert is logged and the
-device is marked degraded.  A checksum proves a copy matches its own metadata;
-it does not prove that it is the newest or the correct copy.  The ambiguity is
-resolved explicitly by the administrator with `emuxfs sync destination
-source`.
+divergence*: if two or more mounted devices (including the destination) hold
+an internally valid but different copy of the path, no repair is performed,
+an alert is logged and the device is marked degraded.  A checksum proves a
+copy matches its own metadata; it does not prove that it is the newest or the
+correct copy.  The ambiguity is resolved explicitly by the administrator with
+`emuxfs sync destination source`.
 
 ## Hard links
 
 emuxfs assigns one metadata slot and one external inode number per inode, so
 two names for the same inode cannot be represented independently.  Hard links
 are therefore refused: `link(2)` through the filesystem returns
-`EOPNOTSUPP`; deleting a name of a hard-linked file is refused; `audit` and
-`heal` report `Unsupported hard link` and fail; restoration refuses to create
-or overwrite a hard-linked node.  `format` cannot encounter them because it
-requires empty directories.  This differs from *symbolic* links, which are
+`EOPNOTSUPP`; deleting, renaming, writing, truncating or changing the metadata
+of a hard-linked file is refused; `audit` and `heal` report
+`Unsupported hard link` and fail; restoration refuses to create or overwrite
+a hard-linked node.  `format` cannot encounter them because it requires empty
+directories.  This differs from *symbolic* links, which are
 fully supported and checksummed by their target text.
 
 ## Checksum trees for large files
@@ -159,8 +185,9 @@ the logical filesystem is limited by the most restrictive device.  `statfs`
 therefore reports the **minimum** across mounted devices for the block
 counts, the free counts and the inode counts, the logical block size
 (`EMUXFS_BLOCK_SIZE`), and the minimum `f_namemax`.  Capacities are never
-summed.  A device that is not clean is not mounted, so it does not take part
-in the aggregate.
+summed.  A device that is not clean at mount time is not opened.  A device
+that becomes degraded at runtime is skipped by `emuxfs_dev_get(..., 0)` and
+therefore drops out of the aggregate while it remains attached.
 
 ## Direct modification of a device
 
@@ -179,4 +206,7 @@ Detectability of external changes is:
 
 `audit` walks each device independently; it detects corruption *within* a
 device, not disagreement *between* devices.  Disagreement is surfaced when an
-automatic repair would need to choose a source: `heal` then refuses.
+automatic repair would need to choose a source: `heal` then refuses.  A large
+file read verifies only the checksum-tree leaves covering the requested
+range, so corruption elsewhere in that file is found by `audit`, `heal`, a
+restore, or a read of the affected range.

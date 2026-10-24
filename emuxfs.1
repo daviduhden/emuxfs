@@ -145,6 +145,9 @@ is the explicit recovery path: it reopens
 even if it is marked as having an interrupted operation, rebuilds it from
 .Ar source ,
 and clears the interrupted-operation state so the array can be mounted again.
+If a restoration fails or two valid copies disagree,
+.Cm sync
+exits non-zero instead of committing a clean state record.
 .It Cm version
 Display the program version and exit.
 .El
@@ -156,9 +159,10 @@ exits with one of the following exit status values:
 .It 0
 success
 .It 1
-incorrect usage
+operation refused
+.Pq usage error, inconsistent or dirty array, or failed validation
 .It 255
-error
+internal error
 .El
 .Sh EXAMPLES
 Create a new

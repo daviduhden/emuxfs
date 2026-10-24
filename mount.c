@@ -117,6 +117,23 @@ emuxfs_mount_absolutize(struct emuxfs_args *args)
 			return 2;
 	}
 
+	/*
+	 * Mirror directories must be disjoint: one device inside another
+	 * would make the outer copy include the inner .muxfs directory and
+	 * would let a restore write through the inner array.
+	 */
+	for (i = 0; i < args->dev_count; ++i) {
+		size_t j;
+
+		for (j = i + 1; j < args->dev_count; ++j) {
+			if (emuxfs_path_within(
+				args->dev_paths[i], args->dev_paths[j]) ||
+			    emuxfs_path_within(
+				args->dev_paths[j], args->dev_paths[i]))
+				return 2;
+		}
+	}
+
 	return 0;
 }
 
@@ -154,7 +171,7 @@ emuxfs_mount_main(int argc, char *argv[])
 		break;
 	case 2:
 		fprintf(stderr,
-		    "Error: the mount point and a mirror directory "
+		    "Error: the mount point and array directories "
 		    "must not contain one another.\n");
 		exit(1);
 	default:
@@ -170,10 +187,18 @@ emuxfs_mount_main(int argc, char *argv[])
 	case 0:
 		break; /* Match. */
 	case 1:
+		emuxfs_final();
 		exit(-1); /* Error. */
 	case 2:
+		/*
+		 * emuxfs_init() marked every device mounted.  Finalize before
+		 * exiting so a later mount is not refused because a previous
+		 * attempt left 'mounted = 1' behind.
+		 */
+		emuxfs_final();
 		exit(1); /* Mismatch.  Error message already printed. */
 	default:
+		emuxfs_final();
 		exit(-1); /* Programming error. */
 	}
 

@@ -144,7 +144,8 @@ emuxfs_lfile_open(int *fd_out, int lfile_fd, ino_t ino, int flags)
 	memset(path_buf, 0, PATH_MAX);
 	snprintf(path_buf, PATH_MAX - 1, "%llu", ino);
 
-	if ((fd = openat(lfile_fd, path_buf, flags)) == -1)
+	if ((fd = openat(lfile_fd, path_buf,
+		 flags | O_NOFOLLOW | O_CLOEXEC)) == -1)
 		goto out;
 
 	*fd_out = fd;
@@ -163,6 +164,7 @@ emuxfs_lfile_create(int lfile_fd, size_t chksz, ino_t ino, size_t filesz)
 	int	 path_len;
 	char	 path_buf[PATH_MAX];
 	int	 fd;
+	struct stat st;
 
 	rc = 1;
 
@@ -180,8 +182,19 @@ emuxfs_lfile_create(int lfile_fd, size_t chksz, ino_t ino, size_t filesz)
 		goto out;
 	memset(path_buf, 0, PATH_MAX);
 	snprintf(path_buf, PATH_MAX - 1, "%llu", ino);
-	if ((fd = openat(
-		 lfile_fd, path_buf, O_RDWR | O_CREAT | O_EXCL, 0700)) == -1)
+	/*
+	 * An inode number may be reused after its previous file was removed.
+	 * A checksum tree left behind for that inode is stale and would make
+	 * O_EXCL fail, so remove it before creating the new tree.  The caller
+	 * has already validated the node that owns the inode.
+	 */
+	if (fstatat(lfile_fd, path_buf, &st, AT_SYMLINK_NOFOLLOW) == 0) {
+		if (unlinkat(lfile_fd, path_buf, 0))
+			goto out;
+	}
+	if ((fd = openat(lfile_fd, path_buf,
+		 O_RDWR | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC,
+		 0700)) == -1)
 		goto out;
 	if (ftruncate(fd, (off_t)lfilesz))
 		goto out2;
@@ -541,10 +554,23 @@ emuxfs_lfile_readback(uint8_t *root_sum, dind dev_index, const char *path,
 		exit(-1); /* Programming error. */
 	ibegin -= (ibegin % EMUXFS_LEVEL_FACTOR);
 
-	if ((fd = openat(dev->root_fd, path, O_RDONLY)) == -1)
+	if ((fd = openat(
+		 dev->root_fd, path, O_RDONLY | O_NOFOLLOW | O_CLOEXEC)) == -1)
 		goto out;
 	if (emuxfs_lfile_open(&lfd, dev->lfile_fd, ino, O_RDONLY))
 		goto out;
+	/*
+	 * Do not map past the end of the checksum tree.  A truncated or
+	 * externally shortened lfile must fail as corruption, not SIGBUS.
+	 */
+	{
+		struct stat lst;
+
+		if (fstat(lfd, &lst))
+			goto out;
+		if ((lst.st_size < 0) || ((size_t)lst.st_size < lfilesz))
+			goto out;
+	}
 	if ((lfile = mmap(nullptr, lfilesz, PROT_READ, MAP_SHARED, lfd, 0)) ==
 	    MAP_FAILED)
 		goto out;

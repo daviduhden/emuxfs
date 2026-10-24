@@ -108,7 +108,7 @@ Rationale:
 * `wpath` — `openat` for write.
 * `cpath` — `mkdirat`, `unlinkat`, `renameat`, `symlinkat`.
 * `fattr` — `fchmodat`, `utimensat`.
-* `chown` — `fchownat` with an arbitrary owner, used only by restore and by
+* `chown` — `fchownat` with an arbitrary owner, used by `format`, restore and
   the `chown` operation.
 * `id` — `seteuid`/`setegid`/`setgroups`, used by the FUSE callbacks.
 * `unix` — `syslog(3)`, which uses an `AF_UNIX` socket.
@@ -138,12 +138,13 @@ last one, `unveil(NULL, NULL)` locks the policy.  The result:
   created, renamed or removed.
 * Nothing else is unveiled.  The FUSE device and the mount point are opened
   by `fuse_setup()` before the lock, so they do not need to remain visible.
-* The mount point and every array directory are canonicalised (with
-  `realpath(3)`) before the sandbox is configured.  A topology in which the
-  mount point and a mirror directory contain one another is refused (see
-  below): otherwise the serving process could traverse the mount it is
-  serving and deadlock, and the mounted filesystem would become part of its
-  own backing storage.
+* `mount` canonicalises the mount point and every array directory (with
+  `realpath(3)`) before the sandbox is configured.  `format`, `audit`, `heal`
+  and `sync` unveil the paths as given.  A topology in which the mount point
+  and a mirror directory contain one another, or in which two mirror
+  directories contain one another, is refused (see below): otherwise the
+  serving process could traverse the mount it is serving and deadlock, and
+  the mounted filesystem would become part of its own backing storage.
 
 `mount` unveils the device directories after `fuse_setup()` has mounted the
 filesystem, but before serving any request.  `format`, `audit`, `heal` and
@@ -171,13 +172,14 @@ resulting deadlock or recursion would be silent and hard to diagnose.
   external tool or a mistakenly modified device) therefore cannot redirect a
   metadata read or write: the descriptor is pinned to the directory that was
   checked.  Long-lived descriptors use `O_CLOEXEC`.
-* Opening a file with `O_TRUNC` is turned into the normal truncate operation
-  before the file is opened, so the truncation updates `meta.db` and the
-  content checksum.  `O_TRUNC` is never passed to `openat(2)` directly, which
-  would truncate the backing file behind emuxfs's back and leave `meta.db`
-  describing the old contents.
+* A user-visible open with `O_TRUNC` is turned into the normal truncate
+  operation before the file is opened, so the truncation updates `meta.db` and
+  the content checksum.  The restore path is the one deliberate exception: it
+  opens the destination with `O_TRUNC` and then immediately rewrites metadata,
+  assignment and the content checksum.  `opendir` does not accept write flags.
 * Restoring a regular file refuses to follow a symlink (`O_NOFOLLOW`) and
-  removes a pre-existing node of the wrong type first.
+  removes a pre-existing node of the wrong type first.  Reads and large-file
+  checksum-tree opens also use `O_NOFOLLOW`.
 
 ## Logging
 
@@ -193,12 +195,14 @@ propagating an error to the caller.
 * No cryptographic integrity: a malicious writer with device access can forge
   checksums.
 * Automatic healing refuses to repair a node when two or more mounted devices
-  hold internally valid but *different* copies of it: a checksum proves a copy
-  matches its own metadata, not that it is the newest or the authoritative
-  one, so emuxfs does not pick a "first valid" source.  `sync`, where the
-  operator designates the source, is the explicit override; see RECOVERY.md.
+  (including the destination) hold internally valid but *different* copies of
+  it: a checksum proves a copy matches its own metadata, not that it is the
+  newest or the authoritative one, so emuxfs does not pick a "first valid"
+  source.  `sync`, where the operator designates the source, is the explicit
+  override; see RECOVERY.md.
   A single internally valid copy is still used even if it might be stale,
   because no metadata distinguishes "stale but coherent" from "current".
-* No encryption, no quotas, no file locking (`flock` is rejected with
-  `EOPNOTSUPP`), and no hard links.
+* No encryption, no quotas, no file locking (the FUSE `.lock` callback
+  returns `EOPNOTSUPP`; whether `flock(2)` reaches it depends on libfuse) and
+  no hard links.
 * Timestamps are not checksummed, so timestamp corruption is not detected.

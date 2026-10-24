@@ -171,8 +171,8 @@ emuxfs_scan(enum emuxfs_scan_mode mode, dind dev_index)
 	memset(path, 0, PATH_MAX);
 	if (emuxfs_scan_impl(mode, dev_index, path, 0))
 		return 1;
-	if (mode == EMUXFS_SCAN_HEAL)
-		emuxfs_restore_now();
+	if ((mode == EMUXFS_SCAN_HEAL) && emuxfs_restore_now())
+		return 2; /* Operational failure, not a scan/internal error. */
 	return 0;
 }
 
@@ -255,12 +255,15 @@ emuxfs_scan_main(enum emuxfs_scan_mode scan_mode, int argc, char *argv[])
 	EMUXFS_TRACE("scan_main: after seq_check\n");
 
 	for (i = 0; i < dev_count; ++i) {
+		int rc;
+
 		EMUXFS_TRACE("scan_main: scanning dev %lu\n", (unsigned long)i);
-		if (emuxfs_scan(scan_mode, i)) {
+		rc = emuxfs_scan(scan_mode, i);
+		if (rc) {
 			EMUXFS_TRACE("scan_main: scan dev %lu failed\n",
 			    (unsigned long)i);
 			emuxfs_final();
-			exit(-1);
+			exit(rc == 2 ? 1 : -1);
 		}
 	}
 	EMUXFS_TRACE("scan_main: scans done\n");

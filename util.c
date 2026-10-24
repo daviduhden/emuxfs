@@ -388,6 +388,16 @@ emuxfs_readback(
 		    (unsigned long)i, (unsigned long long)ino, path);
 		goto fail;
 	}
+	/*
+	 * MF_ASSIGNED is outside the metadata checksum.  Without this check a
+	 * cleared or never-assigned meta record could pass readback, because
+	 * its checksum may still match a fabricated description.
+	 */
+	if (meta.header.flags != MF_ASSIGNED) {
+		EMUXFS_TRACE("readback: meta flags dev=%lu ino=%llu path=%s\n",
+		    (unsigned long)i, (unsigned long long)ino, path);
+		goto fail;
+	}
 	eno = meta.header.eno;
 	if (emuxfs_desc_init_from_stat(&desc, &st, eno)) {
 		EMUXFS_TRACE("readback: desc_init dev=%lu ino=%llu path=%s\n",
@@ -433,30 +443,6 @@ emuxfs_readback(
 	return 0;
 fail:
 	return 1;
-}
-
-EMUXFS int
-emuxfs_parent_readback(dind i, const char *path)
-{
-	EMUXFS_TRACE("enter");
-	char   ppath[PATH_MAX];
-	size_t path_len;
-
-	if (emuxfs_path_is_root(path))
-		return 1;
-
-	path_len = strlen(path);
-	if (path_len >= PATH_MAX)
-		return 1;
-	memcpy(ppath, path, path_len);
-	ppath[path_len] = '\0';
-
-	if (emuxfs_path_pop(nullptr, ppath, nullptr)) {
-		memset(ppath, 0, PATH_MAX);
-		strlcpy(ppath, ".", PATH_MAX);
-	}
-
-	return emuxfs_readback(i, ppath, 0, nullptr);
 }
 
 static void
@@ -1001,7 +987,7 @@ emuxfs_restore_dir(dind ddev_index, dind sdev_index, const char *path, int sfd,
 				goto subout;
 		} else {
 			if ((subfd = openat(sdev->root_fd, pathbuf,
-				 O_RDONLY | O_NOFOLLOW)) == -1)
+				 O_RDONLY | O_NOFOLLOW | O_CLOEXEC)) == -1)
 				goto out2;
 			if (S_ISDIR(subst.st_mode)) {
 				if (emuxfs_restore_dir(ddev_index, sdev_index,
@@ -1060,7 +1046,8 @@ emuxfs_restore_dir(dind ddev_index, dind sdev_index, const char *path, int sfd,
 			strlcpy(pathbuf, path, PATH_MAX);
 			strlcat(pathbuf, "/", PATH_MAX);
 			strlcat(pathbuf, dname, PATH_MAX);
-			emuxfs_removeat(ddev->root_fd, pathbuf);
+			if (emuxfs_removeat(ddev->root_fd, pathbuf))
+				goto out2;
 		}
 	}
 
@@ -1239,6 +1226,16 @@ emuxfs_restore_reg(dind ddev_index, dind sdev_index, const char *path, int sfd,
 			goto out;
 		if (emuxfs_copy_reg(dlfd, slfd, (size_t)slfile_st.st_size))
 			goto out;
+		/*
+		 * The checksum tree is part of the durable content.  Flush it,
+		 * and the lfile directory, before committing meta.db and
+		 * assign.db; otherwise a crash can leave metadata that names a
+		 * tree whose entries were never written.
+		 */
+		if (fsync(dlfd))
+			exit(-1);
+		if (fsync(ddev->lfile_fd))
+			exit(-1);
 	}
 	if (emuxfs_meta_write(expected, ddev_index, dino))
 		goto out;
@@ -1759,8 +1756,8 @@ emuxfs_ancestors_meta_restore(
  * Returns 0 on success (with *ambiguous_out set), 1 on internal error.
  */
 static int
-emuxfs_restore_source_ambiguous(
-    bool *ambiguous_out, dind ddev_index, const char *path)
+emuxfs_restore_source_ambiguous(bool *ambiguous_out,
+    [[maybe_unused]] dind ddev_index, const char *path)
 {
 	EMUXFS_TRACE("enter");
 	struct emuxfs_dev *sdev;
@@ -1778,9 +1775,13 @@ emuxfs_restore_source_ambiguous(
 	if ((dev_count = emuxfs_dev_count()) == 0)
 		return 1;
 
+	/*
+	 * Include the destination in the comparison.  A valid destination
+	 * that disagrees with a valid source is coherent divergence too, and
+	 * a two-device array must detect it.  A destination that is the
+	 * reason for the repair simply fails readback and is skipped.
+	 */
 	for (si = 0; si < dev_count; ++si) {
-		if (si == ddev_index)
-			continue;
 		if (emuxfs_dev_get(&sdev, si, 0))
 			continue;
 		if (emuxfs_readback(si, path, 0, nullptr))
@@ -1866,6 +1867,7 @@ emuxfs_restore_impl(dind ddev_index, const char *path)
 				goto fail;
 			if (emuxfs_ancestors_meta_restore(ddev_index, si, path))
 				goto fail;
+			emuxfs_fault_point("restore/after");
 			return 0;
 		}
 
@@ -1921,18 +1923,33 @@ emuxfs_restore_impl(dind ddev_index, const char *path)
 	return 1;
 }
 
-EMUXFS void
+EMUXFS int
 emuxfs_restore_now(void)
 {
 	EMUXFS_TRACE("enter");
 	dind ddev_index;
 	char path[PATH_MAX];
+	int  failed;
 
+	failed = 0;
 	memset(path, 0, PATH_MAX);
 	while (!emuxfs_state_restore_pop_front(&ddev_index, path)) {
 		emuxfs_info("Restoring: %lu:/%s\n", ddev_index, path);
-		if (emuxfs_restoring_push(ddev_index))
-			continue; /* Device unavailable; nothing pushed. */
+		if (emuxfs_restoring_push(ddev_index)) {
+			/*
+			 * The queue entry was already popped.  Report the
+			 * failure and degrade the device instead of silently
+			 * dropping the repair; the device was not available, so
+			 * 'sync' is required.
+			 */
+			emuxfs_alert("Cannot restore: %lu:/%s (device "
+				     "unavailable)\n",
+			    ddev_index, path);
+			emuxfs_degraded_set(ddev_index);
+			failed = 1;
+			memset(path, 0, PATH_MAX);
+			continue;
+		}
 		switch (emuxfs_restore_impl(ddev_index, path)) {
 		case 0:
 			emuxfs_info("Restored: %lu:/%s\n", ddev_index, path);
@@ -1963,44 +1980,12 @@ emuxfs_restore_now(void)
 		goto next;
 	fail:
 		emuxfs_degraded_set(ddev_index);
+		failed = 1;
 	next:
 		emuxfs_restoring_pop(ddev_index);
 		memset(path, 0, PATH_MAX);
 	}
-}
-
-EMUXFS int
-emuxfs_parent_gid(gid_t *parent_gid_out, const char *path)
-{
-	EMUXFS_TRACE("enter");
-	char		   pbuf[PATH_MAX], *ppath;
-	size_t		   ppathlen;
-	struct emuxfs_dev *dev;
-	dind		   dev_count, i;
-	struct stat	   st;
-
-	ppathlen = strlen(path);
-	if (ppathlen >= PATH_MAX)
-		return 1;
-	ppath = pbuf;
-	memset(ppath, 0, PATH_MAX);
-	strlcpy(ppath, path, PATH_MAX);
-	if (emuxfs_path_pop(nullptr, ppath, &ppathlen)) {
-		ppath = ".";
-		ppathlen = 1;
-	}
-
-	if ((dev_count = emuxfs_dev_count()) == 0)
-		return 1;
-	for (i = 0; i < dev_count; ++i) {
-		if (emuxfs_dev_get(&dev, i, 0))
-			continue;
-		if (fstatat(dev->root_fd, ppath, &st, AT_SYMLINK_NOFOLLOW))
-			continue;
-		*parent_gid_out = st.st_gid;
-		return 0;
-	}
-	return 1;
+	return failed ? 1 : 0;
 }
 
 EMUXFS int

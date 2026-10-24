@@ -35,7 +35,7 @@ longer than the line buffer are rejected.  Keys (all required except
 | `chk_alg`       | `crc32`, `md5` or `sha1`                               |
 | `array_uuid`    | UUID shared by all devices in the array                |
 | `dev_uuid`      | UUID unique to this device                             |
-| `seq_zero_time` | epoch time at which `seq` last wrapped to zero         |
+| `seq_zero_time` | epoch time written at `format`; v1 never wraps         |
 
 The original Multiplexed File System wrote `version=MAJOR.MINORflavor` (for
 example `0.5current`) and had a defect that discarded the revision.  emuxfs
@@ -58,9 +58,11 @@ Parser robustness (all statically verifiable in `conf.c`):
 
 * Duplicate keys are rejected, so a later line cannot silently override an
   earlier `format_version`.
-* Values must be fully valid: `format_version=-1`, `format_version=0`,
-  `format_version=1garbage`, empty values, values above `UINT32_MAX`, and
-  values with trailing characters are all rejected by `strtonum(3)`.
+* Values must be fully valid.  `format_version=-1`, `format_version=1garbage`,
+  empty values, values above `UINT32_MAX`, and values with trailing
+  characters are rejected by `strtonum(3)`.  `format_version=0` parses
+  successfully and is then rejected as an unsupported version
+  (`EMUXFS_CONF_EBADVERSION`), not as a malformed number.
 * A CRLF line ending is accepted by stripping one trailing `\r`; a file that
   does not end in a newline is rejected.
 * Unknown keys and unknown checksum algorithms are rejected.
@@ -90,7 +92,7 @@ integers in little-endian byte order, at fixed offsets:
 | offset | width | field       | meaning                                        |
 |--------|-------|-------------|------------------------------------------------|
 | 0      | 8     | `seq`       | array sequence number; equal across devices    |
-| 8      | 8     | `mounted`   | 1 while the device is in use by any command    |
+| 8      | 8     | `mounted`   | 1 while opened read-write; `audit` leaves it 0 |
 | 16     | 8     | `working`   | 1 during a write operation                     |
 | 24     | 8     | `restoring` | 1 during a restoration                         |
 | 32     | 8     | `degraded`  | 1 after a detected unrecoverable condition      |
@@ -224,9 +226,13 @@ The **content checksum** depends on the node type:
 ## assign.db
 
 An array indexed by *external inode* (`eno`).  Each entry is 16 bytes:
-`flags` (uint64, `AF_ASSIGNED`=1) and `ino` (uint64).  The next free `eno` is
-`filesize / 16`.  Deleting a node zeroes its entry; the `eno` is not reused by
-`emuxfs_state_eno_next_acquire` until the array is recreated.
+`flags` (uint64, `AF_ASSIGNED`=1) and `ino` (uint64).  At mount time the next
+free `eno` is `filesize / 16` (the maximum across the opened devices).
+Deleting a node zeroes its entry.  The in-session allocator returns the most
+recently allocated `eno` to the pool when that exact value is deleted (LIFO);
+after a remount, the next value is recomputed from the unchanged file size, so
+the cleared entry is normally not reused.  The file never shrinks and `eno`
+never wraps.
 
 ### Invariant with meta.db
 
@@ -241,7 +247,10 @@ meta.db[ino].eno   == E           implies  assign.db[E].flags == AF_ASSIGNED
 and conversely, every `assign.db[E]` with `AF_ASSIGNED` set must point at an
 inode whose metadata records `eno == E`.
 
-This is checked in two directions:
+The `flags` field is outside the metadata checksum.  `emuxfs_readback`
+therefore requires `meta.db[ino].flags == MF_ASSIGNED` before it accepts a
+record; otherwise a cleared metadata entry could match a fabricated
+description.  The mapping is checked in two directions:
 
 * on every validation (`emuxfs_readback`), for the node being checked;
 * during `audit` and `heal`, over the whole `assign.db` in O(n) where n is the
@@ -254,10 +263,13 @@ This is checked in two directions:
   metadata and assign writes.  `heal` refuses rather than guessing; recover
   with `sync`.
 * **Orphan meta** (`meta.db[ino]` set but `assign.db[eno]` missing or pointing
-  elsewhere): detected by the per-node check during validation and by `audit`.
-  Not cleaned automatically.
-* The `eno` of a cleared entry is never reused, so an orphan record can never
-  be mistaken for a newly created object.
+  elsewhere): detected by the per-node check during validation and by
+  `audit`, which only reports it.  An explicit `heal` queues the path and
+  restores the metadata and assignment from a valid source.
+* A cleared `eno` is not reused across a remount.  In-session LIFO reuse
+  returns only the most recently allocated value, after both the metadata and
+  the assignment have been cleared, so an orphan record cannot be mistaken for
+  a newly created object.
 
 ## lfile/
 
@@ -269,9 +281,12 @@ inode contains a checksum tree.
   `FACTOR = EMUXFS_BLOCK_SIZE / EMUXFS_CHKSZ_MAX = 204`.  Note that `FACTOR`
   uses the maximum checksum size, so it does not depend on the chosen
   algorithm.
-* Entries are stored consecutively by absolute index
-  (`emuxfs_lfile_abs_range`); the file size is
-  `chksz * (root_absolute_index + 1)`.
+* Each level starts at an absolute index derived from the next power of two
+  greater than or equal to its child count, then repeatedly divided by
+  `FACTOR` (`emuxfs_lfile_abs_range`).  Entries within a level are
+  consecutive, but unused slots can exist between levels.  For example, three
+  file blocks occupy leaf indices 0-2, index 3 is unused, and the root is at
+  index 4.  The file size is `chksz * (root_absolute_index + 1)`.
 * A partial final block is hashed over its actual bytes only; it is not
   zero-padded for the leaf checksum.
 * The root entry is copied into the node's `content_checksum` in meta.db.
@@ -282,11 +297,14 @@ are stored as their raw digest bytes.
 ## Invariants
 
 1. All devices agree on `array_uuid`, `chk_alg` and, when versioned,
-   `format_version`.
+   `format_version`.  `array_uuid` and `chk_alg` are compared when a device
+   is opened; `format_version` is validated per device against
+   `EMUXFS_FORMAT_VERSION`.
 2. All devices agree on `seq` and `seq_zero_time`, checked before mount,
    audit and heal.
-3. `seq` is incremented only after every device has completed an operation,
-   so a mismatch means an interrupted or failed operation.
+3. Each device increments its own `seq` at the end of its part of an
+   operation.  A mismatch therefore means an interrupted or failed operation;
+   it does not mean that the array commits globally after the last device.
 4. `working`/`restoring` are non-zero only while an operation is in progress;
    a non-clean device cannot be mounted and must be recovered offline.
 5. Every live node has exactly one assignment entry in each device.
@@ -296,7 +314,8 @@ are stored as their raw digest bytes.
    at least one device, and *corrupt* on a device where they do not.
 8. No regular file has more than one hard link.  Two names for one inode would
    share a metadata slot and an eno, so hard links are refused by
-   `format`/`audit`/`heal`/`unlink`/restore rather than misrepresented.
+   `format`/`audit`/`heal`/`unlink`/update/rename/restore rather than
+   misrepresented.
 9. When two or more devices hold an internally valid but different copy of a
    path (coherent divergence), no automatic restoration is performed; the
    ambiguity is reported and must be resolved explicitly with `sync`.
@@ -369,9 +388,11 @@ version 1 protects, together with the path.  Concretely:
 * Every persistent offset (`ino * msz`, `eno * 16`) is range-checked against
   `INT64_MAX` before use, because `off_t` is signed.  An index that cannot be
   represented fails the read/write rather than wrapping.
-* `eno` does not wrap and is not reused.  If `eno` reached `UINT64_MAX`,
-  allocation would fail (`emuxfs_state_eno_next_acquire` returns an error)
-  rather than reuse a value.
+* `eno` does not wrap.  A deleted value may be returned to the in-session
+  pool in LIFO order, but a cleared value is never silently reused across a
+  remount.  If `eno` reached `UINT64_MAX`, allocation would fail
+  (`emuxfs_state_eno_next_acquire` returns an error) rather than reuse a
+  value.
 
 ## Version 2 (proposed, not implemented)
 
@@ -413,8 +434,33 @@ restore must also clear restrictive flags before removing or overwriting an
 existing node.  Version 1 does not preserve flags, so it neither suffers nor
 benefits from this ordering; it simply does not reproduce them.
 
+### Migration protocol (proposal only)
+
 A migration would be an explicit command, never automatic in `mount`, and
-would refuse dirty or ambiguous arrays.  Multi-device upgrades must be
-resumable and must never mount a mix of v1 and v2; the array's `array_uuid`
-and per-device `format_version` allow an incomplete upgrade to be detected and
-either completed or rolled back.  No such command exists yet.
+would refuse dirty, degraded or ambiguous arrays.  The required protocol is:
+
+1. **Preflight.** Open every device read-only, require clean
+   `state.db` records, equal `array_uuid`, equal `chk_alg`, equal `seq`, and
+   no `working`/`restoring`/`degraded` flag.  Refuse if any check fails.
+2. **Record intent.** Write a migration marker outside the format-version-1
+   namespace (for example a new file in `.muxfs/`) naming the target version
+   and the ordered device list.  `mount` must refuse an array with a pending
+   marker.
+3. **Upgrade one device at a time.** Convert `state.db` to the two-slot v2
+   layout, then write `format_version=2`, fsyncing each step.  Never leave a
+   device with a v2 `state.db` and `format_version=1` visible as mountable.
+4. **Resume or roll back.** A rerun reads the marker, skips already converted
+   devices and finishes the rest.  Rollback restores the v1 record from the
+   preserved old payload; it is allowed only before the last device is
+   converted.
+5. **Verify before clearing the marker.** Reopen every device, check the v2
+   magic, generation and checksum, verify `array_uuid`/`seq`, run a full
+   `audit`, then remove the marker.  A mixed v1/v2 array must never mount.
+
+The compatibility test matrix for any accepted proposal is: a v1 array read
+by the new binary without conversion; conversion of a clean v1 array and full
+audit; interruption at every migration step followed by resume; rollback;
+refusal of dirty/degraded/ambiguous input; refusal of a mixed array; and a
+byte-for-byte check that v1 arrays are untouched by `mount`, `audit` and
+`sync` when no migration is requested.  No migration command, v2 magic or
+generation field exists yet.

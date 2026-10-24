@@ -36,8 +36,9 @@ usable: the private directory is `.muxfs` and its configuration file is
 
 `NOTICE.md`, `ARCHITECTURE.md`, `ON_DISK_FORMAT.md`, `RECOVERY.md`,
 `SECURITY.md`, `TESTING.md`, `COMPATIBILITY.md`, `sandbox.c`, `sandbox.h`,
-`fault.c`, `fault.h`, `tests/`, `.github/workflows/`.  Existing files were
-also modified; the changes are visible in the project history.
+`fault.c`, `fault.h`, `AGENTS.md`, `.agents/`, `tests/`,
+`.github/workflows/`.  Existing files were also modified; the changes are
+visible in the project history.
 
 ## Removed
 
@@ -49,6 +50,6 @@ also modified; the changes are visible in the project history.
 * `SHA512SUMS` listed hashes of the repository's own files and was regenerated
   in the same change as those files, so it provided no independent guarantee.
   It was removed rather than kept as ceremony.
-* `unity.c` was removed: the incremental build is the only supported build and
-  the fault-injection build now reuses the same objects with
-  `-DEMUXFS_FAULT_INJECTION`.
+* `unity.c` was removed: the incremental build is the only supported build.
+  The fault-injection build compiles the same modules into separate
+  `.fault.o` objects with `-DEMUXFS_FAULT_INJECTION`.

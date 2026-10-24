@@ -93,6 +93,7 @@ emuxfs_statfs(const char *path, struct statvfs *stvfs)
 	struct statvfs	   st, st_agg;
 	bool		   has_st;
 	size_t		   frsize, sz;
+	uint64_t	   bytes;
 
 	emuxfs_wrbuf_flush();
 
@@ -133,13 +134,22 @@ emuxfs_statfs(const char *path, struct statvfs *stvfs)
 			 * fixed to the logical block size, and f_namemax must
 			 * fit on every device, so it is also the minimum.
 			 */
-			sz = (frsize * st.f_blocks) / EMUXFS_BLOCK_SIZE;
+			if (ckd_mul(&bytes, (uint64_t)frsize,
+				(uint64_t)st.f_blocks))
+				return -EOVERFLOW;
+			sz = (size_t)(bytes / EMUXFS_BLOCK_SIZE);
 			if (st_agg.f_blocks > sz)
 				st_agg.f_blocks = sz;
-			sz = (frsize * st.f_bfree) / EMUXFS_BLOCK_SIZE;
+			if (ckd_mul(&bytes, (uint64_t)frsize,
+				(uint64_t)st.f_bfree))
+				return -EOVERFLOW;
+			sz = (size_t)(bytes / EMUXFS_BLOCK_SIZE);
 			if (st_agg.f_bfree > sz)
 				st_agg.f_bfree = sz;
-			sz = (frsize * st.f_bavail) / EMUXFS_BLOCK_SIZE;
+			if (ckd_mul(&bytes, (uint64_t)frsize,
+				(uint64_t)st.f_bavail))
+				return -EOVERFLOW;
+			sz = (size_t)(bytes / EMUXFS_BLOCK_SIZE);
 			if (st_agg.f_bavail > sz)
 				st_agg.f_bavail = sz;
 			if (st_agg.f_files > st.f_files)
@@ -154,14 +164,23 @@ emuxfs_statfs(const char *path, struct statvfs *stvfs)
 			st_agg = st;
 			st_agg.f_bsize = EMUXFS_BLOCK_SIZE;
 			st_agg.f_frsize = EMUXFS_BLOCK_SIZE;
-			sz = (frsize * st.f_blocks) / EMUXFS_BLOCK_SIZE;
+			if (ckd_mul(&bytes, (uint64_t)frsize,
+				(uint64_t)st.f_blocks))
+				return -EOVERFLOW;
+			sz = (size_t)(bytes / EMUXFS_BLOCK_SIZE);
 			st_agg.f_blocks = sz;
-			sz = (frsize * st.f_bfree) / EMUXFS_BLOCK_SIZE;
+			if (ckd_mul(&bytes, (uint64_t)frsize,
+				(uint64_t)st.f_bfree))
+				return -EOVERFLOW;
+			sz = (size_t)(bytes / EMUXFS_BLOCK_SIZE);
 			st_agg.f_bfree = sz;
-			sz = (frsize * st.f_bavail) / EMUXFS_BLOCK_SIZE;
+			if (ckd_mul(&bytes, (uint64_t)frsize,
+				(uint64_t)st.f_bavail))
+				return -EOVERFLOW;
+			sz = (size_t)(bytes / EMUXFS_BLOCK_SIZE);
 			st_agg.f_bavail = sz;
 			st_agg.f_fsid = 0;
-			st_agg.f_flag = 0;
+			st_agg.f_flag = st.f_flag;
 			has_st = true;
 		}
 	}
@@ -229,7 +248,7 @@ emuxfs_open(const char *path, struct fuse_file_info *ffi)
 	 * file behind emuxfs's back and leave meta.db describing the old
 	 * contents.
 	 */
-	oflags = ffi->flags & ~(O_CREAT | O_EXCL);
+	oflags = (ffi->flags & ~(O_CREAT | O_EXCL)) | O_NOFOLLOW | O_CLOEXEC;
 	if (oflags & O_TRUNC) {
 		int trc;
 
@@ -258,7 +277,8 @@ emuxfs_open(const char *path, struct fuse_file_info *ffi)
 }
 
 static int
-emuxfs_opendir(const char *path, struct fuse_file_info *ffi)
+emuxfs_opendir(
+    const char *path, [[maybe_unused]] struct fuse_file_info *ffi)
 {
 	EMUXFS_TRACE("enter");
 	dind		   dev_count, i;
@@ -270,8 +290,12 @@ emuxfs_opendir(const char *path, struct fuse_file_info *ffi)
 	if (emuxfs_path_sanitize(&path))
 		return -EIO;
 
-	/* Directories are created by mkdir(2); see emuxfs_open(). */
-	oflags = (ffi->flags & ~(O_CREAT | O_EXCL)) | O_DIRECTORY;
+	/*
+	 * Directories are created by mkdir(2); see emuxfs_open().  Ignore the
+	 * caller's open flags: a directory is always opened read-only, without
+	 * following a symlink, and never with O_TRUNC.
+	 */
+	oflags = O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC;
 
 	if ((dev_count = emuxfs_dev_count()) == 0)
 		return -EIO;
@@ -350,8 +374,6 @@ emuxfs_op_create(struct emuxfs_op_create_args *args)
 	enum emuxfs_chk_alg_type alg;
 	size_t			 chksz;
 
-	gid_t parent_gid;
-
 	int		     rc, err, subrc, subfd;
 	bool		     has_write;
 	uint64_t	     eno;
@@ -377,10 +399,6 @@ emuxfs_op_create(struct emuxfs_op_create_args *args)
 	if (emuxfs_state_eno_next_acquire(&eno))
 		return -EIO;
 
-	if (emuxfs_parent_gid(&parent_gid, args->path))
-		return -EIO;
-	EMUXFS_TRACE("op_create: parent_gid ok\n");
-
 	now = time(nullptr);
 
 	for (i = 0; i < dev_count; ++i) {
@@ -396,7 +414,7 @@ emuxfs_op_create(struct emuxfs_op_create_args *args)
 		desc = (struct emuxfs_desc){
 		    .eno = eno,
 		    .owner = fc->uid,
-		    .group = parent_gid,
+		    .group = 0,
 		    .mode = args->mode & ~(fc->umask),
 		    .size = 0,
 		};
@@ -413,7 +431,6 @@ emuxfs_op_create(struct emuxfs_op_create_args *args)
 		emuxfs_chk_final(desc.content_checksum, &content_chk);
 
 		memcpy(&meta.checksums[chksz], desc.content_checksum, chksz);
-		emuxfs_desc_chk_meta(&meta.checksums[0], &desc, alg);
 		meta.header.eno = eno;
 		meta.header.flags = MF_ASSIGNED;
 
@@ -478,6 +495,17 @@ emuxfs_op_create(struct emuxfs_op_create_args *args)
 		if (fstatat(fd, args->path, &st, AT_SYMLINK_NOFOLLOW))
 			goto fail;
 		ino = st.st_ino;
+		/*
+		 * Take owner/group from the node that was actually created.
+		 * This preserves the backing filesystem's POSIX result (the
+		 * caller's egid, or the parent's gid for a setgid directory)
+		 * and avoids a root chown/chmod that could re-add setuid bits.
+		 */
+		desc.owner = st.st_uid;
+		desc.group = st.st_gid;
+		desc.mode = (desc.mode & (uint64_t)S_IFMT) |
+		    (uint64_t)(st.st_mode & 07777);
+		emuxfs_desc_chk_meta(&meta.checksums[0], &desc, alg);
 		assign =
 		    (struct emuxfs_assign){.flags = AF_ASSIGNED, .ino = ino};
 
@@ -523,7 +551,12 @@ emuxfs_op_create(struct emuxfs_op_create_args *args)
 		emuxfs_working_pop(i, now);
 		continue;
 	early:
-		emuxfs_working_pop(i, now);
+		/*
+		 * No device mutation has happened on this device yet.  Clear
+		 * the recovery marker without advancing 'seq': a failed
+		 * operation must not look like an interrupted commit.
+		 */
+		emuxfs_working_cancel(i);
 		return rc;
 	}
 	return has_write ? 0 : -EIO;
@@ -670,6 +703,8 @@ emuxfs_op_delete(const char *path, enum emuxfs_op_delete_type type)
 		stage = "meta_read";
 		if (emuxfs_meta_read(&prewr_meta, i, prewr_ino))
 			goto fail;
+		if (prewr_meta.header.flags != MF_ASSIGNED)
+			goto fail;
 		prewr_eno = prewr_meta.header.eno;
 		stage = "desc_init";
 		if (emuxfs_desc_init_from_stat(
@@ -787,7 +822,12 @@ emuxfs_op_delete(const char *path, enum emuxfs_op_delete_type type)
 		emuxfs_working_pop(i, now);
 		continue;
 	early:
-		emuxfs_working_pop(i, now);
+		/*
+		 * No device mutation has happened on this device yet.  Clear
+		 * the recovery marker without advancing 'seq': a failed
+		 * operation must not look like an interrupted commit.
+		 */
+		emuxfs_working_cancel(i);
 		return rc;
 	}
 
@@ -854,8 +894,12 @@ emuxfs_getattr_inner(struct stat *st_out, struct stat *st, uint64_t eno,
 
 	st->st_ino = eno;
 	sz = (size_t)st->st_size;
-	st->st_blocks =
-	    (sz / EMUXFS_BLOCK_SIZE) + ((sz % EMUXFS_BLOCK_SIZE) ? 1 : 0);
+	/*
+	 * POSIX defines st_blocks in 512-byte units; st_blksize is the
+	 * preferred I/O size.  Dividing by EMUXFS_BLOCK_SIZE here made stat(2)
+	 * and du(1) under-report allocation by a factor of eight.
+	 */
+	st->st_blocks = (sz / 512) + ((sz % 512) ? 1 : 0);
 	st->st_blksize = EMUXFS_BLOCK_SIZE;
 	*st_out = *st;
 
@@ -881,15 +925,18 @@ emuxfs_read_inner(int root_fd, struct emuxfs_op_read_args *args,
 	uint8_t		   *lfile;
 
 	rc = EMUXFS_EINT;
+	*err = 0;
 
 	emuxfs_eids_set();
-	fd = openat(root_fd, args->path, O_RDONLY);
+	fd = openat(root_fd, args->path, O_RDONLY | O_NOFOLLOW | O_CLOEXEC);
 	*err = errno;
 	emuxfs_eids_reset();
 	if (fd == -1) {
 		rc = EMUXFS_EFS;
 		goto out;
 	}
+	/* Do not let a stale errno from a successful open leak into EFS paths. */
+	*err = 0;
 
 	fsz = (size_t)st->st_size;
 	if ((size_t)args->offset >= fsz) {
@@ -910,6 +957,7 @@ emuxfs_read_inner(int root_fd, struct emuxfs_op_read_args *args,
 
 	if (fsz <= EMUXFS_BLOCK_SIZE) {
 		if (read(fd, buf, fsz) != (ssize_t)fsz) {
+			*err = EIO;
 			rc = EMUXFS_EFS;
 			goto out2;
 		}
@@ -932,6 +980,7 @@ emuxfs_read_inner(int root_fd, struct emuxfs_op_read_args *args,
 
 	r.byte_begin = (size_t)args->offset;
 	if (ckd_add(&r.byte_end, (size_t)args->offset, args->size)) {
+		*err = EOVERFLOW;
 		rc = EMUXFS_EFS;
 		goto out2;
 	}
@@ -940,11 +989,29 @@ emuxfs_read_inner(int root_fd, struct emuxfs_op_read_args *args,
 	emuxfs_range_compute(&r, chksz);
 	out_offset = 0;
 
-	if (emuxfs_lfile_open(&lfd, lfile_fd, st->st_ino, O_RDONLY))
+	if (emuxfs_lfile_open(&lfd, lfile_fd, st->st_ino, O_RDONLY)) {
+		*err = EIO;
 		goto out2;
+	}
+	{
+		struct stat lst;
+
+		if (fstat(lfd, &lst)) {
+			*err = EIO;
+			goto out3;
+		}
+		if ((lst.st_size < 0) ||
+		    ((uint64_t)lst.st_size <
+			(uint64_t)r.lfileoff + r.lfilesz)) {
+			*err = EIO;
+			goto out3;
+		}
+	}
 	if ((lfile = mmap(nullptr, r.lfilesz, PROT_READ, MAP_SHARED, lfd,
-		 (off_t)r.lfileoff)) == MAP_FAILED)
+		 (off_t)r.lfileoff)) == MAP_FAILED) {
+		*err = EIO;
 		goto out3;
+	}
 
 	for (i = r.blk_index_begin; i < r.blk_index_end; ++i) {
 		i_offset = i * EMUXFS_BLOCK_SIZE;
@@ -952,6 +1019,7 @@ emuxfs_read_inner(int root_fd, struct emuxfs_op_read_args *args,
 		if (i_offset + rdsz > fsz)
 			rdsz = fsz - i_offset;
 		if (pread(fd, buf, rdsz, (off_t)i_offset) != (ssize_t)rdsz) {
+			*err = EIO;
 			rc = EMUXFS_EFS;
 			goto out4;
 		}
@@ -1030,8 +1098,10 @@ emuxfs_readlink_inner(int root_fd, struct emuxfs_op_read_args *args,
 	if (bcmp(lnk_meta_sum, &meta->checksums[0], chksz) != 0)
 		return EMUXFS_ECHK;
 
-	if (args->size == 0)
+	if (args->size == 0) {
+		*err = EINVAL;
 		return EMUXFS_EFS;
+	}
 	rdsz = ((size_t)lnksz < (args->size - 1)) ? lnksz :
 						    (ssize_t)(args->size - 1);
 	memcpy(args->buf_out, lnkbuf, (size_t)rdsz);
@@ -1086,7 +1156,17 @@ emuxfs_readdir_inner(dind dev_index, int root_fd,
 		dnamelen = dirent->d_namlen;
 		if ((dnamelen == 6) && (strncmp(".muxfs", dname, 6) == 0))
 			continue;
-		args->fill(args->fill_data, dname, nullptr, 0);
+		/*
+		 * The high-level API passes the previous call's cookie in
+		 * 'offset'.  Use the sorted entry index as the cookie and stop
+		 * when fill() reports that the reply buffer is full; ignoring
+		 * both could silently truncate a directory or repeat entries.
+		 */
+		if ((off_t)i < args->offset)
+			continue;
+		if (args->fill(args->fill_data, dname, nullptr,
+			(off_t)(i + 1)) != 0)
+			break;
 	}
 
 	rc = 0;
@@ -1108,18 +1188,24 @@ emuxfs_op_read(struct emuxfs_op_read_args *args)
 	size_t			 chksz;
 
 	int		   err, rc, subrc;
+	int		   last_err;
+	dind		   j;
 	struct stat	   st;
 	ino_t		   ino;
 	struct emuxfs_meta meta;
 	uint64_t	   eno;
 	struct emuxfs_desc desc;
+	bool		   missing[EMUXFS_DEV_COUNT_MAX] = {false};
 
 	uint8_t chk_buf[EMUXFS_CHKSZ_MAX];
 	ssize_t rdsz;
+	bool	hard_error;
 
 	if ((dev_count = emuxfs_dev_count()) == 0)
 		return -EIO;
 
+	hard_error = false;
+	last_err = EIO;
 	for (i = 0; i < dev_count; ++i) {
 		if (emuxfs_dev_get(&dev, i, 0))
 			continue;
@@ -1133,11 +1219,25 @@ emuxfs_op_read(struct emuxfs_op_read_args *args)
 		err = errno;
 		emuxfs_eids_reset();
 		if (subrc) {
-			if ((err == ENOENT) &&
-			    emuxfs_parent_readback(i, args->path))
-				goto fail;
-			rc = -err;
-			goto early;
+			if (err == ENOENT) {
+				/*
+				 * One mirror is missing the node.  It may be
+				 * genuinely absent everywhere, or this copy may
+				 * be the damaged one.  Try the other mirrors;
+				 * if one serves the node, queue the missing
+				 * copies for repair.
+				 */
+				missing[i] = true;
+				if (!hard_error)
+					last_err = ENOENT;
+				continue;
+			}
+			last_err = err ? err : EIO;
+			if ((last_err == EACCES) || (last_err == EPERM)) {
+				hard_error = true;
+				continue;
+			}
+			goto fail;
 		}
 		ino = st.st_ino;
 		if (emuxfs_meta_read(&meta, i, ino))
@@ -1178,19 +1278,51 @@ emuxfs_op_read(struct emuxfs_op_read_args *args)
 		case EMUXFS_EINT:
 			exit(-1); /* Unrecoverable runtime error. */
 		case EMUXFS_EFS:
-			rc = -err;
-			goto early;
+			last_err = err ? err : EIO;
+			/*
+			 * Permission and argument errors are not corruption;
+			 * trying another mirror or queueing a repair would be
+			 * wrong.  A node that vanished after the stat is
+			 * treated like a missing mirror.  I/O and consistency
+			 * errors are queued so the next mirror can serve the
+			 * request and the damaged copy can be repaired.
+			 */
+			if (last_err == ENOENT) {
+				missing[i] = true;
+				if (!hard_error)
+					last_err = ENOENT;
+				continue;
+			}
+			if (last_err == EINVAL)
+				return -last_err;
+			if ((last_err == EACCES) || (last_err == EPERM)) {
+				hard_error = true;
+				continue;
+			}
+			goto fail;
 		case EMUXFS_ECHK:
 			goto fail;
 		default:
 			exit(-1); /* Programming error. */
 		}
 
+		/*
+		 * A mirror that did not have the node was damaged (or stale).
+		 * Queue those copies now that a valid source has been found;
+		 * a genuinely absent node never reaches this point.
+		 */
+		for (j = 0; j < dev_count; ++j) {
+			if (missing[j] &&
+			    emuxfs_state_restore_push_back(j, args->path))
+				exit(-1);
+		}
 		emuxfs_restore_now();
 		if (rdsz > -1)
 			return (int)rdsz;
 		return 0;
 	fail:
+		hard_error = true;
+		last_err = EIO;
 		if (emuxfs_state_restore_push_back(i, args->path))
 			exit(-1);
 		continue;
@@ -1198,7 +1330,18 @@ emuxfs_op_read(struct emuxfs_op_read_args *args)
 		emuxfs_restore_now();
 		return rc;
 	}
-	return -EIO;
+	/*
+	 * If every usable mirror reported ENOENT, the node is genuinely
+	 * absent; do not queue repairs for it.  Otherwise drain the queue: a
+	 * repair may have succeeded from a copy that was not readable through
+	 * this callback, and the next access will then see consistent data.
+	 */
+	if (!hard_error && (last_err == ENOENT))
+		return -ENOENT;
+	if ((last_err == EACCES) || (last_err == EPERM))
+		return -last_err;
+	emuxfs_restore_now();
+	return -last_err;
 }
 
 static int
@@ -1996,7 +2139,24 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 			goto early;
 		}
 		prewr_ino = prewr_st.st_ino;
+
+		/*
+		 * Hard links share one metadata slot and one eno.  Rewriting,
+		 * truncating, re-owning or renaming one name would silently
+		 * change the other, so refuse before any mutation.
+		 */
+		if (emuxfs_is_hardlink(&prewr_st)) {
+			if (has_write)
+				goto fail;
+			emuxfs_warn("Unsupported hard link: %lu:/%s\n",
+			    (dind)i, args->path);
+			rc = -EOPNOTSUPP;
+			goto early;
+		}
+
 		if (emuxfs_meta_read(&prewr_meta, i, prewr_ino))
+			goto fail;
+		if (prewr_meta.header.flags != MF_ASSIGNED)
 			goto fail;
 		prewr_eno = prewr_meta.header.eno;
 		if (emuxfs_desc_init_from_stat(
@@ -2069,6 +2229,16 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 		case EMUXFS_EFS:
 			if (has_write)
 				goto fail;
+			/*
+			 * A failed truncate or write may already have changed
+			 * the file before reporting the error, so it must be
+			 * treated as a partial mutation and degraded.  chmod,
+			 * chown and utimens are single syscalls: failure means
+			 * no change and the operation can be cancelled.
+			 */
+			if ((args->type == EMUXFS_UT_TRUNCATE) ||
+			    (args->type == EMUXFS_UT_WRITE))
+				goto fail;
 			rc = -err;
 			goto early;
 		case EMUXFS_ECHK:
@@ -2080,11 +2250,10 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 		emuxfs_fault_point("update/before_meta");
 		if (emuxfs_meta_write(&wr_meta, i, prewr_ino))
 			goto fail;
-		emuxfs_fault_point("update/after_meta");
 
 		if (prewr_desc.type != EMUXFS_DT_LNK) {
-			if ((subfd = openat(
-				 fd, args->path, O_RDONLY | O_NOFOLLOW)) == -1)
+			if ((subfd = openat(fd, args->path,
+				 O_RDONLY | O_NOFOLLOW | O_CLOEXEC)) == -1)
 				goto fail;
 			if (fsync(subfd))
 				exit(-1);
@@ -2093,6 +2262,13 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 		}
 		if (fsync(dev->meta_fd))
 			exit(-1);
+		/*
+		 * The fault point is after both the content and the metadata
+		 * are durable, matching its name and TESTING.md.  A crash here
+		 * leaves 'working = 1', so the operation is still uncommitted
+		 * and 'sync' rolls it back from an intact mirror.
+		 */
+		emuxfs_fault_point("update/after_meta");
 
 		switch (args->type) {
 		case EMUXFS_UT_TRUNCATE:
@@ -2159,7 +2335,12 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 		emuxfs_working_pop(i, now);
 		continue;
 	early:
-		emuxfs_working_pop(i, now);
+		/*
+		 * No device mutation has happened on this device yet.  Clear
+		 * the recovery marker without advancing 'seq': a failed
+		 * operation must not look like an interrupted commit.
+		 */
+		emuxfs_working_cancel(i);
 		return rc;
 	}
 	if (has_write) {
@@ -2190,6 +2371,10 @@ emuxfs_rename(const char *from, const char *to)
 	struct emuxfs_desc prewr_desc;
 	uint8_t		   prewr_meta_chk_buf[EMUXFS_CHKSZ_MAX];
 	struct stat	   postwr_st;
+	struct stat	   dest_st;
+	struct emuxfs_meta dest_meta;
+	uint64_t	   dest_eno;
+	bool		   dest_exists;
 
 	struct emuxfs_cud cud;
 
@@ -2201,6 +2386,10 @@ emuxfs_rename(const char *from, const char *to)
 		return -EIO;
 	if (emuxfs_path_sanitize(&to))
 		return -EIO;
+
+	/* rename(2) of a path onto itself is a successful no-op. */
+	if (strcmp(from, to) == 0)
+		return 0;
 
 	if ((dev_count = emuxfs_dev_count()) == 0)
 		return -EIO;
@@ -2230,7 +2419,24 @@ emuxfs_rename(const char *from, const char *to)
 			goto early;
 		}
 		prewr_ino = prewr_st.st_ino;
+
+		/*
+		 * Hard links share one metadata slot and one eno.  Rewriting,
+		 * truncating, re-owning or renaming one name would silently
+		 * change the other, so refuse before any mutation.
+		 */
+		if (emuxfs_is_hardlink(&prewr_st)) {
+			if (has_write)
+				goto fail;
+			emuxfs_warn("Unsupported hard link: %lu:/%s\n",
+			    (dind)i, from);
+			rc = -EOPNOTSUPP;
+			goto early;
+		}
+
 		if (emuxfs_meta_read(&prewr_meta, i, prewr_ino))
+			goto fail;
+		if (prewr_meta.header.flags != MF_ASSIGNED)
 			goto fail;
 		prewr_eno = prewr_meta.header.eno;
 		if (emuxfs_desc_init_from_stat(
@@ -2242,6 +2448,35 @@ emuxfs_rename(const char *from, const char *to)
 		if (bcmp(prewr_meta_chk_buf, &prewr_meta.checksums[0], chksz) !=
 		    0)
 			goto fail;
+
+		/*
+		 * A rename may replace an existing destination.  That inode is
+		 * unlinked by rename(2), so its metadata and assignment must be
+		 * cleared explicitly; otherwise they describe an inode that no
+		 * longer has a name and may be reused by a later create.
+		 */
+		dest_exists = false;
+		if (fstatat(fd, to, &dest_st, AT_SYMLINK_NOFOLLOW) == 0) {
+			dest_exists = true;
+			if (emuxfs_is_hardlink(&dest_st)) {
+				if (has_write)
+					goto fail;
+				emuxfs_warn("Unsupported hard link: %lu:/%s\n",
+				    (dind)i, to);
+				rc = -EOPNOTSUPP;
+				goto early;
+			}
+			if (emuxfs_meta_read(&dest_meta, i, dest_st.st_ino))
+				goto fail;
+			if (dest_meta.header.flags != MF_ASSIGNED)
+				goto fail;
+			dest_eno = dest_meta.header.eno;
+		} else if (errno != ENOENT) {
+			if (has_write)
+				goto fail;
+			rc = -errno;
+			goto early;
+		}
 
 		/*
 		 * The renameing process juggles the file to achieve 3 separate
@@ -2273,6 +2508,13 @@ emuxfs_rename(const char *from, const char *to)
 			goto fail;
 		if (errno != ENOENT)
 			goto fail;
+		/*
+		 * The namespace has changed but the operation is not
+		 * committed.  A crash here leaves the node in
+		 * '.muxfs/rename.tmp' and 'working = 1'; 'sync' removes the
+		 * temporary and rebuilds the device.
+		 */
+		emuxfs_fault_point("rename/after_vacate");
 		cud.type = EMUXFS_CUD_DELETE;
 		cud.path = from;
 		cud.pre_meta = prewr_meta;
@@ -2289,6 +2531,27 @@ emuxfs_rename(const char *from, const char *to)
 			goto fail;
 		if (emuxfs_fsync_parent(fd, to))
 			goto fail;
+
+		if (dest_exists) {
+			struct emuxfs_meta   zero_meta;
+			struct emuxfs_assign zero_assign;
+
+			if (S_ISREG(dest_st.st_mode) &&
+			    ((size_t)dest_st.st_size > EMUXFS_BLOCK_SIZE) &&
+			    emuxfs_lfile_delete(dev->lfile_fd, dest_st.st_ino))
+				goto fail;
+			memset(&zero_meta, 0, sizeof(zero_meta));
+			memset(&zero_assign, 0, sizeof(zero_assign));
+			if (emuxfs_meta_write(&zero_meta, i, dest_st.st_ino))
+				goto fail;
+			if (emuxfs_assign_write(&zero_assign, i, dest_eno))
+				goto fail;
+			if (fsync(dev->meta_fd))
+				exit(-1);
+			if (fsync(dev->assign_fd))
+				exit(-1);
+		}
+
 		if (emuxfs_readback(i, to, 0, &prewr_meta))
 			goto fail;
 		cud.type = EMUXFS_CUD_CREATE;
@@ -2297,6 +2560,7 @@ emuxfs_rename(const char *from, const char *to)
 		if (emuxfs_ancestors_meta_recompute(i, &cud))
 			goto fail;
 
+		emuxfs_fault_point("rename/after");
 		has_write = true;
 		emuxfs_working_pop(i, now);
 		continue;
@@ -2307,7 +2571,12 @@ emuxfs_rename(const char *from, const char *to)
 		emuxfs_working_pop(i, now);
 		continue;
 	early:
-		emuxfs_working_pop(i, now);
+		/*
+		 * No device mutation has happened on this device yet.  Clear
+		 * the recovery marker without advancing 'seq': a failed
+		 * operation must not look like an interrupted commit.
+		 */
+		emuxfs_working_cancel(i);
 		return rc;
 	}
 	return has_write ? 0 : -EIO;
@@ -2433,9 +2702,10 @@ emuxfs_access(const char *path, int amode)
 }
 
 /*
- * The FUSE read/write callbacks return an int, and emuxfs_buffered_write()
- * casts the accepted byte count to int, so the sequential write buffer must
- * fit in an int.
+ * The FUSE read/write callbacks return an int.  The legacy write-buffer
+ * plumbing is still drained at callback entry so that a buffer left by an
+ * older in-memory state is never silently ignored; new writes are committed
+ * directly in emuxfs_write().
  */
 static_assert(EMUXFS_WRBUF_SIZE <= INT_MAX,
     "the sequential write buffer size must fit in an int");
@@ -2470,67 +2740,6 @@ emuxfs_wrbuf_flush(void)
 }
 
 static int
-emuxfs_buffered_write_begin(const char *path, const char *buf, size_t bufsz,
-    off_t offset, struct fuse_context *fc)
-{
-	EMUXFS_TRACE("enter");
-	int rc;
-
-	rc = emuxfs_access(path, W_OK);
-	if (rc != 0)
-		return rc; /* Negated errno, as returned by the FUSE layer. */
-
-	if (emuxfs_state_wrbuf_set(path, fc->uid, fc->gid, bufsz,
-		(size_t)offset, (const uint8_t *)buf))
-		exit(-1);
-	return (int)bufsz;
-}
-
-static int
-emuxfs_buffered_write(
-    const char *path, const char *buf, size_t bufsz, off_t offset)
-{
-	EMUXFS_TRACE("enter");
-	struct fuse_context *fc;
-	size_t		     wrsz;
-
-	if (bufsz > EMUXFS_WRBUF_SIZE)
-		exit(-1); /* Programming error. */
-
-	fc = fuse_get_context();
-
-	if (!emuxfs_state_wrbuf_is_set()) {
-		return emuxfs_buffered_write_begin(
-		    path, buf, bufsz, offset, fc);
-	}
-
-	if (!emuxfs_state_wrbuf_append(&wrsz, path, fc->uid, fc->gid, bufsz,
-		(size_t)offset, (const uint8_t *)buf)) {
-		if (wrsz < bufsz) {
-			/*
-			 * The sequential buffer filled up.  Flush what was
-			 * appended, then start a fresh buffer with the bytes
-			 * that did not fit (they begin at buf + wrsz); the
-			 * whole request has been accepted, so report its
-			 * original size.
-			 */
-			offset += (off_t)wrsz;
-			buf += wrsz;
-			bufsz -= wrsz;
-			emuxfs_wrbuf_flush();
-			if (emuxfs_state_wrbuf_set(path, fc->uid, fc->gid,
-				bufsz, (size_t)offset, (const uint8_t *)buf))
-				exit(-1);
-			return (int)(wrsz + bufsz);
-		}
-		return (int)bufsz;
-	}
-
-	emuxfs_wrbuf_flush();
-	return emuxfs_buffered_write_begin(path, buf, bufsz, offset, fc);
-}
-
-static int
 emuxfs_write(const char *path, const char *buf, size_t bufsz, off_t offset,
     [[maybe_unused]] struct fuse_file_info *ffi)
 {
@@ -2544,9 +2753,16 @@ emuxfs_write(const char *path, const char *buf, size_t bufsz, off_t offset,
 	if (bufsz == 0)
 		return 0;
 
-	if (bufsz <= EMUXFS_WRBUF_SIZE)
-		return emuxfs_buffered_write(path, buf, bufsz, offset);
-
+	/*
+	 * Commit every write before returning success.  The former global
+	 * sequential buffer reported success before any device was touched,
+	 * flushed another file's data on fsync/flush/release, and killed the
+	 * daemon when the deferred commit failed.  A direct update costs
+	 * throughput but keeps the write contract and error attribution
+	 * correct.
+	 */
+	if (bufsz > (size_t)INT_MAX)
+		return -EINVAL;
 	emuxfs_wrbuf_flush();
 
 	args.type = EMUXFS_UT_WRITE;

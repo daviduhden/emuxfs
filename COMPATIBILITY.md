@@ -2,8 +2,9 @@
 
 ## Target system
 
-emuxfs targets OpenBSD 7.9 (amd64).  There is no version-conditional code;
-OpenBSD 8.0 is not a CI target and no preparation is made for it.
+emuxfs targets OpenBSD 8.0 on amd64 and arm64.  There is no
+version-conditional code; CI builds and tests both architectures on the same
+release.
 
 ## FUSE backend: the native OpenBSD implementation
 
@@ -52,19 +53,22 @@ FUSE_OPENDIR FUSE_READDIR FUSE_RELEASEDIR FUSE_DESTROY
 ```
 
 There is no `FUSE_CREATE`, `FUSE_ACCESS`, `FUSE_READDIRPLUS`, `FUSE_INTERRUPT`,
-xattr or remote-lock opcode.  Consequently the `.create`, `.access`,
-`.fsyncdir`, xattr, `.ioctl`, `.poll`, `.fallocate` and `.lseek` callbacks are
-never invoked.  File creation is `mknod` followed by `open`, as the kernel
-performs it.  `struct fuse_operations` in the base header still declares
-`access`, `create`, `fsyncdir`, `ftruncate` and `fgetattr`; they are simply
-not delivered.
+xattr or remote-lock opcode.  Consequently the kernel does not deliver the
+`.create`, `.access`, `.fsyncdir`, xattr, `.ioctl`, `.poll`, `.fallocate` and
+`.lseek` callbacks; `.access` is installed but must not be relied on for
+permission enforcement.  File creation is `mknod` followed by `open`, as the
+kernel performs it.  `struct fuse_operations` in the base header still
+declares `access`, `create`, `fsyncdir`, `ftruncate` and `fgetattr`; they are
+simply not delivered.
 
 ## Inode identity (`ino` / `eno`)
 
 The high-level API is not inode-controlled: the kernel and libfuse use their
 own node identifiers and only expose the `st_ino` returned by callbacks.
 emuxfs passes `-ouse_ino` so that the kernel reports the external inode
-(`eno`) through `stat(2)` and `readdir(2)`, while the internal node identity
+(`eno`) through `stat(2)`.  emuxfs itself passes a null `struct stat` to
+`readdir(2)`'s fill callback, so it relies on libfuse for directory entry
+inode numbers rather than claiming to supply them.  The internal node identity
 remains libfuse's.  The `eno` mapping itself is owned by emuxfs
 (`meta.db`/`assign.db`); see ON_DISK_FORMAT.md and the audit notes.  The
 low-level API would allow emuxfs to control node identifiers directly, but it
@@ -107,9 +111,9 @@ provenance.
 
 ## CI
 
-The CI matrix is OpenBSD **7.9**, using `vmactions/openbsd-vm@v1` on
-`ubuntu-latest`; the 7.9 image is the only one used.  The same full test set
-runs on two architectures, **amd64** and **arm64** (`arch: aarch64`): build
+The CI matrix is OpenBSD **8.0**, using `vmactions/openbsd-vm@v1.4.9` on
+`ubuntu-latest`.  The same full test set runs on two architectures, **amd64**
+and **arm64** (`arch: aarch64`): build
 with clang and C23, the strict warning build (`make check`), the unit tests,
 the FUSE integration tests, the fault-injection tests, install, `mandoc`, and a
 clean rebuild.  No external FUSE package is needed

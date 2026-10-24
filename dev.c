@@ -327,6 +327,19 @@ emuxfs_dev_open(dind dev_index, bool force, bool readonly)
 		    (bcmp(dev->conf.array_uuid, first->conf.array_uuid,
 			 EMUXFS_UUID_SIZE) != 0))
 			goto fail;
+		/*
+		 * The checksum algorithm selects both the digest size and the
+		 * meta.db entry size, so devices that disagree cannot be read
+		 * or repaired consistently.  Refuse the array instead of
+		 * discovering the mismatch through corrupt checksums.
+		 */
+		if (dev->conf.chk_alg_type != first->conf.chk_alg_type) {
+			dprintf(2,
+			    "Error: %s: checksum algorithm does not match "
+			    "the other array devices.\n",
+			    dev->root_path);
+			goto fail;
+		}
 	}
 
 	file_flags = readonly ? (O_RDONLY | O_NOFOLLOW | O_CLOEXEC) :
@@ -544,6 +557,31 @@ emuxfs_working_pop(size_t index, [[maybe_unused]] time_t now)
 		 */
 		exit(-1);
 	}
+
+	return 0;
+}
+
+/*
+ * Clear 'working' without advancing 'seq'.  This is the cancellation path for
+ * an operation that failed before it changed the device: advancing 'seq'
+ * would make the array look as if an interrupted commit had happened and
+ * would force an unnecessary 'sync'.
+ */
+EMUXFS int
+emuxfs_working_cancel(size_t index)
+{
+	EMUXFS_TRACE("enter");
+	struct emuxfs_dev *dev;
+
+	if (emuxfs_dev_get(&dev, index, 1))
+		return 1;
+
+	if (dev->state.working == 0)
+		exit(-1);
+
+	dev->state.working--;
+	if (emuxfs_dev_state_write_fd(dev->state_fd, &dev->state))
+		exit(-1);
 
 	return 0;
 }
