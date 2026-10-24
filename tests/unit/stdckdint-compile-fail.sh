@@ -19,7 +19,7 @@
 set -u
 
 TESTS_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
-COMPAT_DIR=$(CDPATH='' cd -- "$TESTS_DIR/.." && pwd)
+COMPAT_DIR=$(CDPATH='' cd -- "$TESTS_DIR/../../compat" && pwd)
 
 CC=${CC:-cc}
 CFLAGS=${CFLAGS:--O2 -pipe}
