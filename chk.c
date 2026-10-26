@@ -78,6 +78,12 @@ emuxfs_sha1_final(uint8_t *buf_out, struct emuxfs_chk *chk)
 	SHA1Final(buf_out, &chk->impl.sha1_ctx);
 }
 
+/*
+ * Indexed by enum emuxfs_chk_alg_type.  CAT_NONE terminates the table and
+ * must never be passed to the dispatch helpers; its function pointers are
+ * deliberately null.  The names are part of the persistent configuration
+ * format, so they cannot be changed without breaking existing arrays.
+ */
 static struct emuxfs_chk_alg emuxfs_chk_alg_tab[] = {
     {CAT_CRC32, 4, emuxfs_crc32_init, emuxfs_crc32_update, emuxfs_crc32_final,
 	"crc32"},
@@ -86,6 +92,11 @@ static struct emuxfs_chk_alg emuxfs_chk_alg_tab[] = {
 	"sha1"},
     {CAT_NONE, 0, nullptr, nullptr, nullptr, "none"}};
 
+/*
+ * Resolve a persisted algorithm name such as "sha1".  The caller supplies the
+ * length because configuration values are parsed from a non-terminated line
+ * slice.  Returns 0 and stores the enum on an exact match, 1 otherwise.
+ */
 EMUXFS int
 emuxfs_chk_str_to_type(
     enum emuxfs_chk_alg_type *type, const char *name, size_t name_len)
@@ -104,6 +115,11 @@ emuxfs_chk_str_to_type(
 	return 1;
 }
 
+/*
+ * Return the persisted name for an initialized algorithm.  CAT_NONE is a
+ * sentinel, not a usable algorithm, so reaching this function with it is a
+ * programming error.
+ */
 EMUXFS const char *
 emuxfs_chk_type_to_str(enum emuxfs_chk_alg_type type)
 {
@@ -112,6 +128,11 @@ emuxfs_chk_type_to_str(enum emuxfs_chk_alg_type type)
 	return emuxfs_chk_alg_tab[type].name;
 }
 
+/*
+ * Return the digest width in bytes.  This width determines the size of
+ * meta.db records and every checksum-tree entry, so it must remain stable for
+ * an existing on-disk format.
+ */
 EMUXFS size_t
 emuxfs_chk_size(enum emuxfs_chk_alg_type type)
 {
@@ -120,6 +141,11 @@ emuxfs_chk_size(enum emuxfs_chk_alg_type type)
 	return emuxfs_chk_alg_tab[type].chk_size;
 }
 
+/*
+ * Bind a checksum context to an algorithm.  The selected implementation's
+ * init callback stores its own algorithm pointer in the context, so update()
+ * and final() can dispatch without a separate type argument.
+ */
 EMUXFS void
 emuxfs_chk_init(struct emuxfs_chk *chk, enum emuxfs_chk_alg_type type)
 {

@@ -1,5 +1,14 @@
 /* state.c */
 
+/*
+ * This file belongs to emuxfs, The Enhanced Multiplexed File System (see
+ * NOTICE.md).
+ *
+ * Process-global runtime state: the restore queue, the external inode
+ * allocator, ambiguity accounting, logging and the legacy write buffer.  All
+ * of it is single-threaded by design and is initialized once by emuxfs_init().
+ */
+
 // clang-format off
 #include <sys/types.h>
 
@@ -55,6 +64,11 @@ static struct emuxfs_state emuxfs_global_state;
 static int  emuxfs_trace_fd = -1;
 static bool emuxfs_trace_stderr;
 
+/*
+ * Return the aligned size of one queue item, including its inline path and
+ * NUL terminator.  Offsets, rather than pointers, are stored so reallocarray()
+ * cannot invalidate the queue while it grows.
+ */
 static size_t
 emuxfs_restore_item_next_offset(const char *path)
 {
@@ -120,6 +134,13 @@ emuxfs_restore_queue_reserve(size_t extra)
 	return 0;
 }
 
+/*
+ * Append a damaged path to the restore queue.  In restore-only mode (used by
+ * sync), entries for any device other than the designated destination are
+ * ignored.  The path length is bounded by PATH_MAX because a later pop copies
+ * it into a caller-provided buffer of that size.  The function logs every
+ * corruption report even when the entry is filtered out.
+ */
 EMUXFS int
 emuxfs_state_restore_push_back(dind dev_index, const char *path)
 {
@@ -176,6 +197,12 @@ emuxfs_state_restore_next_path_len(size_t *path_len_out)
 	return 0;
 }
 
+/*
+ * Remove and copy the oldest queue entry.  The caller supplies a PATH_MAX
+ * buffer; the stored length was validated on insertion, so the copy fits.  An
+ * empty queue returns 1.  Resetting front/back to zero avoids unbounded
+ * movement of the live region over many repairs.
+ */
 EMUXFS int
 emuxfs_state_restore_pop_front(size_t *dev_index_out, char *path_out)
 {
@@ -204,6 +231,11 @@ emuxfs_state_restore_pop_front(size_t *dev_index_out, char *path_out)
 	return 0;
 }
 
+/*
+ * Initialize the restore queue and reset its restore-only filter.  A small
+ * initial reservation keeps push operations from allocating immediately while
+ * still exercising the same growth path as later inserts.
+ */
 EMUXFS int
 emuxfs_state_restore_queue_init(void)
 {
@@ -237,6 +269,12 @@ emuxfs_state_restore_queue_final(void)
 	emuxfs_global_state.restore_back = 0;
 }
 
+/*
+ * Count a refusal to choose between coherent but divergent valid copies.  The
+ * counter saturates at SIZE_MAX rather than wrapping; heal treats any nonzero
+ * value as failure.  The count is intentionally conservative: it records that
+ * an operator decision is required.
+ */
 EMUXFS void
 emuxfs_state_ambiguity_note(void)
 {
@@ -268,6 +306,11 @@ emuxfs_state_eno_next_init(uint64_t eno)
 	return 0;
 }
 
+/*
+ * Allocate the next external inode number.  UINT64_MAX is reserved as an
+ * invalid sentinel, so exhaustion fails instead of wrapping.  The allocator
+ * is process-local and is seeded from the largest assign.db seen at init.
+ */
 EMUXFS int
 emuxfs_state_eno_next_acquire(uint64_t *eno_out)
 {
@@ -284,6 +327,11 @@ emuxfs_state_eno_next_acquire(uint64_t *eno_out)
 	return 0;
 }
 
+/*
+ * Return the most recently acquired eno to the allocator.  A successful delete
+ * uses this to release the deleted node's identity; only a LIFO return is
+ * supported because other allocations may already have advanced the counter.
+ */
 EMUXFS int
 emuxfs_state_eno_next_return(uint64_t eno)
 {
@@ -302,6 +350,13 @@ emuxfs_state_eno_next_return(uint64_t eno)
 	return 0;
 }
 
+/*
+ * Initialize syslog and optional tracing.  Tracing is enabled by the
+ * EMUXFS_TRACE environment variable, which writes to standard error, and by
+ * EMUXFS_TRACE_FILE, which opens an append-only log for the daemon whose
+ * standard error is closed.  The log descriptor is owned by this module and
+ * closed by emuxfs_state_syslog_final().
+ */
 EMUXFS int
 emuxfs_state_syslog_init(void)
 {
@@ -404,7 +459,13 @@ emuxfs_trace(const char *file, int line, const char *fmt, ...)
 	}
 }
 
-/* Assumes that emuxfs_dsinit() has already been called. */
+/*
+ * Initialize the device array, restore queue and eno allocator for one
+ * command.  Assumes that emuxfs_dsinit() has already been called.  The first
+ * device may be skipped so sync can open it later with force after rebuilding
+ * it.  The initial eno is the maximum needed across all opened devices; this
+ * module does not assign per-array ranges.
+ */
 EMUXFS int
 emuxfs_init(bool skip_first_mount, bool force)
 {
@@ -453,6 +514,12 @@ emuxfs_init(bool skip_first_mount, bool force)
 	return 0;
 }
 
+/*
+ * Release process-global state.  This is idempotent because both the FUSE
+ * destroy callback and command error paths may call it.  Devices are unmounted
+ * in reverse order, then the queue, syslog handle and dynamic stack are
+ * released.
+ */
 EMUXFS int
 emuxfs_final(void)
 {
@@ -516,6 +583,11 @@ emuxfs_state_wrbuf_reset(void)
 	return 0;
 }
 
+/*
+ * Install a pending write in the legacy buffer.  Only one buffered write may
+ * exist at a time.  The buffer is copied because the FUSE caller owns the
+ * original bytes only for the duration of the callback.
+ */
 EMUXFS int
 emuxfs_state_wrbuf_set(const char *path, uid_t user, gid_t group, size_t sz,
     size_t off, const uint8_t *buf)
@@ -553,6 +625,12 @@ emuxfs_state_wrbuf_set(const char *path, uid_t user, gid_t group, size_t sz,
 	return 0;
 }
 
+/*
+ * Append contiguous data for the same file and credentials.  The incoming
+ * offset must exactly follow the buffered range.  If the request would
+ * overflow the buffer, only the bytes that fit are copied and the accepted
+ * count is returned; the caller must honor the short result.
+ */
 EMUXFS int
 emuxfs_state_wrbuf_append(size_t *wrsz_out, const char *path, uid_t user,
     gid_t group, size_t sz, size_t off, const uint8_t *buf)

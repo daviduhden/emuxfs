@@ -6,6 +6,10 @@
 #include "emuxfs.h"
 // clang-format on
 
+/*
+ * Program version written into muxfs.conf.  The number and revision are
+ * provenance only; EMUXFS_FORMAT_VERSION controls on-disk compatibility.
+ */
 struct emuxfs_version emuxfs_program_version = {
     .number = 1, .revision = 0, .flavor = VF_CURRENT};
 

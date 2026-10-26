@@ -137,6 +137,13 @@ emuxfs_mount_teardown(struct fuse *fuse, char *mp)
 	free(mp);
 }
 
+/*
+ * Set up the FUSE mount, verify the array-wide sequence number, mount the
+ * filesystem, and only then restrict visibility and system calls.  libfuse
+ * performs mount(2) before pledge(2) is applied.  The single-threaded
+ * fuse_loop() is deliberate: the transaction engine and global state are not
+ * thread-safe.  Teardown runs on every exit path after fuse_setup succeeds.
+ */
 EMUXFS int
 emuxfs_mount_main(int argc, char *argv[])
 {

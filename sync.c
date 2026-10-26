@@ -1,5 +1,14 @@
 /* sync.c */
 
+/*
+ * Implementation of sync.  The first directory is the destination and the
+ * remaining directories are sources; the destination may be empty (it is then
+ * formatted) or an existing device rebuilt from a designated source.  Sync is
+ * the explicit recovery path and therefore opens the destination with force,
+ * clears interrupted-operation markers, and removes leftover rename
+ * temporaries.  It does not clear the degraded flag.
+ */
+
 // clang-format off
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,6 +24,14 @@ emuxfs_sync_usage(void)
 	dprintf(2, "usage: emuxfs sync destination source ...\n");
 }
 
+/*
+ * Recover a destination device from the first usable source.  The destination
+ * is formatted only when it is empty; otherwise it is opened with force so a
+ * dirty state.db can be repaired.  Every source must be usable before the
+ * rebuild starts, otherwise a later source could be skipped and the result
+ * would silently be incomplete.  A restore failure is propagated instead of
+ * writing a clean state record over a possibly inconsistent device.
+ */
 EMUXFS int
 emuxfs_sync_main(int argc, char *argv[])
 {

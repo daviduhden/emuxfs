@@ -35,6 +35,12 @@ emuxfs_dsfinal(void)
 	return 0;
 }
 
+/*
+ * Allocate a prefixed block whose payload has the requested size.  The size
+ * is stored in the header so emuxfs_dsgrow() can add bytes rather than
+ * replace them.  Allocation failure is fatal, matching the arena-style
+ * contract of the main implementation.
+ */
 EMUXFS int
 emuxfs_dspush(void **p_out, size_t s)
 {
@@ -51,6 +57,11 @@ emuxfs_dspush(void **p_out, size_t s)
 	return 0;
 }
 
+/*
+ * Free an allocation created by emuxfs_dspush() or emuxfs_dsgrow().  The
+ * public pointer points just past the private size header, so recover the
+ * header before releasing the block.
+ */
 EMUXFS int
 emuxfs_dspop(void *p)
 {
@@ -63,6 +74,11 @@ emuxfs_dspop(void *p)
 	return 0;
 }
 
+/*
+ * Grow an allocation by 's' bytes.  The recorded size is the current payload
+ * length, so the new header size is old plus requested, not an absolute size.
+ * Both overflow and realloc failure are fatal.
+ */
 EMUXFS int
 emuxfs_dsgrow(void **p_inout, size_t s)
 {

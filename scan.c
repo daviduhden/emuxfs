@@ -1,5 +1,13 @@
 /* scan.c */
 
+/*
+ * Implementation of audit and heal.  Both walk every device and validate each
+ * node with emuxfs_readback(); audit only reports damaged paths, while heal
+ * also queues them for restoration.  The two modes share the traversal and
+ * differ in whether devices are opened read-only and whether the restore
+ * queue is drained at the end.
+ */
+
 // clang-format off
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -20,6 +28,14 @@
  * 'path' is required to be null-terminated and pointing to a buffer of
  * capacity PATH_MAX, 'len' is provided so that 'path' may be mutated, then
  * returned to its original state.
+ */
+/*
+ * Recursive worker for audit/heal.  The path buffer is mutated in place while
+ * descending and restored to its original terminator after each child, which
+ * avoids allocating a full path for every entry.  Directories are validated
+ * after their children so a parent checksum reflects the final child state.
+ * Hard links and unsupported node types are reported as errors because the
+ * array cannot represent them safely.
  */
 static int
 emuxfs_scan_impl(
@@ -121,6 +137,12 @@ emuxfs_scan_impl(
 	return 0;
 }
 
+/*
+ * Validate one device.  The metadata/assignment mapping is cross-checked
+ * before the tree walk, because readback and repair decisions depend on it.
+ * In heal mode the queue is drained after the walk; a refused ambiguous
+ * repair makes the entire command fail even though scanning succeeded.
+ */
 static int
 emuxfs_scan(enum emuxfs_scan_mode mode, dind dev_index)
 {
@@ -174,6 +196,12 @@ emuxfs_heal_usage(void)
 	fprintf(stderr, "usage: emuxfs heal directory ...\n");
 }
 
+/*
+ * Shared entry point for audit and heal.  Argument parsing and sandbox setup
+ * happen before any device is opened; audit opens devices read-only so it
+ * cannot alter state.db, while heal opens them read-write.  All devices must
+ * share a sequence number before scanning starts.
+ */
 EMUXFS int
 emuxfs_scan_main(enum emuxfs_scan_mode scan_mode, int argc, char *argv[])
 {

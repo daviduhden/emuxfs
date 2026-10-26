@@ -1,5 +1,16 @@
 /* dev.c */
 
+/*
+ * This file belongs to emuxfs, The Enhanced Multiplexed File System (see
+ * NOTICE.md).
+ *
+ * The device layer owns the fixed-size array of mirror directories and every
+ * descriptor used to access their private .muxfs state.  Each device gets its
+ * own sequence number and operation markers.  The array is intentionally
+ * process-global and single-threaded; the FUSE frontend uses fuse_loop(), not
+ * the multithreaded loop.
+ */
+
 // clang-format off
 #include <sys/stat.h>
 #include <sys/syslimits.h>
@@ -65,8 +76,12 @@ emuxfs_dev_state_is_valid(const struct emuxfs_dev_state *state)
 	return true;
 }
 
-/* Returns 0 on success, 1 on I/O or size error, 2 on a structurally invalid
- * record. */
+/*
+ * Read and decode state.db.  The file must contain exactly one fixed-size
+ * record.  Returns 0 on success, 1 on an I/O or size error, and 2 on a
+ * structurally invalid record.  The distinction lets the caller decide
+ * whether force mode may proceed with a warning.
+ */
 static int
 emuxfs_dev_state_read(struct emuxfs_dev_state *state, int fd)
 {
@@ -255,6 +270,15 @@ emuxfs_dev_append(dind *dev_index_out, const char *path)
 	return 0;
 }
 
+/*
+ * Open a previously appended device and validate its local metadata.  All
+ * descriptors are acquired before the persistent mounted flag is written, so
+ * a failure partway through cannot leave the device marked mounted.  The
+ * array-wide UUID and checksum algorithm must match the already-open
+ * devices; otherwise reads and repairs would silently use incompatible
+ * records.  'force' is reserved for the explicit sync recovery path and
+ * permits a structurally invalid state.db to be opened with a warning.
+ */
 EMUXFS int
 emuxfs_dev_open(dind dev_index, bool force, bool readonly)
 {
@@ -420,6 +444,12 @@ emuxfs_dev_mount(dind dev_index, bool force)
 	return emuxfs_dev_open(dev_index, force, false);
 }
 
+/*
+ * Release a mounted device.  The device is marked unmounted first on disk,
+ * then the descriptors are closed; an in-flight transaction is refused rather
+ * than tearing down its state.  Close failures are fatal because continuing
+ * with a half-released device would make descriptor ownership ambiguous.
+ */
 EMUXFS int
 emuxfs_dev_unmount(size_t index)
 {
@@ -480,6 +510,12 @@ emuxfs_dev_unmount(size_t index)
 	return 0;
 }
 
+/*
+ * Mark the start of a device transaction.  The marker must be durable before
+ * the first mutation so an interrupted operation is detectable at the next
+ * mount and can be resolved by sync(1).  Failure to make the marker durable
+ * is fatal: continuing would silently weaken the recovery contract.
+ */
 EMUXFS int
 emuxfs_working_push(size_t index)
 {
@@ -505,6 +541,13 @@ emuxfs_working_push(size_t index)
 	return 0;
 }
 
+/*
+ * Commit a device transaction by clearing the working marker and advancing
+ * the sequence number.  The sequence value never wraps: exhaustion marks the
+ * device degraded instead, which requires explicit operator action.  The
+ * caller must have made the tree, metadata, assignment and parent directory
+ * durable before reaching this point.
+ */
 EMUXFS int
 emuxfs_working_pop(size_t index, [[maybe_unused]] time_t now)
 {
@@ -570,6 +613,12 @@ emuxfs_working_cancel(size_t index)
 	return 0;
 }
 
+/*
+ * Mark the start of a repair transaction.  Restoration uses a separate
+ * persistent counter from the normal write path, and the two are mutually
+ * exclusive for a given device.  The marker is made durable before repair
+ * work begins.
+ */
 EMUXFS int
 emuxfs_restoring_push(size_t index)
 {
@@ -588,6 +637,11 @@ emuxfs_restoring_push(size_t index)
 	return 0;
 }
 
+/*
+ * Finish a repair transaction.  Unlike a normal commit this does not advance
+ * the sequence number: a repair restores checksums for an existing logical
+ * state, it does not create a new logical revision.
+ */
 EMUXFS int
 emuxfs_restoring_pop(size_t index)
 {
@@ -607,6 +661,11 @@ emuxfs_restoring_pop(size_t index)
 	return 0;
 }
 
+/*
+ * Set or clear the degraded flag, keeping the aggregate count in sync.  A
+ * changed value is persisted immediately because degraded is recovery state:
+ * losing it across a crash would let a suspect device participate again.
+ */
 static int
 emuxfs_degraded_set_val(size_t dev_index, uint64_t val)
 {
@@ -671,6 +730,12 @@ emuxfs_meta_size(size_t *size_out, dind dev_index)
 	return emuxfs_meta_size_raw(size_out, dev->conf.chk_alg_type);
 }
 
+/*
+ * Read one meta.db record by internal inode number.  The record size depends
+ * on the checksum algorithm and may be smaller than struct emuxfs_meta, so
+ * the on-disk bytes are copied into a zeroed full-size buffer.  The offset is
+ * range-checked against INT64_MAX before multiplication.
+ */
 EMUXFS int
 emuxfs_meta_read(struct emuxfs_meta *meta, dind dev_index, uint64_t ino)
 {
@@ -719,6 +784,12 @@ emuxfs_meta_read(struct emuxfs_meta *meta, dind dev_index, uint64_t ino)
 	return 0;
 }
 
+/*
+ * Write one meta.db record to an arbitrary descriptor.  Only 'msz' bytes are
+ * written, which lets the on-disk record omit unused checksum space while
+ * still accepting a full-size in-memory struct.  Converts the header fields
+ * to little-endian at the I/O boundary.
+ */
 EMUXFS int
 emuxfs_meta_write_fd(
     int fd, const struct emuxfs_meta *meta, uint64_t ino, size_t msz)
@@ -757,6 +828,12 @@ emuxfs_meta_write(const struct emuxfs_meta *meta, dind dev_index, uint64_t ino)
 	return emuxfs_meta_write_fd(dev->meta_fd, meta, ino, msz);
 }
 
+/*
+ * Derive the next external inode from the size of assign.db.  The file is a
+ * dense array indexed by eno, so its record count is the next free value.
+ * A size that is not an exact multiple of the record size indicates
+ * corruption and fails closed.
+ */
 EMUXFS int
 emuxfs_assign_peek_next_eno(uint64_t *eno_out, dind dev_index)
 {

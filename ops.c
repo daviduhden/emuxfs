@@ -1,5 +1,18 @@
 /* ops.c */
 
+/*
+ * This file belongs to emuxfs, The Enhanced Multiplexed File System (see
+ * NOTICE.md).
+ *
+ * FUSE operation callbacks and the multi-device transaction engine.  Every
+ * mutating callback applies the same logical change to each usable device in
+ * index order.  Each device advances its own durable sequence number only
+ * after its tree, metadata, assignments and parent directory are durable, so
+ * an interrupted operation is visible as a sequence mismatch rather than as a
+ * silent partial commit.  Reads verify metadata, content and the eno/ino
+ * mapping, try other devices on damage, and queue repairs for the next drain.
+ */
+
 // clang-format off
 #include <sys/mman.h>
 #include <sys/syslimits.h>
@@ -25,6 +38,13 @@
 static void emuxfs_wrbuf_flush(void);
 static int  emuxfs_truncate(const char *, off_t);
 
+/*
+ * Adopt the requesting FUSE user's effective credentials for one backing
+ * operation.  Supplementary groups are dropped first; otherwise a request
+ * attributed to an unprivileged user could still satisfy a group permission
+ * check through root's groups.  The daemon keeps euid 0 for its own privileged
+ * work, so these switches must always be paired with emuxfs_eids_reset().
+ */
 static void
 emuxfs_eids_set(void)
 {
@@ -45,6 +65,11 @@ emuxfs_eids_set(void)
 		exit(-1);
 }
 
+/*
+ * Impersonate the credentials captured with a deferred write.  This follows
+ * the same ordering as emuxfs_eids_set(): drop supplementary groups, then set
+ * egid and euid.  Used only by the legacy write-buffer flush path.
+ */
 static void
 emuxfs_eids_wrctx_set(const struct emuxfs_wrctx *wc)
 {
@@ -57,6 +82,11 @@ emuxfs_eids_wrctx_set(const struct emuxfs_wrctx *wc)
 		exit(-1);
 }
 
+/*
+ * Restore the daemon's own credentials after an impersonated operation.
+ * Order matters: regain euid 0 before restoring egid, so the process can
+ * change group IDs again.
+ */
 static void
 emuxfs_eids_reset(void)
 {
@@ -67,6 +97,14 @@ emuxfs_eids_reset(void)
 		exit(-1);
 }
 
+/*
+ * Report aggregate filesystem statistics.  Mirrors are not striped: every
+ * device holds a complete copy, so capacity, free space, inode counts and
+ * maximum name length are the minimum across usable devices.  Block counts are
+ * normalized to EMUXFS_BLOCK_SIZE, and all multiplications use checked
+ * arithmetic so an overflowing backing filesystem is reported rather than
+ * wrapped.
+ */
 static int
 emuxfs_statfs(const char *path, struct statvfs *stvfs)
 {
@@ -345,6 +383,15 @@ struct emuxfs_op_create_args {
 	const char		  *link_content;
 };
 
+/*
+ * Create one node on every usable device.  A single eno is allocated for the
+ * logical node before the loop; each device receives its own metadata and
+ * assignment record.  If a device fails before mutating anything, its working
+ * marker is canceled without advancing seq.  If it fails after a mutation, it
+ * is marked degraded and the operation continues on later devices, succeeding
+ * as long as at least one device committed.  Only regular files, directories
+ * and symlinks are supported; other node types are refused.
+ */
 static int
 emuxfs_op_create(struct emuxfs_op_create_args *args)
 {
@@ -603,6 +650,14 @@ emuxfs_symlink(const char *link_content, const char *path)
 
 enum emuxfs_op_delete_type { EMUXFS_DT_UNLINK, EMUXFS_DT_RMDIR };
 
+/*
+ * Remove one node from every usable device.  The current metadata is verified
+ * before deletion, hard-linked files are refused, and the large-file checksum
+ * tree is removed only after unlinkat(2) succeeds.  Metadata and assignment
+ * records are cleared and fsynced before the working marker is cleared.  On
+ * success, the deleted node's eno is returned to the allocator so the identity
+ * can be reused.
+ */
 static int
 emuxfs_op_delete(const char *path, enum emuxfs_op_delete_type type)
 {
@@ -889,6 +944,14 @@ emuxfs_getattr_inner(struct stat *st_out, struct stat *st, uint64_t eno,
 	return 0;
 }
 
+/*
+ * Read a byte range from one device and verify it.  Small files are checked
+ * as a whole against the content checksum in meta.db.  Larger files map only
+ * the checksum-tree leaves for the requested block range and copy the exact
+ * requested bytes from the block-aligned reads, never a whole block beyond the
+ * caller's buffer.  Returns EMUXFS_ECHK for a checksum mismatch so the caller
+ * can try another mirror and queue a repair.
+ */
 static int
 emuxfs_read_inner(int root_fd, struct emuxfs_op_read_args *args,
     struct stat *st, enum emuxfs_chk_alg_type alg, size_t chksz,
@@ -1161,6 +1224,16 @@ out:
 	return rc;
 }
 
+/*
+ * Shared read-side dispatcher for getattr, read, readlink and readdir.  A
+ * usable device is selected by validating metadata and the requested
+ * operation.  Missing nodes are remembered rather than immediately returned:
+ * another mirror may serve the node, in which case the missing copies are
+ * queued for repair.  Permission errors are not treated as corruption.  A
+ * genuinely absent node returns ENOENT without queuing repairs.  Any queued
+ * corruption is drained after a successful read so the next access observes a
+ * repaired tree.
+ */
 static int
 emuxfs_op_read(struct emuxfs_op_read_args *args)
 {
@@ -1430,6 +1503,16 @@ struct emuxfs_op_update_args {
 	const struct emuxfs_wrctx *wc;
 };
 
+/*
+ * Resize one device's file and update its checksum tree.  The switch on
+ * old/new size class handles the four meaningful cases: large to small,
+ * small to large, large to large, and small to small.  Before mutating, the
+ * existing bytes in the affected range are verified against the old
+ * checksum tree.  When growing, the new hole is treated as zeros for hashing,
+ * and the tree shape is adjusted only when the resize crosses a level
+ * boundary.  The caller writes the resulting metadata after this function
+ * returns.
+ */
 static int
 emuxfs_truncate_inner(int root_fd, struct emuxfs_op_update_args *args,
     enum emuxfs_chk_alg_type alg, size_t chksz, struct stat *st,
@@ -1776,6 +1859,15 @@ out:
 	return rc;
 }
 
+/*
+ * Write one device's file and update its checksum tree.  The pre-image bytes
+ * covered by the write are verified first.  Writes entirely below one block
+ * use a single buffer; larger writes update each touched block, preserving
+ * bytes before and after the written range, and recompute the affected tree
+ * ancestors.  The buffer is zero-filled where a write starts past the current
+ * end so the hole's zero bytes are included in the checksum.  The caller
+ * writes metadata after this returns.
+ */
 static int
 emuxfs_write_inner(int root_fd, struct emuxfs_op_update_args *args,
     enum emuxfs_chk_alg_type alg, size_t chksz, struct stat *st,
@@ -2060,6 +2152,15 @@ out:
 	return rc;
 }
 
+/*
+ * Apply a metadata, truncate or write update to every usable device.  The
+ * pre-image is fully verified before mutation, hard links are refused, and
+ * the resulting metadata is fsynced before readback and ancestor
+ * recomputation.  A failed truncate or write is treated as a partial mutation
+ * and degrades the device even when no device has committed yet, because the
+ * syscall may already have changed the file.  chmod, chown and utimens are
+ * single syscalls, so their failure can be canceled cleanly.
+ */
 static int
 emuxfs_op_update(struct emuxfs_op_update_args *args)
 {
@@ -2335,6 +2436,15 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 	return -EIO;
 }
 
+/*
+ * Rename a node on every usable device.  Rename is decomposed into one
+ * directory-entry change at a time: the source is moved to a private
+ * temporary, an existing destination is moved to a second temporary, then the
+ * source is moved into place.  This keeps each ancestor recomputation's
+ * pre-image unambiguous.  Type and emptiness rules are checked before any
+ * name is vacated, and a replaced destination's metadata, assignment and
+ * large-file tree are cleared only after the new name is committed.
+ */
 static int
 emuxfs_rename(const char *from, const char *to)
 {
@@ -2807,6 +2917,12 @@ emuxfs_wrbuf_flush(void)
 		exit(-1);
 }
 
+/*
+ * Write callback.  Writes are committed synchronously before success is
+ * reported; the legacy global write buffer is only drained first so state left
+ * by an older in-memory path is never ignored.  This costs throughput but
+ * preserves error attribution and the "success means durable" contract.
+ */
 static int
 emuxfs_write(const char *path, const char *buf, size_t bufsz, off_t offset,
     [[maybe_unused]] struct fuse_file_info *ffi)

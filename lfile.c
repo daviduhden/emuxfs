@@ -1,5 +1,18 @@
 /* lfile.c */
 
+/*
+ * This file belongs to emuxfs, The Enhanced Multiplexed File System (see
+ * NOTICE.md).
+ *
+ * Regular files larger than one 4 KiB block keep a checksum tree in
+ * .muxfs/lfile/<internal inode>.  Leaves are per-block digests; every parent
+ * entry hashes up to EMUXFS_LEVEL_FACTOR child digests, and the root entry is
+ * the file's content checksum stored in meta.db.  The tree is memory-mapped
+ * for in-place block updates and is resized when the file crosses a level
+ * boundary.  Addresses in the tree are relative to the file's block index,
+ * not to the whole array.
+ */
+
 // clang-format off
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -25,6 +38,12 @@
 static_assert(EMUXFS_BLOCK_SIZE >= EMUXFS_CHKSZ_MAX,
     "lfile level factor must be at least one");
 
+/*
+ * Convert a byte range into block-aligned indexes and the corresponding
+ * slice of the checksum tree.  The end is rounded up so a partial final block
+ * is included; lfileoff/lfilesz then address exactly the leaves affected by
+ * the range.
+ */
 EMUXFS void
 emuxfs_range_compute(struct emuxfs_range *range_inout, size_t chksz)
 {
@@ -44,6 +63,14 @@ emuxfs_range_compute(struct emuxfs_range *range_inout, size_t chksz)
 	*range_inout = r;
 }
 
+/*
+ * Locate a level in the checksum tree.  Return the absolute entry index where
+ * that level begins and the number of entries it contains.  Levels are laid
+ * out bottom-up; the fan-in is EMUXFS_LEVEL_FACTOR.  The initial rounding
+ * computes the next power-of-two leaf count, which keeps the tree shape
+ * stable while a file grows within a level.  Returns 1 for an empty file or an
+ * out-of-range level.
+ */
 static int
 emuxfs_lfile_abs_range(uint64_t *index_out, uint64_t *count_out,
     uint64_t file_blk_count, uint64_t level)
@@ -76,6 +103,11 @@ emuxfs_lfile_abs_range(uint64_t *index_out, uint64_t *count_out,
 	return 0;
 }
 
+/*
+ * Return the height of the tree for a file with 'file_blk_count' data blocks.
+ * A single-block file still has one root entry at level 0, so the result is
+ * zero for that case and increases as the tree fans in.
+ */
 static uint64_t
 emuxfs_lfile_root_level(uint64_t file_blk_count)
 {
@@ -95,6 +127,10 @@ emuxfs_lfile_root_level(uint64_t file_blk_count)
 	return l;
 }
 
+/*
+ * Return the absolute index of the root entry.  This is the last entry in the
+ * tree and is what meta.db stores as the file's content checksum.
+ */
 static uint64_t
 emuxfs_lfile_root_abs_index(uint64_t file_blk_count)
 {
@@ -109,6 +145,12 @@ emuxfs_lfile_root_abs_index(uint64_t file_blk_count)
 	return index;
 }
 
+/*
+ * Open a checksum tree by its internal inode name.  The tree is addressed
+ * relative to the already-open lfile directory and is opened with O_NOFOLLOW,
+ * so a symlink planted in lfile/ cannot redirect the mapping.  The caller owns
+ * the returned descriptor.
+ */
 EMUXFS int
 emuxfs_lfile_open(int *fd_out, int lfile_fd, ino_t ino, int flags)
 {
@@ -138,6 +180,12 @@ out:
 	return rc;
 }
 
+/*
+ * Create a checksum tree sized for 'filesz' and truncate it to the exact
+ * number of entries needed.  An inode number may be reused after the old file
+ * is gone, so a stale tree for the same name is removed first; O_EXCL then
+ * guarantees that a racing creator cannot share the tree.
+ */
 EMUXFS int
 emuxfs_lfile_create(int lfile_fd, size_t chksz, ino_t ino, size_t filesz)
 {
@@ -191,6 +239,12 @@ out:
 	return rc;
 }
 
+/*
+ * Grow a checksum tree across a level boundary.  The top level is truncated
+ * to the new power-of-two size, then existing levels are moved upward as
+ * contiguous runs to leave space for the new root and parent entries.  Leaf
+ * content is not touched; callers update changed leaves separately.
+ */
 static int
 emuxfs_lfile_grow(
     int lfile_fd, size_t chksz, ino_t ino, size_t old_filesz, size_t new_filesz)
@@ -248,6 +302,12 @@ out:
 	return rc;
 }
 
+/*
+ * Shrink a checksum tree across a level boundary.  The surviving levels are
+ * copied downward into their new offsets, and only after a successful copy is
+ * the file truncated.  Unmapping before truncation keeps the mapping valid
+ * for the entire move.
+ */
 static int
 emuxfs_lfile_shrink(
     int lfile_fd, size_t chksz, ino_t ino, size_t old_filesz, size_t new_filesz)
@@ -313,6 +373,11 @@ out:
 	return rc;
 }
 
+/*
+ * Adjust the tree when a file changes size.  The tree shape only depends on
+ * the next power-of-two block count, so a resize within the same level needs
+ * no tree movement; otherwise delegate to grow or shrink.
+ */
 EMUXFS int
 emuxfs_lfile_resize(
     int lfile_fd, size_t chksz, ino_t ino, size_t old_filesz, size_t new_filesz)
@@ -385,6 +450,13 @@ emuxfs_lfile_exists(bool *exists_out, int lfile_fd, ino_t ino)
 	return emuxfs_existsat(exists_out, lfile_fd, path_buf);
 }
 
+/*
+ * Recompute the ancestor entries affected by a changed leaf range and return
+ * the new root digest.  Work proceeds bottom-up; each parent entry hashes a
+ * full fan-in range, including unchanged children, because every child digest
+ * contributes to the parent.  A partial final range is handled by clamping to
+ * the level's actual entry count.
+ */
 EMUXFS int
 emuxfs_lfile_ancestors_recompute(uint8_t *root_sum, int lfile_fd,
     enum emuxfs_chk_alg_type alg, ino_t ino, size_t filesz, uint64_t ibegin,
@@ -475,6 +547,15 @@ out:
 	return rc;
 }
 
+/*
+ * Verify a byte range of a regular file against its checksum tree.  The
+ * requested block range is read, each leaf digest is recomputed, and every
+ * ancestor is recomputed and compared.  This avoids hashing the whole file
+ * for a small read while still proving that the bytes and the tree agree.
+ * An optional 'expected' root digest is checked as a final cross-check.  The
+ * tree must be at least as large as the computed layout; a shorter tree is
+ * reported as corruption instead of being mapped past its end.
+ */
 EMUXFS int
 emuxfs_lfile_readback(uint8_t *root_sum, dind dev_index, const char *path,
     size_t begin, size_t end, const uint8_t *expected)

@@ -1,5 +1,17 @@
 /* desc.c */
 
+/*
+ * This file belongs to emuxfs, The Enhanced Multiplexed File System (see
+ * NOTICE.md).
+ *
+ * A description captures the checksum-relevant attributes of a node: its
+ * external inode (eno), type, ownership, mode, size and content digest.  The
+ * metadata checksum is computed from this description, while the content
+ * checksum is computed from the node's bytes, symlink target, or directory
+ * entry list.  Descriptions are transient; only their checksums are stored in
+ * meta.db.
+ */
+
 // clang-format off
 #include <sys/stat.h>
 #include <sys/syslimits.h>
@@ -15,6 +27,12 @@
 #include "emuxfs.h"
 // clang-format on
 
+/*
+ * Compute the content checksum of a regular file.  Files up to one block are
+ * read into a single buffer; larger files use their on-disk checksum tree so
+ * a full verification does not need to stream the entire file.  The function
+ * fails closed on stat, open, seek or short-read errors.
+ */
 EMUXFS int
 emuxfs_desc_chk_reg_content(
     struct emuxfs_desc *desc, dind dev_index, const char *path)
@@ -65,6 +83,12 @@ emuxfs_desc_chk_reg_content(
 	    (size_t)st.st_size, nullptr);
 }
 
+/*
+ * Compute a directory's content checksum from the sorted names and the
+ * metadata checksum of each child, as assembled by emuxfs_dir_content_chk().
+ * The directory is opened without following a final symlink, then handed to
+ * the shared directory walker.
+ */
 static int
 emuxfs_desc_chk_dir_content(
     struct emuxfs_desc *desc, dind dev_index, const char *path)
@@ -89,6 +113,12 @@ emuxfs_desc_chk_dir_content(
 	return rc;
 }
 
+/*
+ * Hash a symlink's target text.  The target is not followed; readlinkat(2)
+ * returns the stored bytes.  The buffer is zeroed before the call so the
+ * target is NUL-terminated and no stale bytes remain beyond the returned
+ * length.
+ */
 EMUXFS int
 emuxfs_desc_chk_symlink_content(
     struct emuxfs_desc *desc, dind dev_index, const char *path)
@@ -114,6 +144,11 @@ emuxfs_desc_chk_symlink_content(
 	return 0;
 }
 
+/*
+ * Hash caller-provided bytes into a description's content checksum field.
+ * This is used for symlink targets and for in-memory content during create,
+ * where no backing file exists yet.
+ */
 EMUXFS void
 emuxfs_desc_chk_provided_content(struct emuxfs_desc *desc,
     const uint8_t *content, size_t contentsz, enum emuxfs_chk_alg_type alg_type)
@@ -149,6 +184,13 @@ emuxfs_desc_chk_node_content(
 	exit(-1); /* Unreachable. */
 }
 
+/*
+ * Compute the metadata checksum from the description fields.  The fields are
+ * hashed in their little-endian on-disk encoding, including the content
+ * checksum, so the result is independent of host byte order.  Size is
+ * included only for regular files; directory and symlink sizes are not
+ * stable across filesystems.
+ */
 EMUXFS void
 emuxfs_desc_chk_meta(uint8_t *sum_out, const struct emuxfs_desc *desc,
     enum emuxfs_chk_alg_type alg_type)
@@ -184,6 +226,11 @@ emuxfs_desc_chk_meta(uint8_t *sum_out, const struct emuxfs_desc *desc,
 	emuxfs_chk_final(sum_out, &chk);
 }
 
+/*
+ * Initialize a description from stat(2) data.  The caller supplies the eno
+ * because it is an emuxfs identity, not a field of the backing filesystem.
+ * The content checksum is left zeroed for the caller to fill in.
+ */
 EMUXFS int
 emuxfs_desc_init_from_stat(
     struct emuxfs_desc *desc_out, struct stat *st, uint64_t eno)
@@ -207,6 +254,11 @@ emuxfs_desc_init_from_stat(
 	return 0;
 }
 
+/*
+ * Translate a POSIX file type into the three node types emuxfs supports.
+ * Devices, sockets, FIFOs and other special nodes are rejected with 1 rather
+ * than represented by a type the on-disk format cannot express.
+ */
 EMUXFS int
 emuxfs_desc_type_from_mode(emuxfs_desc_type *dt_out, mode_t mode)
 {

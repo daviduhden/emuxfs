@@ -1,5 +1,11 @@
 /* emuxfs.c */
 
+/*
+ * Program entry point and sub-command dispatch.  Global runtime state (the
+ * dynamic stack and syslog handle) is initialized once here; each sub-command
+ * owns its own argument parsing, sandbox policy and cleanup.
+ */
+
 // clang-format off
 #include <stdio.h>
 #include <stdlib.h>

@@ -49,6 +49,14 @@ struct ds {
 
 static int emuxfs_ds_add_pages(size_t);
 
+/*
+ * Reserve 'sz' bytes from the current allocation block.  Sizes are rounded up
+ * to the stack's alignment so every returned pointer is suitable for the
+ * pointer arrays and structures stored by callers.  If the head block cannot
+ * satisfy the request, enough pages are added to restore the historical peak
+ * reservation before retrying.  Returns 0 and stores the pointer, or 1 on
+ * allocation failure.
+ */
 EMUXFS int
 emuxfs_dspush(void **p, size_t sz)
 {
@@ -89,6 +97,11 @@ emuxfs_ds_free_head(struct ds *n)
 	free(n);
 }
 
+/*
+ * Pop all allocations newer than 'p', then make 'p' the new top.  Blocks that
+ * lie entirely above the target are freed.  The caller must pop in reverse
+ * allocation order; passing a pointer that is not on the stack is an error.
+ */
 EMUXFS int
 emuxfs_dspop(void *p)
 {
@@ -119,6 +132,12 @@ emuxfs_dspop(void *p)
 	return 1;
 }
 
+/*
+ * Grow the most recent allocation in place when it is the top allocation.
+ * If the current block has no room, the live prefix is copied into a newly
+ * pushed allocation and the old tail is released.  'p_inout' is updated when
+ * the allocation moves; growing an older allocation is not supported.
+ */
 EMUXFS int
 emuxfs_dsgrow(void **p_inout, size_t sz)
 {
@@ -156,6 +175,12 @@ emuxfs_dsgrow(void **p_inout, size_t sz)
 	return 0;
 }
 
+/*
+ * Allocate a page-quantized block and push it onto the stack.  The block
+ * header and the first allocation share the same mapping, with the header
+ * size rounded up to preserve alignment.  Updates the high-water mark used by
+ * later push operations.
+ */
 static int
 emuxfs_ds_add_pages(size_t pagecount)
 {
@@ -182,6 +207,12 @@ emuxfs_ds_add_pages(size_t pagecount)
 	return 0;
 }
 
+/*
+ * Initialize the stack state and reserve the first page.  The header offset
+ * must fit inside a page so that a page-sized allocation still has usable
+ * payload.  A second initialization would leak the existing list, so callers
+ * initialize exactly once per process.
+ */
 EMUXFS int
 emuxfs_dsinit(void)
 {
@@ -207,6 +238,11 @@ emuxfs_dsinit(void)
 	return 0;
 }
 
+/*
+ * Release every block without resetting the cached high-water mark.  The
+ * process is exiting, so the reservation statistics are intentionally left
+ * intact.
+ */
 EMUXFS int
 emuxfs_dsfinal(void)
 {

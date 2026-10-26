@@ -52,6 +52,11 @@ struct emuxfs_dev_conf_checklist {
 	    has_dev_uuid, has_seq_zero_time;
 };
 
+/*
+ * Compare a key slice from a configuration line with a NUL-terminated
+ * literal.  The length comparison prevents a prefix such as "version" from
+ * matching "version_x".
+ */
 static int
 emuxfs_conf_key_is(const char *key, size_t key_len, const char *literal)
 {
@@ -62,6 +67,12 @@ emuxfs_conf_key_is(const char *key, size_t key_len, const char *literal)
 	return (key_len == n) && (memcmp(key, literal, n) == 0);
 }
 
+/*
+ * Parse the provenance version string.  Both the legacy spelling without a
+ * separator ("1.0current") and the current spelling ("1.0-current") are
+ * accepted.  The version is informational; format_version is what controls
+ * on-disk compatibility.
+ */
 static int
 emuxfs_conf_version_parse(
     struct emuxfs_dev_conf *conf, const char *version, size_t version_len)
@@ -125,6 +136,11 @@ emuxfs_conf_version_parse(
 	return 0;
 }
 
+/*
+ * Decode a textual UUID into the on-disk binary representation.  The input is
+ * a non-terminated slice, so it is copied into a temporary NUL-terminated
+ * buffer.  Returns 0 on success and 1 on allocation or parse failure.
+ */
 static int
 emuxfs_uuid_read(uint8_t *dest, const char *src, size_t len)
 {
@@ -150,6 +166,11 @@ emuxfs_uuid_read(uint8_t *dest, const char *src, size_t len)
 	return 0;
 }
 
+/*
+ * Parse one "key=value" line.  Unknown and duplicate keys are rejected, and
+ * the checklist records which required keys were seen.  Numeric values are
+ * converted with strtonum(3) after copying the slice into a bounded buffer.
+ */
 static int
 emuxfs_conf_line_parse(struct emuxfs_dev_conf *conf, const char *line,
     size_t len, struct emuxfs_dev_conf_checklist *cl)
@@ -222,6 +243,12 @@ emuxfs_conf_line_parse(struct emuxfs_dev_conf *conf, const char *line,
 	return 0;
 }
 
+/*
+ * Enforce the required-key set and the on-disk format version.  A missing
+ * format_version is not an error: it denotes a legacy array whose layout is
+ * the same as version 1.  An unsupported version is reported separately so
+ * the caller can print a precise diagnostic.
+ */
 static int
 emuxfs_conf_check(
     struct emuxfs_dev_conf *conf, struct emuxfs_dev_conf_checklist cl)
@@ -237,6 +264,13 @@ emuxfs_conf_check(
 	return EMUXFS_CONF_OK;
 }
 
+/*
+ * Read and validate muxfs.conf.  The parser streams fixed-size chunks and
+ * carries an incomplete final line across reads, so a value may span a read
+ * boundary.  Every line, including the last, must end in a newline; CRLF is
+ * tolerated by stripping one CR.  On success the caller owns only plain
+ * scalar fields and the two fixed-size UUID buffers.
+ */
 EMUXFS int
 emuxfs_conf_parse(struct emuxfs_dev_conf *conf, int fd)
 {
@@ -297,6 +331,11 @@ emuxfs_conf_parse(struct emuxfs_dev_conf *conf, int fd)
 	return EMUXFS_CONF_OK;
 }
 
+/*
+ * Map the in-memory flavor enum back to the spelling used on disk.  This is
+ * only called from the writer, but the exit marks a programming error if a
+ * new enum value is added without updating the mapping.
+ */
 static const char *
 emuxfs_version_flavor_str(enum emuxfs_version_flavor flavor)
 {
@@ -312,6 +351,12 @@ emuxfs_version_flavor_str(enum emuxfs_version_flavor flavor)
 	exit(-1); /* Programming error. */
 }
 
+/*
+ * Serialize the configuration to an already-open file descriptor.  The file
+ * is truncated so a rewrite cannot leave bytes from a longer previous
+ * configuration.  Every write is checked, and fsync(2) makes the new
+ * configuration durable before the caller records the device as formatted.
+ */
 EMUXFS int
 emuxfs_conf_write(struct emuxfs_dev_conf *conf, int fd)
 {

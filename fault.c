@@ -13,6 +13,12 @@
 #include "fault.h"
 // clang-format on
 
+/*
+ * Optional crash point.  In a normal build this is an empty function.  In the
+ * fault-injection build, EMUXFS_FAULT_POINT selects one named boundary; when
+ * it matches, EMUXFS_FAULT_ACTION chooses _exit(70) (the default) or abort().
+ * Other points return immediately so a test can target a single transition.
+ */
 void
 emuxfs_fault_point([[maybe_unused]] const char *name)
 {

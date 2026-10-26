@@ -1,5 +1,13 @@
 /* format.c */
 
+/*
+ * Implementation of the format sub-command.  Formatting turns an empty
+ * directory into one device of an array by creating the private .muxfs tree,
+ * the configuration, and the initial metadata records for the root inode.
+ * The root receives external inode zero.  The on-disk layout is fixed by
+ * ON_DISK_FORMAT.md; do not reorder these writes without a version bump.
+ */
+
 // clang-format off
 #include <sys/stat.h>
 #include <sys/syslimits.h>
@@ -38,7 +46,18 @@ emuxfs_format_usage(void)
 	    "directory ...\n");
 }
 
-/* Returns 0 on success, 2 if dev_root is not empty, 1 otherwise. */
+/*
+ * Format one directory as an array device.  The directory must be empty and
+ * is made root-owned mode 0755.  The .muxfs directory is created first and
+ * fsynced before any child is added, then config, state, metadata, assignment
+ * and lfile storage are written in dependency order.  Each file is fsynced
+ * before the next step so an interrupted format cannot look complete.
+ *
+ * Returns 0 on success, 2 when the target is not empty, and 1 on any other
+ * failure.  A partially formatted directory is not rolled back automatically;
+ * the operator should inspect and remove the incomplete .muxfs tree before
+ * retrying.
+ */
 EMUXFS int
 emuxfs_dev_format(const char *dev_root, enum emuxfs_chk_alg_type alg,
     size_t chksz, size_t metasz, time_t now, const uint8_t *array_uuid)
@@ -226,6 +245,11 @@ out:
 	return rc;
 }
 
+/*
+ * Parse format options, restrict the process to the target directories, and
+ * format each directory with one shared array UUID and timestamp.  The
+ * checksum algorithm defaults to MD5 for compatibility with existing arrays.
+ */
 EMUXFS int
 emuxfs_format_main(int argc, char *argv[])
 {

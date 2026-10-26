@@ -41,6 +41,10 @@ if ( !-c "/dev/fuse0" ) {
 
 my %conf;
 
+# Parse the legacy key=value configuration.  Lines are trimmed, comments are
+# ignored, only the first '=' separates the pair, and matching single or double
+# quotes around a value are removed.  Missing or malformed lines are skipped so
+# validate_config() can report the resulting missing paths.
 sub parse_conf {
     if ( !-e "test.conf" ) {
         print STDERR "Please read test.conf.dist.\n";
@@ -75,6 +79,9 @@ my $test_tmp    = $conf{test_tmp}    // q{};
 my $unpriv_user = $conf{unpriv_user} // q{};
 
 # Refuse to operate on unsafe or ambiguous paths.
+# Reject paths that the destructive suite must never remove.  The checks are
+# intentionally conservative: the path must be absolute, cannot be '/', and
+# cannot contain a '..' component.  Returns an error string or undef.
 sub safe_path {
     my ( $name, $path ) = @_;
     return "$name is not set" if $path eq q{};
@@ -117,6 +124,8 @@ my $started = 0;
 # Small helpers
 # ---------------------------------------------------------------------------
 
+# Run a command with list-form exec (never a shell) and discard its output.
+# Returns the decoded exit status; the caller decides whether that is success.
 sub quiet {
     my (@cmd) = @_;
     open( my $fh, q{-|}, @cmd ) or die "cannot run @cmd: $!\n";
@@ -139,6 +148,9 @@ sub must_fail {
     return;
 }
 
+# Capture command output as an array of chomped lines and return it together
+# with the exit status.  $? is decoded with >> 8 because the tests care about
+# the command's exit code, not whether it was killed by a signal.
 sub capture {
     my (@cmd) = @_;
     open( my $fh, q{-|}, @cmd ) or die "cannot run @cmd: $!\n";
@@ -235,6 +247,9 @@ sub testsuite_final {
     return;
 }
 
+# Prepare a clean scratch array before each test.  The suite owns every
+# configured path, so existing contents are removed only after safe_path() has
+# validated them.  The mount flag lets the END block unmount on failure.
 sub pre_test {
     make_path( $test_tmp, $dev_a, $dev_b );
     must_emuxfs( "format", "-a", $chk_alg, $dev_a, $dev_b );
@@ -243,6 +258,8 @@ sub pre_test {
     return;
 }
 
+# Tear down a test's mount and scratch directories.  whether_mounted() is
+# idempotent so both normal completion and the END block can call it.
 sub post_test {
     whether_mounted();
     remove_tree( $test_tmp, $dev_a, $dev_b, { safe => 1 } );
@@ -265,6 +282,9 @@ END {
 # Dispatch tables (Perl hashes of code references)
 # ---------------------------------------------------------------------------
 
+# The suite is a hash of code references because tests are selected by name.
+# Each individual test runs between pre_test() and post_test(); the group
+# tests dispatch to run_tests() for their member lists.
 my %TESTS;
 
 # --- basic operations -------------------------------------------------------
@@ -819,6 +839,9 @@ my @all_tests = qw(
   test_permissions test_extras
 );
 
+# Run every group under each supported checksum algorithm.  testsuite_init()
+# runs once per algorithm, and the eval catches any die so cleanup still runs.
+# On failure the mount is removed and the process exits with a nonzero status.
 sub run_all_tests {
     my $ok = eval {
         testsuite_init();

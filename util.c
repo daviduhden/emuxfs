@@ -1,5 +1,17 @@
 /* util.c */
 
+/*
+ * This file belongs to emuxfs, The Enhanced Multiplexed File System (see
+ * NOTICE.md).
+ *
+ * Shared filesystem primitives: path handling, directory walking, readback
+ * verification, metadata recomputation for ancestors, restoration of
+ * individual nodes and directories, and the restore-queue drain.  Validation
+ * (emuxfs_readback and the desc.c checksum helpers) is deliberately separate
+ * from repair (the emuxfs_restore_* functions) so validation can be tested
+ * without writing.
+ */
+
 // clang-format off
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -47,6 +59,15 @@ struct emuxfs_dir_patch {
 	const char		  *fname;
 	const uint8_t		  *sum;
 };
+/*
+ * Compute both the current directory checksum and the checksum it would have
+ * after applying one pending patch.  The patch describes a single child name
+ * as it differs between the pre-image and post-image: substitute its metadata
+ * checksum, add a missing name, or remove an existing name.  Entries are
+ * visited in sorted order, so the digest covers (name, child meta checksum)
+ * pairs in a stable order.  The explicit match checks detect a caller whose
+ * patch description does not agree with the actual directory contents.
+ */
 static int
 emuxfs_dir_patch_sums(uint8_t *as_is_out, uint8_t *with_patch_out,
     enum emuxfs_chk_alg_type alg, dind dev_index, int dirfd,
@@ -190,6 +211,14 @@ out:
 	return rc;
 }
 
+/*
+ * Recompute one directory's metadata after a child operation.  The operation
+ * has already been applied, so the patch is derived backwards: a CREATE looks
+ * like removing a name from the post-image, DELETE looks like adding the old
+ * name, and UPDATE substitutes the old child checksum.  The pre-image in
+ * meta.db must match the computed pre-image exactly; otherwise the directory
+ * was changed outside emuxfs and the caller must not overwrite its metadata.
+ */
 EMUXFS int
 emuxfs_dir_meta_recompute(struct emuxfs_cud *pcud_out, dind dev_index,
     const struct emuxfs_cud *ccud_in)
@@ -545,6 +574,14 @@ emuxfs_path_sanitize(const char **path_inout)
 	return 0;
 }
 
+/*
+ * Propagate a child change upward to the array root.  Each parent directory
+ * is recomputed from the child metadata just written, then becomes the input
+ * for its own parent.  The root directory has no further ancestor and is
+ * handled explicitly with path ".".  This must run after the changed node's
+ * metadata is durable; otherwise an ancestor checksum could describe content
+ * that never reached disk.
+ */
 EMUXFS int
 emuxfs_ancestors_meta_recompute(dind dev_index, struct emuxfs_cud *cud)
 {
@@ -831,6 +868,14 @@ emuxfs_removeat(int fd, const char *_path)
 	return emuxfs_removeat_impl(fd, path, len);
 }
 
+/*
+ * Restore one directory subtree from a source device.  The source directory
+ * checksum is verified before its children are copied.  Existing destination
+ * nodes are replaced, extra names are removed, ownership/mode/timestamps are
+ * reproduced, and the destination metadata and assignment are written last.
+ * Recursive calls use pinned descriptors, so names never escape the intended
+ * source or destination tree.
+ */
 static int
 emuxfs_restore_dir(dind ddev_index, dind sdev_index, const char *path, int sfd,
     struct stat *sst, struct emuxfs_meta *expected)
@@ -1066,6 +1111,11 @@ out:
 	return rc;
 }
 
+/*
+ * Copy exactly 'content_sz' bytes between descriptors using block-sized
+ * exact-I/O helpers.  The final block may be short, but every requested byte
+ * must be read and written or the copy fails.
+ */
 static int
 emuxfs_copy_reg(int dfd, int sfd, size_t content_sz)
 {
@@ -1099,6 +1149,14 @@ out:
 	return rc;
 }
 
+/*
+ * Restore one regular file from a source device.  The source is revalidated
+ * with the expected metadata, hard links are refused, and any non-regular
+ * destination node is removed first so O_NOFOLLOW cannot be redirected by a
+ * stale symlink.  Content is copied before ownership/mode, then the
+ * large-file checksum tree is copied and fsynced.  Metadata and assignment
+ * are written only after the content and tree are durable.
+ */
 static int
 emuxfs_restore_reg(dind ddev_index, dind sdev_index, const char *path, int sfd,
     struct stat *sst, struct emuxfs_meta *expected)
@@ -1254,6 +1312,12 @@ out:
 	return rc;
 }
 
+/*
+ * Restore one symbolic link.  The target text is read from the source and
+ * verified against the expected content checksum before any destination name
+ * is changed.  The target is stored verbatim with symlinkat(2); links are not
+ * followed, and the usual ownership/mode/timestamp sequence is applied.
+ */
 static int
 emuxfs_restore_symlink(dind ddev_index, dind sdev_index, const char *path,
     struct stat *sst, struct emuxfs_meta *expected)
@@ -1342,6 +1406,14 @@ out:
 	return rc;
 }
 
+/*
+ * Check whether one level of a repair can proceed.  It compares the parent
+ * directory patch on the destination with the source parent's checksum,
+ * queues damaged parents, and reports whether the node is deleted in the
+ * source.  Return codes are internal to the restore planner: 0 means proceed,
+ * 1 means hard failure, 2 means the destination parent was queued, 3 means the
+ * source copy is damaged, and 4 means no repair is needed.
+ */
 static int
 emuxfs_restore_possible_inner(bool *is_delete_out, dind ddev_index,
     dind sdev_index, const char *path, struct emuxfs_dev *ddev,
@@ -1582,6 +1654,12 @@ emuxfs_restore_possible(
 	return is_unnecessary ? 4 : 0;
 }
 
+/*
+ * Remove a node from the destination because the source no longer has it.
+ * The destination parent's metadata is then synchronized from the source
+ * parent, and the parent is read back to prove the removal is fully
+ * consistent.  Root deletion is refused: sync cannot delete the array root.
+ */
 static int
 emuxfs_restore_delete(dind ddev_index, dind sdev_index, const char *path)
 {
@@ -1666,6 +1744,12 @@ out:
 	return rc;
 }
 
+/*
+ * Copy a directory's metadata record from the source device to the
+ * destination, then verify the destination.  The eno is preserved because it
+ * is the logical identity of the directory; only the physical inode and its
+ * record location differ.
+ */
 static int
 emuxfs_dir_meta_restore(dind ddev_index, dind sdev_index, const char *path)
 {
@@ -1696,6 +1780,11 @@ emuxfs_dir_meta_restore(dind ddev_index, dind sdev_index, const char *path)
 	return 0;
 }
 
+/*
+ * Walk from a restored path to the root and copy each ancestor directory's
+ * metadata from the source.  The root is handled explicitly.  This is the
+ * repair-side counterpart of emuxfs_ancestors_meta_recompute().
+ */
 static int
 emuxfs_ancestors_meta_restore(
     dind ddev_index, dind sdev_index, const char *_path)
@@ -1788,6 +1877,14 @@ emuxfs_restore_source_ambiguous(
 	return 0;
 }
 
+/*
+ * Choose a source and repair one path on one destination device.  Unless the
+ * process is in the administrator-directed restore-only mode, first refuse to
+ * choose between internally valid but different copies.  The first usable
+ * source becomes authoritative; if it is damaged or unusable, the next source
+ * is tried.  Returns 0 on repair, 1 on failure, 2 when another level queued the
+ * work, 4 when no repair was needed, and 5 on ambiguity.
+ */
 static int
 emuxfs_restore_impl(dind ddev_index, const char *path)
 {
@@ -1972,6 +2069,13 @@ emuxfs_restore_now(void)
 	return failed ? 1 : 0;
 }
 
+/*
+ * Compute a directory's content checksum from its sorted entry list.  Each
+ * child contributes its name and the metadata checksum stored in meta.db;
+ * "." and ".." and the private .muxfs directory are excluded.  The result is
+ * independent of inode numbers so mirrors with different physical inodes
+ * agree on directory content.
+ */
 EMUXFS int
 emuxfs_dir_content_chk(uint8_t *sum_out, dind dev_index, struct emuxfs_dir *dir)
 {
@@ -2024,6 +2128,10 @@ out:
 	return rc;
 }
 
+/*
+ * Round 's' up to the next multiple of 'a'.  Used for block and alignment
+ * calculations; 'a' must be nonzero.
+ */
 EMUXFS size_t
 emuxfs_align_up(size_t s, size_t a)
 {
@@ -2038,6 +2146,12 @@ emuxfs_align_down(size_t s, size_t a)
 	return a * (s / a);
 }
 
+/*
+ * Detect a regular file with more than one hard link.  emuxfs represents one
+ * inode with one metadata slot and one eno, so two names cannot be maintained
+ * independently; callers refuse such nodes rather than corrupting the other
+ * name.
+ */
 EMUXFS bool
 emuxfs_is_hardlink(const struct stat *st)
 {
@@ -2045,6 +2159,12 @@ emuxfs_is_hardlink(const struct stat *st)
 	return S_ISREG(st->st_mode) && (st->st_nlink > 1);
 }
 
+/*
+ * Read exactly 'sz' bytes, retrying on EINTR and short transfers.  A zero
+ * return before the requested size is an unexpected end of file and fails.
+ * This is deliberately stricter than a loop around pread(2), which can leave
+ * callers with partially initialized buffers.
+ */
 EMUXFS int
 emuxfs_pread_exact(int fd, void *buf, size_t sz, off_t off)
 {
@@ -2068,6 +2188,10 @@ emuxfs_pread_exact(int fd, void *buf, size_t sz, off_t off)
 	return 0;
 }
 
+/*
+ * Write exactly 'sz' bytes, retrying on EINTR and short transfers.  A zero
+ * return is treated as failure rather than an endless retry.
+ */
 EMUXFS int
 emuxfs_pwrite_exact(int fd, const void *buf, size_t sz, off_t off)
 {
@@ -2091,6 +2215,12 @@ emuxfs_pwrite_exact(int fd, const void *buf, size_t sz, off_t off)
 	return 0;
 }
 
+/*
+ * fsync(2) the directory that contains 'path' relative to 'root_fd'.  The
+ * parent name is extracted in a local buffer because path_pop() mutates its
+ * input.  Root-level paths use ".".  This makes a preceding create, rename,
+ * unlink or metadata write durable in the namespace.
+ */
 EMUXFS int
 emuxfs_fsync_parent(int root_fd, const char *path)
 {
@@ -2121,6 +2251,14 @@ emuxfs_fsync_parent(int root_fd, const char *path)
 	return rc ? 1 : 0;
 }
 
+/*
+ * Parse the common command-line shape.  The sub-command name is discarded;
+ * -f is accepted for mount and ignored elsewhere for compatibility.  When
+ * 'no_mp' is zero the first positional argument is the mount point and the
+ * rest are devices; otherwise every positional argument is a device.  Paths
+ * are copied into fixed PATH_MAX buffers and an empty or overlong path is
+ * rejected.
+ */
 EMUXFS int
 emuxfs_parse_args(int argc, char **argv, int no_mp)
 {

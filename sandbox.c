@@ -20,6 +20,11 @@
 #include "sandbox.h"
 // clang-format on
 
+/*
+ * Wrapper that reports the failing path and permission string.  unveil(2)
+ * takes an absolute path that must already exist; callers are responsible for
+ * supplying one.  Returns 0 on success and 1 after printing a diagnostic.
+ */
 static int
 emuxfs_sandbox_unveil_path_perm(const char *path, const char *permissions)
 {
@@ -32,6 +37,11 @@ emuxfs_sandbox_unveil_path_perm(const char *path, const char *permissions)
 	return 0;
 }
 
+/*
+ * Make the device directory visible for read, write and create operations.
+ * This is the permission set needed by both normal operations and recovery;
+ * nested .muxfs descriptors are opened after this call.
+ */
 EMUXFS int
 emuxfs_sandbox_unveil_path(const char *path)
 {
@@ -53,6 +63,11 @@ emuxfs_sandbox_unveil_mirrors(const struct emuxfs_args *args)
 	return 0;
 }
 
+/*
+ * Remove all remaining filesystem visibility.  After this call the process
+ * cannot unveil additional paths, so it must be the last sandbox setup step
+ * before the command begins its work.
+ */
 EMUXFS int
 emuxfs_sandbox_unveil_lock(void)
 {
@@ -64,6 +79,12 @@ emuxfs_sandbox_unveil_lock(void)
 	return 0;
 }
 
+/*
+ * Apply a pledge(2) promise set.  The strings live in sandbox.h and are
+ * derived from the syscalls reachable by each sub-command.  A failure is
+ * reported and returned to the caller, which must abort rather than continue
+ * unsandboxed.
+ */
 EMUXFS int
 emuxfs_sandbox_pledge(const char *promises)
 {
