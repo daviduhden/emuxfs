@@ -1,20 +1,4 @@
 /* ops.c */
-/*
- * Copyright (c) 2022 Stephen D. Adams <stephen@sdadams.org>
- * Copyright (c) 2026 David Uhden Collado <daviduhden@gmail.com>
- *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
 
 // clang-format off
 #include <sys/mman.h>
@@ -140,8 +124,8 @@ emuxfs_statfs(const char *path, struct statvfs *stvfs)
 			sz = (size_t)(bytes / EMUXFS_BLOCK_SIZE);
 			if (st_agg.f_blocks > sz)
 				st_agg.f_blocks = sz;
-			if (ckd_mul(&bytes, (uint64_t)frsize,
-				(uint64_t)st.f_bfree))
+			if (ckd_mul(
+				&bytes, (uint64_t)frsize, (uint64_t)st.f_bfree))
 				return -EOVERFLOW;
 			sz = (size_t)(bytes / EMUXFS_BLOCK_SIZE);
 			if (st_agg.f_bfree > sz)
@@ -169,8 +153,8 @@ emuxfs_statfs(const char *path, struct statvfs *stvfs)
 				return -EOVERFLOW;
 			sz = (size_t)(bytes / EMUXFS_BLOCK_SIZE);
 			st_agg.f_blocks = sz;
-			if (ckd_mul(&bytes, (uint64_t)frsize,
-				(uint64_t)st.f_bfree))
+			if (ckd_mul(
+				&bytes, (uint64_t)frsize, (uint64_t)st.f_bfree))
 				return -EOVERFLOW;
 			sz = (size_t)(bytes / EMUXFS_BLOCK_SIZE);
 			st_agg.f_bfree = sz;
@@ -277,8 +261,7 @@ emuxfs_open(const char *path, struct fuse_file_info *ffi)
 }
 
 static int
-emuxfs_opendir(
-    const char *path, [[maybe_unused]] struct fuse_file_info *ffi)
+emuxfs_opendir(const char *path, [[maybe_unused]] struct fuse_file_info *ffi)
 {
 	EMUXFS_TRACE("enter");
 	dind		   dev_count, i;
@@ -935,7 +918,8 @@ emuxfs_read_inner(int root_fd, struct emuxfs_op_read_args *args,
 		rc = EMUXFS_EFS;
 		goto out;
 	}
-	/* Do not let a stale errno from a successful open leak into EFS paths. */
+	/* Do not let a stale errno from a successful open leak into EFS paths.
+	 */
 	*err = 0;
 
 	fsz = (size_t)st->st_size;
@@ -1164,8 +1148,8 @@ emuxfs_readdir_inner(dind dev_index, int root_fd,
 		 */
 		if ((off_t)i < args->offset)
 			continue;
-		if (args->fill(args->fill_data, dname, nullptr,
-			(off_t)(i + 1)) != 0)
+		if (args->fill(
+			args->fill_data, dname, nullptr, (off_t)(i + 1)) != 0)
 			break;
 	}
 
@@ -2148,8 +2132,8 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 		if (emuxfs_is_hardlink(&prewr_st)) {
 			if (has_write)
 				goto fail;
-			emuxfs_warn("Unsupported hard link: %lu:/%s\n",
-			    (dind)i, args->path);
+			emuxfs_warn("Unsupported hard link: %lu:/%s\n", (dind)i,
+			    args->path);
 			rc = -EOPNOTSUPP;
 			goto early;
 		}
@@ -2428,8 +2412,8 @@ emuxfs_rename(const char *from, const char *to)
 		if (emuxfs_is_hardlink(&prewr_st)) {
 			if (has_write)
 				goto fail;
-			emuxfs_warn("Unsupported hard link: %lu:/%s\n",
-			    (dind)i, from);
+			emuxfs_warn(
+			    "Unsupported hard link: %lu:/%s\n", (dind)i, from);
 			rc = -EOPNOTSUPP;
 			goto early;
 		}
@@ -2486,7 +2470,7 @@ emuxfs_rename(const char *from, const char *to)
 				if (has_write)
 					goto fail;
 				rc = S_ISDIR(dest_st.st_mode) ? -EISDIR :
-							       -ENOTDIR;
+								-ENOTDIR;
 				goto early;
 			}
 
@@ -2497,9 +2481,9 @@ emuxfs_rename(const char *from, const char *to)
 			 */
 			if (S_ISDIR(dest_st.st_mode)) {
 				struct emuxfs_dir ddir;
-				struct dirent	  *de;
-				size_t		   di;
-				bool		   empty;
+				struct dirent	 *de;
+				size_t		  di;
+				bool		  empty;
 
 				if (emuxfs_pushdir(&ddir, fd, to)) {
 					if (has_write)
@@ -2572,13 +2556,12 @@ emuxfs_rename(const char *from, const char *to)
 		 * tree, so the root now changes by one entry.
 		 */
 		if (dest_exists) {
-			if (renameat(fd, to, dev->muxfs_fd,
-				"rename.dest.tmp"))
+			if (renameat(fd, to, dev->muxfs_fd, "rename.dest.tmp"))
 				goto fail;
 			if (fsync(dev->muxfs_fd))
 				exit(-1);
-			if (fstatat(fd, to, &postwr_st,
-				AT_SYMLINK_NOFOLLOW) != -1)
+			if (fstatat(fd, to, &postwr_st, AT_SYMLINK_NOFOLLOW) !=
+			    -1)
 				goto fail;
 			if (errno != ENOENT)
 				goto fail;
@@ -2622,7 +2605,7 @@ emuxfs_rename(const char *from, const char *to)
 		if (dest_exists) {
 			struct emuxfs_meta   zero_meta;
 			struct emuxfs_assign zero_assign;
-			int		      rmflags;
+			int		     rmflags;
 
 			if (S_ISREG(dest_st.st_mode) &&
 			    ((size_t)dest_st.st_size > EMUXFS_BLOCK_SIZE) &&

@@ -1,20 +1,4 @@
 /* lfile.c */
-/*
- * Copyright (c) 2022 Stephen D. Adams <stephen@sdadams.org>
- * Copyright (c) 2026 David Uhden Collado <daviduhden@gmail.com>
- *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
 
 // clang-format off
 #include <sys/mman.h>
@@ -144,8 +128,8 @@ emuxfs_lfile_open(int *fd_out, int lfile_fd, ino_t ino, int flags)
 	memset(path_buf, 0, PATH_MAX);
 	snprintf(path_buf, PATH_MAX - 1, "%llu", ino);
 
-	if ((fd = openat(lfile_fd, path_buf,
-		 flags | O_NOFOLLOW | O_CLOEXEC)) == -1)
+	if ((fd = openat(lfile_fd, path_buf, flags | O_NOFOLLOW | O_CLOEXEC)) ==
+	    -1)
 		goto out;
 
 	*fd_out = fd;
@@ -158,12 +142,12 @@ EMUXFS int
 emuxfs_lfile_create(int lfile_fd, size_t chksz, ino_t ino, size_t filesz)
 {
 	EMUXFS_TRACE("enter");
-	int	 rc;
-	uint64_t blk_count, blk_count2;
-	size_t	 lfilesz;
-	int	 path_len;
-	char	 path_buf[PATH_MAX];
-	int	 fd;
+	int	    rc;
+	uint64_t    blk_count, blk_count2;
+	size_t	    lfilesz;
+	int	    path_len;
+	char	    path_buf[PATH_MAX];
+	int	    fd;
 	struct stat st;
 
 	rc = 1;
@@ -193,8 +177,8 @@ emuxfs_lfile_create(int lfile_fd, size_t chksz, ino_t ino, size_t filesz)
 			goto out;
 	}
 	if ((fd = openat(lfile_fd, path_buf,
-		 O_RDWR | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC,
-		 0700)) == -1)
+		 O_RDWR | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0700)) ==
+	    -1)
 		goto out;
 	if (ftruncate(fd, (off_t)lfilesz))
 		goto out2;
