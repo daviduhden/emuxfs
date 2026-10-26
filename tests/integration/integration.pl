@@ -104,8 +104,10 @@ sub cleanup {
     }
     return;
 }
+
 END {
     cleanup();
+
     # Even if a helper exits early, a recorded failure must not produce a
     # successful process status.
     exit 1 if defined($failures) && $failures > 0;
@@ -184,7 +186,7 @@ sub state_mounted {
 }
 
 sub mount_array {
-    my $mlog = "$sandbox/mount-fg.log";
+    my $mlog  = "$sandbox/mount-fg.log";
     my $ready = 0;
 
     # Remove any previous log so readiness below cannot be satisfied by a
@@ -316,7 +318,7 @@ sub basic_operations {
     # st_blocks is reported in 512-byte units, not emuxfs blocks.
     {
         my @st = stat("$mp/reg");
-        fail("cannot stat reg") unless @st;
+        fail("cannot stat reg")              unless @st;
         fail("st_blocks has the wrong unit") unless $st[12] == 1;
     }
     return;
