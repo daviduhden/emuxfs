@@ -321,7 +321,8 @@ sub setup_and_populate {
 
 setup_and_populate();
 
-# Corrupt both a file and a nested file on one mirror.
+# Corrupt the same logical file on one mirror, both at the top level and inside
+# a directory, so recovery must repair content and ancestor metadata.
 sub corrupt {
     my ($label) = @_;
     my $evil = sprintf( "evil-%s\n", $label );
@@ -330,6 +331,8 @@ sub corrupt {
     return;
 }
 
+# Recover a destination left with a persistent restore marker.  sync is the
+# explicit recovery path; heal refuses a device whose state is not clean.
 sub recover_and_check {
     my ($tag) = @_;
 

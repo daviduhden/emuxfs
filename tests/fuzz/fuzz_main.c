@@ -23,6 +23,10 @@
 
 int LLVMFuzzerTestOneInput(const uint8_t *, size_t);
 
+/*
+ * Small deterministic xorshift64 generator.  The driver favors reproducibility
+ * over cryptographic quality; the seed is supplied by the caller.
+ */
 static uint64_t
 xs64(uint64_t *s)
 {
@@ -36,6 +40,12 @@ xs64(uint64_t *s)
 	return x;
 }
 
+/*
+ * Standalone mutation loop used when libFuzzer is unavailable.  Half of the
+ * inputs mutate a valid configuration seed, half are random bytes; both paths
+ * call the same parser entry point as the libFuzzer target.  The optional
+ * argument bounds the number of runs.
+ */
 int
 main(int argc, char *argv[])
 {

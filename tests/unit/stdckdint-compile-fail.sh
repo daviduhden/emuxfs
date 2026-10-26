@@ -32,6 +32,8 @@ trap 'rm -rf "$tmp"' EXIT HUP INT TERM
 
 fail=0
 
+# Compile one translation unit and require the compiler to reject it.  The
+# diagnostic text is not inspected; only acceptance versus rejection matters.
 # $1 = label, $2 = translation unit.
 must_reject() {
 	printf '%s\n' "$2" >"$tmp/case.c"
@@ -46,6 +48,8 @@ must_reject() {
 	fi
 }
 
+# Compile one translation unit and require the compiler to accept it.  This
+# guards against a fallback that is too strict for conforming uses.
 # $1 = label, $2 = translation unit.
 must_accept() {
 	printf '%s\n' "$2" >"$tmp/case.c"

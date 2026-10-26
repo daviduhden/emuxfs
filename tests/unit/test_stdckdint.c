@@ -50,6 +50,7 @@ static int failures;
 		}                                                              \
 	} while (0)
 
+/* Low width bits set, for widths up to 64; width 64 uses all bits. */
 static uint64_t
 mask_of(unsigned width)
 {
@@ -61,7 +62,10 @@ struct int_info {
 	unsigned is_signed;
 };
 
-/* Value of a width-bit two's complement pattern in the given type. */
+/*
+ * Interpret one width-bit two's complement pattern according to the described
+ * type.  This is the oracle's operand decoder, not a call into the shim.
+ */
 static i128
 value_of(uint64_t bits, struct int_info in)
 {
@@ -76,7 +80,11 @@ value_of(uint64_t bits, struct int_info in)
 	return (i128)bits;
 }
 
-/* Convert a mathematical value to the result type; returns overflow flag. */
+/*
+ * Convert an exact mathematical result to the destination type and report
+ * whether the conversion changed its value.  The low bits are always stored,
+ * matching the C23 wrapping contract.
+ */
 static int
 convert(i128 res, struct int_info rr, uint64_t *out)
 {
@@ -95,6 +103,11 @@ convert(i128 res, struct int_info rr, uint64_t *out)
 	return overflow;
 }
 
+/*
+ * Independent arbitrary-precision implementation of the C23 checked
+ * arithmetic contract for one operation.  Multiplication is decomposed into
+ * sign and magnitude so a full-width product fits in unsigned __int128.
+ */
 static int
 oracle(int op, struct int_info ra, struct int_info rb, struct int_info rr,
     uint64_t a_bits, uint64_t b_bits, uint64_t *out)
@@ -235,6 +248,10 @@ static const uint64_t vals[] = {
 /* Single-evaluation probes. */
 static unsigned probe_calls;
 
+/*
+ * Side-effecting operand used to verify that each checked-arithmetic macro
+ * evaluates its operands and destination exactly once.
+ */
 static unsigned
 probe(void)
 {
@@ -245,6 +262,11 @@ probe(void)
 static size_t	slots[4];
 static unsigned slot_index;
 
+/*
+ * Hand out distinct destination slots so a test can prove the macro evaluates
+ * its result pointer only once even when several operations share one call
+ * site.
+ */
 static size_t *
 next_slot(void)
 {
@@ -344,6 +366,11 @@ test_hand_written(void)
 	    "ckd_add() must have type bool");
 }
 
+/*
+ * Run the hand-written edge cases, then the exhaustive width/signedness
+ * matrix against the independent oracle.  A failure count is returned as the
+ * process status by the caller.
+ */
 int
 main(void)
 {

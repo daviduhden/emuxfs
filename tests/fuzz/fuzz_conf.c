@@ -19,6 +19,12 @@
 #include "emuxfs.h"
 // clang-format on
 
+/*
+ * One libFuzzer iteration.  The input is written to a private temporary file
+ * because the configuration parser expects a descriptor; the file is removed
+ * on every return path.  A parser rejection is a normal outcome and is not
+ * distinguished from success here.
+ */
 int
 LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {

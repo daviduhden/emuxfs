@@ -65,6 +65,8 @@ my $mounted  = 0;
 my $failures = 0;
 my $daemon_pid;
 
+# Record a test failure without aborting immediately.  The END block converts
+# any recorded failure into a nonzero process status, so all checks still run.
 sub fail {
     my ($msg) = @_;
     print STDERR "FAIL: $msg\n";
@@ -72,6 +74,9 @@ sub fail {
     return;
 }
 
+# Return true only for a path below the private temporary base.  The component
+# after the base may not contain a slash, which keeps recursive deletion scoped
+# to the directory created by this test.
 sub in_sandbox {
     my ($path) = @_;
     return defined($path) && $path =~ m{\A\Q$tmpbase\E/[^/]}x;
@@ -114,12 +119,16 @@ END {
 }
 local $SIG{INT} = local $SIG{TERM} = sub { cleanup(); exit 130 };
 
+# Run a command with list-form system(3) and return the raw wait status.  No
+# shell expands the arguments.
 sub run {
     my (@cmd) = @_;
     system(@cmd);
     return $?;
 }
 
+# Run a command and record a failure when it exits nonzero.  The command's
+# output is left visible so a failing integration case can be diagnosed.
 sub must_run {
     my ( $what, @cmd ) = @_;
     my $st = run(@cmd);
@@ -177,6 +186,8 @@ sub wait_state_clean {
     return 0;
 }
 
+# Read the mounted field from a raw 40-byte state.db record.  Returns -1 if the
+# file is missing or malformed, which callers treat as a failed precondition.
 sub state_mounted {
     my ($dev) = @_;
     my $db = slurp("$dev/.muxfs/state.db");
@@ -185,6 +196,10 @@ sub state_mounted {
     return $f[1];
 }
 
+# Start the FUSE daemon in the foreground as a child, wait until it logs that it
+# entered fuse_loop(), and retain its PID for cleanup.  Readiness is required:
+# returning success before the mount exists would make every later operation
+# fail for an unrelated reason.
 sub mount_array {
     my $mlog  = "$sandbox/mount-fg.log";
     my $ready = 0;
@@ -228,6 +243,9 @@ sub mount_array {
     return 1;
 }
 
+# Unmount, reap the daemon, and wait for both devices to report a clean state.
+# The daemon updates state.db asynchronously, so operations such as audit or a
+# following mount must not start until this wait succeeds.
 sub unmount_array {
     must_run( "umount", "umount", $mp );
     $mounted = 0;

@@ -72,6 +72,8 @@ my $daemon_pid;
 
 my $parent = $$;
 
+# Record a failure and continue running the stress test so diagnostics from all
+# workers are collected; the final exit status reflects any recorded failure.
 sub fail {
     my ($msg) = @_;
     print STDERR "FAIL: $msg\n";
@@ -88,6 +90,7 @@ sub slurp {
     return $data;
 }
 
+# Capture stdout lines and the raw wait status without invoking a shell.
 sub run {
     my (@cmd) = @_;
     system(@cmd);

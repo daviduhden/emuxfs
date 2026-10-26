@@ -46,6 +46,11 @@ static char sandbox[PATH_MAX];
 		}                                                              \
 	} while (0)
 
+/*
+ * Print a checksum mismatch in hexadecimal and count it as a failure.  The
+ * helper exists so digest assertions report both values without duplicating
+ * formatting code in each test.
+ */
 static void
 fail_hex(const char *what, const uint8_t *got, const uint8_t *want, size_t n)
 {
@@ -61,6 +66,11 @@ fail_hex(const char *what, const uint8_t *got, const uint8_t *want, size_t n)
 	++failures;
 }
 
+/*
+ * Build a path inside the per-run sandbox.  The buffer is caller-owned and a
+ * too-long path aborts rather than truncating, because a truncated path could
+ * point outside the sandbox.
+ */
 static char *
 sandbox_path(char *buf, size_t bufsz, const char *name)
 {
@@ -71,6 +81,10 @@ sandbox_path(char *buf, size_t bufsz, const char *name)
 	return buf;
 }
 
+/*
+ * nftw(3) callback used for depth-first sandbox removal.  Returning -1 stops
+ * the walk on the first failure so the caller can report it.
+ */
 static int
 rm_cb(const char *path, [[maybe_unused]] const struct stat *st,
     [[maybe_unused]] int type, [[maybe_unused]] struct FTW *ftw)
@@ -80,6 +94,11 @@ rm_cb(const char *path, [[maybe_unused]] const struct stat *st,
 	return 0;
 }
 
+/*
+ * Create a private mkdtemp(3) sandbox under TMPDIR (or /tmp).  The resolved
+ * path is checked against the temporary base before any test writes to it; a
+ * failed check aborts instead of risking deletion outside the sandbox.
+ */
 static void
 sandbox_create(void)
 {
@@ -110,6 +129,11 @@ sandbox_create(void)
 	strlcpy(sandbox, tmpl, sizeof(sandbox));
 }
 
+/*
+ * Remove the test sandbox recursively without following symlinks.  Cleanup
+ * runs at the end of main; a failure is reported but does not change the test
+ * result, because the sandbox contents are already private test data.
+ */
 static void
 sandbox_destroy(void)
 {
@@ -1009,6 +1033,12 @@ test_dynamic_stack(void)
 		exit(-1);
 }
 
+/*
+ * Run the headless suite.  Global helpers used by production code (syslog,
+ * dynamic stack) are initialized exactly as the real main() does, then each
+ * test allocates everything else beneath the private sandbox.  A nonzero exit
+ * status means setup failed or at least one CHECK failed.
+ */
 int
 main(int, char *[])
 {
