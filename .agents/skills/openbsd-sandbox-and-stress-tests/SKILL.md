@@ -178,6 +178,39 @@ CI does not run `make stability`, the legacy suite or `yamllint`.
 - Leaving a daemon or mount behind after a failed test.  Cleanup must unmount,
   terminate and reap, and re-prove the sandbox before `remove_tree`.
 
+
+## Maintenance & Continuous Learning
+
+When using this skill to modify the repository, complete one post-change review
+before reporting the task done:
+
+1. Re-read this skill and applicable `AGENTS.md` and specialized agent
+   instructions; verify their responsibilities, assumptions and references
+   still match the implementation.
+2. Update this skill when procedures, tools, configuration, paths, validation
+   commands or assumptions changed, or when implementation work produced
+   reusable knowledge. Correct guidance that proved inaccurate and remove
+   obsolete or contradictory instructions. Add only knowledge useful to
+   future work; omit run-specific details.
+3. Review other skills mapped to the changed behavior and update any that are
+   affected. Create a skill only for a distinct durable responsibility that
+   no existing skill covers. Keep specialized agent instructions synchronized
+   with this skill's scope and workflow.
+4. Validate changed references and run `python3
+   scripts/check_agent_maintenance.py --base <base-ref>` (or omit `--base` for
+   working-tree changes). Structural validation does not judge semantic
+   relevance; inspect the diff for that explicitly. If an update is impossible
+   or validation fails, report the task incomplete with the reason.
+5. Include reviewed/updated instruction files, knowledge changed, actual
+   validation results and `PASS`/`FAIL` in the final **Agent & Skills
+   Synchronization** report. A code change without relevant knowledge
+   maintenance is incomplete.
+
+If this task changes agent/skill policy itself, review the complete policy,
+all skill sections, validator and CI integration together. One complete review
+is sufficient; repeat validation only after fixing an error.
+
+
 ## References
 
 - [`SECURITY.md`](../../../SECURITY.md) — threat model, privilege model,

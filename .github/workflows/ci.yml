@@ -2,6 +2,7 @@
 name: CI
 
 on:
+  pull_request:
   workflow_dispatch:
 
 permissions: {}
@@ -22,6 +23,13 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
+
+      - name: Enforce agent and skills maintenance
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python3 scripts/check_agent_maintenance.py --base "$BASE_SHA"
 
       - name: Build and test on OpenBSD 8.0 (amd64)
         uses: vmactions/openbsd-vm@f1ca8bc8ecc5b6ef7218e5b914836e067e1546d3  # v1.4.9

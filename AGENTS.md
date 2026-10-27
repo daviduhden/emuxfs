@@ -131,6 +131,78 @@ is **not** a pass.  The actual CI target is OpenBSD 8.0 amd64 and arm64; see
 * If a required runtime step is skipped for lack of root or `/dev/fuse0`,
   report it as unverified, not as passing.
 
+## Continuous Agent & Skills Maintenance
+
+**Agent instructions and skills are living repository artifacts.**
+
+Agent instructions and skills are living repository artifacts.
+Every repository modification MUST include an agent/skills synchronization step.
+A code change without the corresponding agent knowledge maintenance is considered incomplete.
+Never claim completion when the synchronization step has been skipped or has failed.
+
+**Every repository modification MUST include an agent/skills synchronization
+step.** This applies to code, configuration, dependencies, functionality,
+bug fixes, refactors, tests, workflows, documentation, architecture and
+repository structure, including changes to these instructions and skills.
+
+Before completing any task, inspect the applicable `AGENTS.md` and
+`.agents/skills/**/SKILL.md` files, update the affected instructions, and
+validate their consistency with the implementation. A code change without the
+corresponding agent knowledge maintenance is considered incomplete. Never
+claim completion when the synchronization step has been skipped or has failed.
+
+Procedure (one complete review at the end of the task; repeat validation only
+after correcting a detected error):
+
+1. Inventory instruction files with `rg --files --hidden` for `AGENTS.md`,
+   `*.agent.md` and `SKILL.md` across `.agents`, `.github`, `.claude`,
+   `.cursor` and other tool-specific directories. Inspect tool instruction
+   files such as `.github/copilot-instructions.md` and `*.instructions.md`
+   when present. Do not assume only this list exists.
+2. Map changed paths and behavior to skill Activation sections, then read
+   those skills and their cited canonical docs. Review specialized agent
+   instructions when the repository has them. Also check whether another
+   skill would benefit from reusable knowledge learned during the change.
+3. Update an existing skill when its scope applies and the task changes its
+   procedures, tools, assumptions, commands, paths, validations or reusable
+   knowledge. Create a skill only for a durable, distinct responsibility
+   without a suitable existing skill; avoid duplicating coverage. Update
+   specialized agent instructions when their role, workflow, validation or
+   skill relationships change. Keep the root instructions and specialized
+   instructions aligned.
+4. Remove stale or contradictory guidance and verify every changed local
+   instruction reference and documented path that can be checked
+   automatically. Record semantic review explicitly; structural checks cannot
+   determine whether a knowledge update is relevant.
+5. Run `python3 scripts/check_agent_maintenance.py --base <base-ref>` for a
+   branch/PR comparison (or omit `--base` to include staged and unstaged
+   changes against `HEAD`). The checker enforces a substantive instruction
+   diff when project files change, required policy sections/frontmatter, and
+   resolvable local Markdown links. CI runs it on pull requests. Its pass is
+   structural evidence only; the agent must still review semantic accuracy.
+6. Validate the implementation using the applicable commands in this file
+   and the relevant skill, then inspect the complete diff. If a related skill
+   or instruction cannot be updated, document the concrete reason and report
+   the task incomplete. Do not silently omit synchronization.
+
+### Post-change checklist (mandatory definition of done)
+
+- [ ] Repository changes implemented.
+- [ ] Relevant agent instructions reviewed.
+- [ ] Relevant skills reviewed.
+- [ ] Affected `AGENTS.md` / `SKILL.md` files updated substantively.
+- [ ] Obsolete knowledge removed.
+- [ ] New reusable knowledge incorporated.
+- [ ] Agent and skill references validated.
+- [ ] Automated maintenance checks passed.
+- [ ] Final synchronization status reported.
+
+Every final report must include **Agent & Skills Synchronization** with agents
+and skills reviewed, instruction files updated, knowledge incorporated or
+corrected, validations actually run, and status `PASS` or `FAIL`. If any item
+fails, correct it or state the limitation and report `FAIL`; never claim a
+check that was not run.
+
 ## Working with existing changes
 
 * Run `git status --short` and read the diff before editing.  Do not revert,
