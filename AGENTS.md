@@ -174,7 +174,7 @@ after correcting a detected error):
    instruction reference and documented path that can be checked
    automatically. Record semantic review explicitly; structural checks cannot
    determine whether a knowledge update is relevant.
-5. Run `python3 scripts/check_agent_maintenance.py --base <base-ref>` for a
+5. Run `perl scripts/check-agent-maintenance.pl --base <base-ref>` for a
    branch/PR comparison (or omit `--base` to include staged and unstaged
    changes against `HEAD`). The checker enforces a substantive instruction
    diff when project files change, required policy sections/frontmatter, and

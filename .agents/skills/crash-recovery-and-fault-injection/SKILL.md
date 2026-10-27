@@ -200,7 +200,7 @@ before reporting the task done:
    no existing skill covers. Keep specialized agent instructions synchronized
    with this skill's scope and workflow.
 4. Validate changed references and run `python3
-   scripts/check_agent_maintenance.py --base <base-ref>` (or omit `--base` for
+   scripts/check-agent-maintenance.pl --base <base-ref>` (or omit `--base` for
    working-tree changes). Structural validation does not judge semantic
    relevance; inspect the diff for that explicitly. If an update is impossible
    or validation fails, report the task incomplete with the reason.

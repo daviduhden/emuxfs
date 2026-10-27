@@ -29,7 +29,7 @@ jobs:
         if: github.event_name == 'pull_request'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: python3 scripts/check_agent_maintenance.py --base "$BASE_SHA"
+        run: perl scripts/check-agent-maintenance.pl --base "$BASE_SHA"
 
       - name: Build and test on OpenBSD 8.0 (amd64)
         uses: vmactions/openbsd-vm@f1ca8bc8ecc5b6ef7218e5b914836e067e1546d3  # v1.4.9
