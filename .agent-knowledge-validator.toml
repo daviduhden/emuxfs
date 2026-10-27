@@ -1,0 +1,8 @@
+[validator]
+contract_version = "1.0.0"
+
+[validator.required_headings]
+"AGENTS.md" = ["Post-change checklist (mandatory definition of done)"]
+
+[validator.required_phrases]
+"AGENTS.md" = ["Agent instructions and skills are living repository artifacts.", "Every repository modification MUST include an agent/skills synchronization step.", "A code change without the corresponding agent knowledge maintenance is considered incomplete.", "Never claim completion when the synchronization step has been skipped or has failed."]

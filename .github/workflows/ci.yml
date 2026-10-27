@@ -25,11 +25,20 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Enforce agent and skills maintenance
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run canonical agent knowledge tests
+        run: python3 -m unittest discover -s tests/agent_knowledge_validator -v
+
+      - name: Agent Knowledge Validation
         if: github.event_name == 'pull_request'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: perl scripts/check-agent-maintenance.pl --base "$BASE_SHA"
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: python3 scripts/validate-agent-knowledge.py --scope range --base "$BASE_SHA" --head "$HEAD_SHA"
 
       - name: Build and test on OpenBSD 8.0 (amd64)
         uses: vmactions/openbsd-vm@f1ca8bc8ecc5b6ef7218e5b914836e067e1546d3  # v1.4.9

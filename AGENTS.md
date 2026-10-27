@@ -105,6 +105,12 @@ not a test pass.
 | `make install` | install binary and man page under `/usr/local` | root; system change |
 | `make clean` | remove build products and test binaries | — |
 
+Run `checkmake Makefile` when reviewing Makefile changes, including from the
+repository root with the absolute Makefile path. Keep recipes within checkmake's
+default five-line limit; the bounded fuzz fallback lives in
+`tests/fuzz-smoke.sh`. Keep the no-recipe `faultbuild` alias and required
+`clean` target on explicit standalone `.PHONY` declarations.
+
 `make stability` is the core local sequence, not byte-for-byte CI: CI also
 installs, runs `mandoc` and linkage checks, rebuilds with
 `EMUXFS_DS_MALLOC=1` and performs a final clean rebuild.  A skipped FUSE step
@@ -174,7 +180,7 @@ after correcting a detected error):
    instruction reference and documented path that can be checked
    automatically. Record semantic review explicitly; structural checks cannot
    determine whether a knowledge update is relevant.
-5. Run `perl scripts/check-agent-maintenance.pl --base <base-ref>` for a
+5. Run `python3 scripts/validate-agent-knowledge.py --scope range --base <base-ref> --head HEAD` for a
    branch/PR comparison (or omit `--base` to include staged and unstaged
    changes against `HEAD`). The checker enforces a substantive instruction
    diff when project files change, required policy sections/frontmatter, and
@@ -233,3 +239,24 @@ a reproducible procedure, validations and known failure modes.
 | [`checksum-and-self-healing`](.agents/skills/checksum-and-self-healing/SKILL.md) | editing `chk.c`, `desc.c`, `lfile.c`, readback, audit/heal or restore behavior |
 | [`crash-recovery-and-fault-injection`](.agents/skills/crash-recovery-and-fault-injection/SKILL.md) | editing `state.db` transitions, `sync.c`, fault points, `crash.pl`, or recovery documentation |
 | [`openbsd-sandbox-and-stress-tests`](.agents/skills/openbsd-sandbox-and-stress-tests/SKILL.md) | adding syscalls/subcommands, editing `sandbox.c`/`sandbox.h`, or changing/running integration, stress, CI or test safety rules |
+
+### Shared Agent Knowledge Validation Contract
+
+Use `python3 scripts/validate-agent-knowledge.py --scope worktree` for local
+changes and `python3 -m unittest discover -s tests/agent_knowledge_validator -v`
+for its contract tests. The validator requires Python 3.11+ and Git, uses only
+the Python standard library, and publishes contract version `1.0.0`. All
+adopting repositories share the same CLI, AK001-AK006 identifiers, output
+schema, and exit codes (`0` pass, `1` policy failure, `2` execution/configuration
+error). For a pull request, pass both revisions with
+`--scope range --base BASE_REF --head HEAD_REF`; compare from their merge base.
+
+Read [Agent Knowledge Validation Contract](docs/agent-knowledge-validation.md)
+for the complete rules, JSON schema, optional repository configuration,
+warning semantics, and extension process. AK004 and AK006 can require human
+review; their warnings do not prove or disprove semantic correctness. Keep the
+canonical script and black-box unittest suite byte-identical across adopting
+repositories. Repository-specific requirements belong in the documented TOML
+configuration or a stable `AKX...` extension, never in a private fork of the
+shared rules. The GitHub PR workflow runs the same tests and range command;
+it does not edit files or require secrets.

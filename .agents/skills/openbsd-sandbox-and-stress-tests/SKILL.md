@@ -89,7 +89,7 @@ separation is implemented; do not add one casually.
 | parallel stress | `make paralleltest` | root and `/dev/fuse0`; 32 workers × 20 iterations by default |
 | crash/fault | `make faulttest` | root and `/dev/fuse0`; needs `emuxfs` and `emuxfs-fault`; private sandbox |
 | legacy | `make legacytest` / `perl test.pl` | `test.conf`; uses and recursively deletes the configured paths; checks root and `/dev/fuse0` but still needs disposable paths |
-| fuzz | `make fuzz-smoke` | libFuzzer if available, otherwise standalone mutation driver under ASan |
+| fuzz | `make fuzz-smoke` (`tests/fuzz-smoke.sh`) | libFuzzer if available, otherwise standalone mutation driver under ASan |
 
 Stress-test defaults and overrides: `PARALLEL_WORKERS` (32),
 `PARALLEL_ITERS` (20), `PARALLEL_TIMEOUT` (900 seconds; CI sets 1800 on both
@@ -123,6 +123,8 @@ ownership or timestamps.
    idempotent and never run the parent's cleanup in a forked worker.
 3. Prefer `fork`/`exec` over shell strings when a pid, exit status or path with
    spaces matters.  Reap the daemon.
+   Redirect child output with three-argument `open`; duplicate stderr with
+   `open(STDERR, '>&', \*STDOUT)` so the filehandle duplication is explicit.
 4. Wait for readiness by reading the trace for `entering fuse_loop`; a timeout
    is a failure.  Bound every wait and unmount.
 5. Poll `state.db` until `mounted`, `working` and `restoring` are zero before
@@ -196,8 +198,7 @@ before reporting the task done:
    affected. Create a skill only for a distinct durable responsibility that
    no existing skill covers. Keep specialized agent instructions synchronized
    with this skill's scope and workflow.
-4. Validate changed references and run `python3
-   scripts/check-agent-maintenance.pl --base <base-ref>` (or omit `--base` for
+4. Validate changed references and run `python3 scripts/validate-agent-knowledge.py --scope range --base <base-ref> --head HEAD` (or omit `--base` for
    working-tree changes). Structural validation does not judge semantic
    relevance; inspect the diff for that explicitly. If an update is impossible
    or validation fails, report the task incomplete with the reason.
