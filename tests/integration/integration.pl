@@ -216,8 +216,8 @@ sub mount_array {
         return 0;
     }
     if ( $pid == 0 ) {
-        open( STDOUT, ">", $mlog ) or POSIX::_exit(127);
-        open( STDERR, ">&STDOUT" ) or POSIX::_exit(127);
+        open( STDOUT, ">",  $mlog )    or POSIX::_exit(127);
+        open( STDERR, ">&", \*STDOUT ) or POSIX::_exit(127);
         $ENV{EMUXFS_TRACE} = 1;
         exec( $EMUXFS, "mount", "-f", $mp, $dev_a, $dev_b )
           or POSIX::_exit(127);

@@ -218,8 +218,8 @@ sub fuse_mount_bg {
         return;
     }
     if ( $pid == 0 ) {
-        open( STDOUT, ">", $log ) or POSIX::_exit(127);
-        open( STDERR, ">&STDOUT" ) or POSIX::_exit(127);
+        open( STDOUT, ">",  $log )     or POSIX::_exit(127);
+        open( STDERR, ">&", \*STDOUT ) or POSIX::_exit(127);
         $ENV{EMUXFS_TRACE}       = 1;
         $ENV{EMUXFS_FAULT_POINT} = $point if defined($point);
         exec( $bin, "mount", "-f", $mp, $a, $b )
