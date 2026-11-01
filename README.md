@@ -65,8 +65,8 @@ the bounded parser fuzz run.  The on-disk format is frozen at version 1.
 ## Installation
 
 ```sh
-# make
-# make install
+make
+make install
 ```
 
 Build requirements: OpenBSD, `clang`, C23 and zlib.  The FUSE
@@ -82,7 +82,7 @@ program-facing names are `emuxfs`.
 
 ## Usage
 
-```
+```sh
 emuxfs format [-a checksum_algorithm] directory ...
 emuxfs mount [-f] mount_point directory ...
 emuxfs audit directory ...
