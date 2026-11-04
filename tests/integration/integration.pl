@@ -25,21 +25,17 @@ use Time::HiRes   ();
 my $EMUXFS = $ENV{EMUXFS} // ( getcwd() . "/emuxfs" );
 
 if ( !-x $EMUXFS ) {
-    print STDERR "emuxfs binary not found at $EMUXFS (set EMUXFS=...)\n";
+    print {*STDERR} "emuxfs binary not found at $EMUXFS (set EMUXFS=...)\n";
     exit 2;
 }
 
 if ( $> != 0 ) {
-    print STDERR "SKIP: integration tests require root\n";
+    print {*STDERR} "SKIP: integration tests require root\n";
     exit 0;
 }
 
-# Create the FUSE device node if the image did not populate /dev.
 if ( !-c "/dev/fuse0" ) {
-    system( "sh", "-c", "cd /dev && MAKEDEV fuse >/dev/null 2>&1" );
-}
-if ( !-c "/dev/fuse0" ) {
-    print STDERR "SKIP: /dev/fuse0 is not available\n";
+    print {*STDERR} "SKIP: /dev/fuse0 is not available\n";
     exit 0;
 }
 
@@ -52,7 +48,7 @@ my $sandbox = tempdir( "emuxfs-test.XXXXXX", DIR => $tmpbase, CLEANUP => 0 );
 # Prove we are inside the intended temporary base before doing anything else.
 # \Q...\E quotes the base so regex metacharacters in the path cannot widen it.
 if ( $sandbox !~ m{\A\Q$tmpbase\E/[^/]+\z}x ) {
-    print STDERR "Refusing to run: sandbox '$sandbox' is outside '$tmpbase'\n";
+    print {*STDERR} "Refusing to run: sandbox '$sandbox' is outside '$tmpbase'\n";
     exit 2;
 }
 
@@ -69,7 +65,7 @@ my $daemon_pid;
 # any recorded failure into a nonzero process status, so all checks still run.
 sub fail {
     my ($msg) = @_;
-    print STDERR "FAIL: $msg\n";
+    print {*STDERR} "FAIL: $msg\n";
     $failures++;
     return;
 }
@@ -101,11 +97,11 @@ sub cleanup {
         my $err;
         remove_tree( $sandbox, { safe => 1, error => \$err } );
         if ( $err && @{$err} ) {
-            print STDERR "cleanup: could not remove $sandbox\n";
+            print {*STDERR} "cleanup: could not remove $sandbox\n";
         }
     }
     else {
-        print STDERR "Refusing to remove '" . ( $sandbox // "undef" ) . "'\n";
+        print {*STDERR} "Refusing to remove '" . ( $sandbox // "undef" ) . "'\n";
     }
     return;
 }
@@ -161,7 +157,7 @@ sub slurp {
     open( my $fh, "<", $path ) or return;
     local $/ = undef;
     my $data = <$fh>;
-    close($fh);
+    close($fh) or return;
     return $data;
 }
 
@@ -285,6 +281,7 @@ deep_tree();
 odd_names();
 heal_content();
 heal_missing();
+open_fallback();
 heal_timestamps();
 heal_symlink();
 remount_cycle();
@@ -294,10 +291,12 @@ audit_corruption();
 heal_repairs();
 sync_replacement();
 hard_links_refused();
+intermediate_symlink_safety();
+sync_source_revisions();
 report_version();
 
 if ( $failures != 0 ) {
-    print STDERR "$failures integration test(s) failed\n";
+    print {*STDERR} "$failures integration test(s) failed\n";
     exit 1;
 }
 print "All integration tests passed\n";
@@ -327,7 +326,7 @@ sub basic_operations {
     fail("lnk not mirrored")      unless -l "$dev_a/lnk";
 
     open( my $rfh, ">", "$mp/reg" ) or fail("write reg: $!");
-    print $rfh "foo\n";
+    print {$rfh} "foo\n";
     close($rfh) or fail("write reg: $!");
     fail("read-back content") unless ( slurp("$mp/reg")    // q{} ) eq "foo\n";
     fail("mirror a content")  unless ( slurp("$dev_a/reg") // q{} ) eq "foo\n";
@@ -391,7 +390,7 @@ sub file_operations {
     # Renaming over an existing name must clear the replaced node's
     # metadata/assignment as well as replace the directory entry.
     open( my $rfh, ">", "$mp/reg3" ) or fail("create rename target: $!");
-    print $rfh "replacement\n";
+    print {$rfh} "replacement\n";
     close($rfh) or fail("create rename target: $!");
     must_run( "rename over existing", "mv", "$mp/reg3", "$mp/reg2" );
     fail("rename over existing not mirrored")
@@ -413,7 +412,7 @@ sub modes_mirrored {
     print "== modes are mirrored\n";
     {
         open( my $mfh, ">", "$mp/mode" ) or fail("create mode: $!");
-        print $mfh "mode\n";
+        print {$mfh} "mode\n";
         close($mfh) or fail("create mode: $!");
         must_run( "chmod 0640", "chmod", "0640", "$mp/mode" );
         run("sync");
@@ -431,7 +430,7 @@ sub directory_rename {
     {
         must_run( "mkdir z", "mkdir", "$mp/z" );
         open( my $zfh, ">", "$mp/z/f" ) or fail("create z/f: $!");
-        print $zfh "z\n";
+        print {$zfh} "z\n";
         close($zfh) or fail("create z/f: $!");
         must_run( "mv z z2", "mv", "$mp/z", "$mp/z2" );
         if ( !-f "$dev_a/z2/f" || -e "$dev_a/z" ) {
@@ -528,14 +527,14 @@ sub partial_reads {
                 next;
             };
             binmode($fh);
-            if ( !sysseek( $fh, $off, 0 ) ) {
+            if ( !defined sysseek( $fh, $off, 0 ) ) {
                 fail("seek partial ($off,$len): $!");
-                close($fh);
+                close($fh) or fail("close partial: $!");
                 next;
             }
             my $buf = q{};
             my $got = sysread( $fh, $buf, $len );
-            close($fh);
+            close($fh) or fail("close partial: $!");
             if ( !defined($got) || $got != $len ) {
                 fail( "partial read ($off,$len) returned "
                       . ( defined($got) ? $got : "error" ) );
@@ -565,7 +564,7 @@ sub truncate_grow_small {
     # rebuilds the checksum tree; the bytes past the old end are a hole of
     # zeroes.  Exercise truncate(2) directly rather than a write.
     open( my $sfh, ">", "$mp/grow" ) or fail("create grow: $!");
-    print $sfh "hello";
+    print {$sfh} "hello";
     close($sfh) or fail("create grow: $!");
     if ( !truncate( "$mp/grow", 10_000 ) ) {
         fail("truncate grow: $!");
@@ -629,7 +628,7 @@ sub deep_tree {
         must_run( "deep mkdir $i", "mkdir", $deep );
     }
     open( my $dfh, ">", "$deep/leaf" ) or fail("deep leaf: $!");
-    print $dfh "deep\n";
+    print {$dfh} "deep\n";
     close($dfh) or fail("deep leaf: $!");
     fail("deep leaf content") unless ( slurp("$deep/leaf") // q{} ) eq "deep\n";
     return;
@@ -644,7 +643,7 @@ sub odd_names {
             fail("create '$name': $!");
             next;
         };
-        print $nfh "$name\n";
+        print {$nfh} "$name\n";
         close($nfh) or fail("create '$name': $!");
         my $got = slurp("$mp/$name");
         fail("read '$name'") unless defined($got) && $got eq "$name\n";
@@ -655,11 +654,11 @@ sub odd_names {
 sub heal_content {
     print "== self-healing on read (content corruption)\n";
     open( my $hfh, ">", "$mp/healme" ) or fail("create healme: $!");
-    print $hfh "good\n";
+    print {$hfh} "good\n";
     close($hfh) or fail("create healme: $!");
     run("sync");
     open( my $efh, ">", "$dev_a/healme" ) or fail("corrupt mirror a: $!");
-    print $efh "evil\n";
+    print {$efh} "evil\n";
     close($efh) or fail("corrupt mirror a: $!");
     fail("self-heal read") unless ( slurp("$mp/healme") // q{} ) eq "good\n";
     fail("self-heal restored a")
@@ -670,7 +669,7 @@ sub heal_content {
 sub heal_missing {
     print "== self-healing on read (missing node)\n";
     open( my $gfh, ">", "$mp/gone" ) or fail("create gone: $!");
-    print $gfh "gone\n";
+    print {$gfh} "gone\n";
     close($gfh) or fail("create gone: $!");
     run("sync");
     must_run( "remove mirror a copy", "rm", "-f", "$dev_a/gone" );
@@ -679,11 +678,60 @@ sub heal_missing {
     return;
 }
 
+sub open_fallback {
+    print "== open and opendir fallback to an intact mirror\n";
+    must_run( "create fallback directory", "mkdir", "$mp/open-dir" );
+    must_run( "remove first directory copy", "rmdir", "$dev_a/open-dir" );
+    if ( opendir( my $dh, "$mp/open-dir" ) ) {
+        closedir($dh) or fail("close fallback directory: $!");
+    }
+    else {
+        fail("opendir fallback: $!");
+    }
+    fail("directory not restored") unless -d "$dev_a/open-dir";
+    if ( open( my $fh, "<", "$mp/absent-on-all" ) ) {
+        close($fh);
+        fail("all-missing open succeeded");
+    }
+    fail("all-missing open created a node")
+      if -e "$dev_a/absent-on-all" || -e "$dev_b/absent-on-all";
+    # Permit traversal of the private test sandbox by the unprivileged probe.
+    chmod( 0755, $sandbox ) or die "chmod test sandbox: $!";
+    must_run( "write-only mode", "chmod", "222", "$mp/gone" );
+    my $pid = fork();
+    die "fork open permission probe: $!" unless defined $pid;
+    if ( $pid == 0 ) {
+        $) = "65534 65534";
+        $> = 65534;
+        POSIX::_exit(2) unless $> == 65534;
+        my $ok = open( my $fh, ">>", "$mp/gone" );
+        close($fh) if $ok;
+        POSIX::_exit( $ok ? 0 : 1 );
+    }
+    waitpid( $pid, 0 );
+    fail("unprivileged write-only open") if $? != 0;
+    must_run( "deny gone access", "chmod", "000", "$mp/gone" );
+    $pid = fork();
+    die "fork denied open probe: $!" unless defined $pid;
+    if ( $pid == 0 ) {
+        $) = "65534 65534";
+        $> = 65534;
+        POSIX::_exit(2) unless $> == 65534;
+        my $ok = open( my $fh, "<", "$mp/gone" );
+        close($fh) if $ok;
+        POSIX::_exit( $ok ? 1 : 0 );
+    }
+    waitpid( $pid, 0 );
+    fail("permission-denied open unexpectedly succeeded") if $? != 0;
+    must_run( "restore gone mode", "chmod", "600", "$mp/gone" );
+    return;
+}
+
 sub heal_timestamps {
     print "== self-healing reproduces the source timestamps\n";
     {
         open( my $sfh, ">", "$mp/stamp" ) or fail("create stamp: $!");
-        print $sfh "stamped\n";
+        print {$sfh} "stamped\n";
         close($sfh) or fail("create stamp: $!");
         run("sync");
         must_run( "set stamp time",
@@ -692,7 +740,7 @@ sub heal_timestamps {
         my @ref = stat("$dev_b/stamp");
         fail("cannot stat stamp on b") unless @ref;
         open( my $cfh, ">", "$dev_a/stamp" ) or fail("corrupt stamp: $!");
-        print $cfh "evil\n";
+        print {$cfh} "evil\n";
         close($cfh) or fail("corrupt stamp: $!");
         fail("stamp self-heal")
           unless ( slurp("$mp/stamp") // q{} ) eq "stamped\n";
@@ -724,7 +772,7 @@ sub remount_cycle {
     fail("content across remount")
       unless ( slurp("$mp/healme") // q{} ) eq "good\n";
     open( my $pfh, ">", "$mp/post" ) or fail("write after remount: $!");
-    print $pfh "post-remount\n";
+    print {$pfh} "post-remount\n";
     close($pfh) or fail("write after remount: $!");
     fail("post mirrored") unless -f "$dev_b/post";
     unmount_array();
@@ -781,7 +829,7 @@ sub audit_read_only {
 sub audit_corruption {
     print "== audit detects corruption\n";
     open( my $cfh, ">>", "$dev_a/post" ) or fail("corrupt post: $!");
-    print $cfh "corrupt\n";
+    print {$cfh} "corrupt\n";
     close($cfh) or fail("corrupt post: $!");
     my ( $audit_lines, $audit_st ) =
       capture( $EMUXFS, "audit", $dev_a, $dev_b );
@@ -854,5 +902,92 @@ sub hard_links_refused {
 sub report_version {
     print "== version\n";
     must_run( "version", $EMUXFS, "version" );
+    return;
+}
+
+# Use fresh arrays so a refused repair cannot affect the main regression cases.
+sub intermediate_symlink_safety {
+    print "== intermediate symlinks stay confined and preserve unrelated data\n";
+    my @saved = ( $dev_a, $dev_b, $mp );
+    $dev_a = "$sandbox/path-a";
+    $dev_b = "$sandbox/path-b";
+    $mp = "$sandbox/path-mp";
+    make_path( $dev_a, $dev_b, $mp );
+    must_run( "format path arrays", $EMUXFS, "format", "-a", "sha1",
+        $dev_a, $dev_b ) or exit 1;
+    mount_array() or exit 1;
+    must_run( "create path directories", "mkdir", "$mp/branch-outside",
+        "$mp/branch-inside" );
+    must_run( "create unrelated directory", "mkdir", "$mp/unrelated" );
+    for my $pair ( [ "$mp/branch-outside/child", "intended\n" ],
+        [ "$mp/branch-inside/child", "intended\n" ],
+        [ "$mp/unrelated/child", "sentinel\n" ],
+        [ "$work/child", "outside\n" ] ) {
+        open( my $fh, ">", $pair->[0] ) or die "create path fixture: $!";
+        print {$fh} $pair->[1];
+        close($fh) or die "close path fixture: $!";
+    }
+    run("sync");
+    # Test both an invisible directory and another unveiled mirror directory.
+    for my $case ( [ "branch-outside", $work ],
+        [ "branch-inside", "$dev_b/unrelated" ] ) {
+        my ( $branch, $target ) = @{$case};
+        must_run( "stash real directory", "mv", "$dev_a/$branch",
+            "$sandbox/stash-$branch" );
+        must_run( "replace intermediate component", "ln", "-s", $target,
+            "$dev_a/$branch" );
+        my $got = slurp("$mp/$branch/child");
+        fail("intermediate symlink exposed unrelated content")
+          if defined($got) && $got ne "intended\n";
+        # A refused write is acceptable; redirection into either sentinel is
+        # not. Append avoids relying on a separate truncate callback.
+        if ( open( my $fh, ">>", "$mp/$branch/child" ) ) {
+            print {$fh} "probe\n" or fail("write path probe: $!");
+            close($fh) or fail("close path probe: $!");
+        }
+        fail("outside sentinel changed")
+          unless ( slurp("$work/child") // q{} ) eq "outside\n";
+        fail("other mirror sentinel changed")
+          unless ( slurp("$dev_b/unrelated/child") // q{} ) eq "sentinel\n";
+
+    }
+    unmount_array();
+    ( $dev_a, $dev_b, $mp ) = @saved;
+    return;
+}
+
+# Diverge one source through ordinary FUSE operations, never by editing state.
+sub sync_source_revisions {
+    print "== sync rejects sources at different revisions\n";
+    my @saved = ( $dev_a, $dev_b, $mp );
+    my $base = "$sandbox/source-revisions";
+    my ( $older, $newer, $peer, $dest ) =
+      map { "$base/$_" } qw(older newer peer dest);
+    make_path( $older, $newer, $peer, $dest, "$base/mp" );
+    must_run( "format revision fixture", $EMUXFS, "format", "-a", "md5",
+        $older, $newer, $peer, $dest ) or return;
+    my @private = qw(muxfs.conf state.db meta.db assign.db);
+    my %before = map { $_ => slurp("$dest/.muxfs/$_") } @private;
+    ( $dev_a, $dev_b, $mp ) = ( $newer, $peer, "$base/mp" );
+    if ( !mount_array() ) {
+        exit 1; # Keep current globals for safe daemon cleanup.
+    }
+    must_run( "advance source revision", "touch", "$mp/new-revision" );
+    unmount_array();
+    ( $dev_a, $dev_b, $mp ) = @saved;
+    fail("sync accepted different source revisions")
+      if run( $EMUXFS, "sync", $dest, $older, $newer ) == 0;
+    for my $name (@private) {
+        fail("rejected sync changed destination $name")
+          unless defined( $before{$name} ) &&
+          ( slurp("$dest/.muxfs/$name") // q{} ) eq $before{$name};
+    }
+    fail("rejected sync created destination content") if -e "$dest/new-revision";
+    must_run( "sync authoritative source", $EMUXFS, "sync", $dest, $newer );
+    fail("single-source sync lost content") unless -f "$dest/new-revision";
+    my ( $audit_out, $audit_status ) =
+      capture( $EMUXFS, "audit", $dest, $newer );
+    fail("authoritative recovery audit failed") if $audit_status != 0;
+    fail("authoritative recovery audit reported corruption") if @{$audit_out};
     return;
 }

@@ -177,3 +177,16 @@ is sufficient; repeat validation only after fixing an error.
   semantics.
 - `emuxfs.h`, `conf.c`, `dev.c`, `format.c`, `lfile.c`,
   `tests/unit/test_core.c`.
+
+## Source revision and fatal storage diagnostics
+
+`sync` checks `seq` and `seq_zero_time` across its sources before opening the
+destination; mismatched sources require selecting one authoritative source.
+Do not include the destination in that preflight. Equal revisions alone do
+not establish content agreement. The integration suite must exercise
+rejection without modifying destination bytes; it needs OpenBSD, root and
+FUSE. The check changes acceptance, not version 1 serialization.
+The disabled restore optimization was removed; do not bypass readback merely
+because directory patch checksums match. Fatal storage errors can use
+`emuxfs_fatal_errno`: it logs the saved error and device index and exits without
+clearing dirty transaction markers. Supply only relevant relative paths.

@@ -117,9 +117,8 @@ and **arm64** (`arch: aarch64`): build
 with clang and C23, the strict warning build (`make check`), the unit tests,
 the FUSE integration tests, the fault-injection tests, install, `mandoc`, and a
 clean rebuild.  No external FUSE package is needed
-because the native implementation is part of the base system.  On an
-architecture where `/dev/fuse0` is unavailable the FUSE integration test is
-skipped rather than failed.
+because the native implementation is part of the base system.  Both jobs invoke `scripts/ci-openbsd.pl`, which requires root and
+`/dev/fuse0`; absent prerequisites fail CI rather than omitting runtime tests.
 
 ## Version 1 guarantee and the decision on version 2
 
@@ -146,3 +145,13 @@ OpenBSD file flags, or a per-inode generation.  A v2 array would be
 identified by `format_version` in `muxfs.conf` and by a magic in `state.db`;
 migration would be an explicit command that refuses dirty or ambiguous
 arrays.  See ON_DISK_FORMAT.md for the proposed byte layout.
+
+## Sync source revision preflight
+
+When `sync destination source ...` has multiple sources, all sources must
+have equal `seq` and `seq_zero_time` before the destination is opened or
+formatted. The destination is excluded from this comparison because recovering
+its different revision is the purpose of sync. A mismatch fails with a request
+to select one authoritative source. Equal sequence numbers do not prove equal
+content; normal checksum validation still applies to every selected copy.
+This changes command acceptance only and preserves all version 1 bytes.

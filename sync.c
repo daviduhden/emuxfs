@@ -91,6 +91,14 @@ emuxfs_sync_main(int argc, char *argv[])
 				emuxfs_final();
 				exit(1);
 			}
+			/* Fallback sources must describe the same logical revision. */
+			if ((tmp->state.seq != sdev->state.seq) ||
+			    (tmp->conf.seq_zero_time != sdev->conf.seq_zero_time)) {
+				dprintf(2, "Error: sync source sequence mismatch; "
+				    "choose one authoritative source.\n");
+				emuxfs_final();
+				exit(1);
+			}
 		}
 	}
 

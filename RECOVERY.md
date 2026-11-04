@@ -239,3 +239,13 @@ power-loss safety.  Rename has three points (`rename/after_vacate`,
 `rename/after_dest` and `rename/after`); a crash between them can leave the
 source in `.muxfs/rename.tmp` and a replaced destination in
 `.muxfs/rename.dest.tmp`, both of which `sync` removes while rebuilding.
+
+## Sync source revision preflight
+
+When `sync destination source ...` has multiple sources, all sources must
+have equal `seq` and `seq_zero_time` before the destination is opened or
+formatted. The destination is excluded from this comparison because recovering
+its different revision is the purpose of sync. A mismatch fails with a request
+to select one authoritative source. Equal sequence numbers do not prove equal
+content; normal checksum validation still applies to every selected copy.
+This changes command acceptance only and preserves all version 1 bytes.

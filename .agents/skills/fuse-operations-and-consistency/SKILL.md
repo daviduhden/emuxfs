@@ -135,7 +135,11 @@ an overflow check.
 - **FUSE (root and `/dev/fuse0`):** `make integration` and
   `make paralleltest`.  Integration covers boundary sizes, unaligned writes,
   partial reads, truncate grow/shrink, rename over an existing name,
-  `st_blocks`, hard links, remounts and audit read-only behavior.
+  `st_blocks`, hard links, remounts and audit read-only behavior. It also
+  probes missing-directory open fallback, all-missing opens, unprivileged
+  write-only/denied opens and intermediate-symlink redirection with sentinels
+  outside unveil and inside another mirror. Path-safety probes use fresh arrays
+  so a refused repair cannot contaminate the preceding cases.
 - **Crash ordering:** if you change the transaction, run `make faulttest` and
   update `RECOVERY.md` and `TESTING.md`.
 
@@ -153,10 +157,16 @@ an overflow check.
   permission errors and corruption.
 - Ignoring the `readdir` cookie or the fill callback's full-buffer result;
   this truncates or repeats directory listings.
-- Assuming `emuxfs_open`/`opendir`/`access` see every mirror; they consult the
-  first usable device.  Do not build consistency guarantees on them.
+- `open` and `opendir` share a shallow metadata-validated mirror fallback.
+  Missing nodes, I/O errors, symlinks and invalid directory components try
+  another device; permission errors stop immediately to avoid bypassing a
+  mirror access check. Repairs are queued only after a valid copy is found.
+  Do not replace shallow validation with a full large-file hash on each open.
+  `access` still consults the first usable device.
 - Adding per-open state or thread-local credentials; the design is
   single-threaded and path-based.
+- Use `emuxfs_fatal_errno` with the saved syscall errno for fatal descriptor
+  failures; report operation, device and relative path before exiting.
 - Using `fsync` failure as a normal error return.  The existing contract is
   that a pinned-descriptor fsync failure exits; user-visible syscall errors
   return a negated errno or degrade.

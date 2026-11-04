@@ -206,3 +206,21 @@ propagating an error to the caller.
   returns `EOPNOTSUPP`; whether `flock(2)` reaches it depends on libfuse) and
   no hard links.
 * Timestamps are not checksummed, so timestamp corruption is not detected.
+
+## Open fallback and remaining path-resolution boundary
+
+`open` and `opendir` check access with the caller's effective credentials and
+validate metadata and the inode assignment with shallow readback as root.
+They try another mirror for missing entries or storage/structural errors;
+permission denials stop immediately. A valid copy is required before queuing
+repairs. Shallow validation avoids reading file content for write-only opens
+and avoids hashing a large file twice; content is checked by the read path.
+
+`O_NOFOLLOW` constrains the final path component. Paths relative to pinned
+roots can still resolve intermediate symlinks; the textual sanitizer alone
+does not prevent that. `unveil` bounds visibility to the array directories.
+Direct concurrent modification of backing directories is unsupported; the
+single-threaded FUSE loop does not serialize external tools. Tests inject
+corruption only in disposable arrays.
+A component-by-component resolver would need OpenBSD regression evidence and
+careful integration with restore before claiming stronger confinement.

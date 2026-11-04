@@ -246,13 +246,57 @@ emuxfs_fsync(const char *, int, struct fuse_file_info *)
 	return 0;
 }
 
+/*
+ * Check access as the caller, then validate metadata as the daemon.  Shallow
+ * readback avoids hashing an entire large file merely to open it.  Permission
+ * denials are authoritative: fallback must not bypass a mirror's access check.
+ * Remember damage until a valid copy is found; all-missing opens do not repair.
+ */
+static int
+emuxfs_open_mirrors(const char *path, int oflags)
+{
+	struct emuxfs_dev *dev;
+	bool damaged[EMUXFS_DEV_COUNT_MAX] = { false };
+	dind count, i, j;
+	int fd, err = EIO;
+
+	count = emuxfs_dev_count();
+	for (i = 0; i < count; ++i) {
+		if (emuxfs_dev_get(&dev, i, false))
+			continue;
+		emuxfs_eids_set();
+		fd = openat(dev->root_fd, path, oflags);
+		err = errno;
+		emuxfs_eids_reset();
+		if (fd == -1) {
+			if ((err != ENOENT) && (err != EIO) &&
+			    (err != ELOOP) && (err != ENOTDIR))
+				return -err;
+			damaged[i] = true;
+			continue;
+		}
+		if (close(fd))
+			emuxfs_fatal_errno("close open", i, path, errno);
+		if (emuxfs_readback(i, path, true, nullptr)) {
+			damaged[i] = true;
+			err = EIO;
+			continue;
+		}
+		for (j = 0; j < count; ++j) {
+			if (damaged[j] && emuxfs_state_restore_push_back(j, path))
+				exit(-1);
+		}
+		(void)emuxfs_restore_now();
+		return 0;
+	}
+	return -err;
+}
+
 static int
 emuxfs_open(const char *path, struct fuse_file_info *ffi)
 {
 	EMUXFS_TRACE("enter");
-	dind		   dev_count, i;
-	struct emuxfs_dev *dev;
-	int		   fd, err, oflags;
+	int oflags;
 
 	emuxfs_wrbuf_flush();
 
@@ -280,31 +324,14 @@ emuxfs_open(const char *path, struct fuse_file_info *ffi)
 		oflags &= ~O_TRUNC;
 	}
 
-	if ((dev_count = emuxfs_dev_count()) == 0)
-		return -EIO;
-	for (i = 0; i < dev_count; ++i) {
-		if (emuxfs_dev_get(&dev, i, 0))
-			continue;
-		emuxfs_eids_set();
-		fd = openat(dev->root_fd, path, oflags);
-		err = errno;
-		emuxfs_eids_reset();
-		if (fd == -1)
-			return -err;
-		if (close(fd))
-			exit(-1);
-		return 0;
-	}
-	return -EIO;
+	return emuxfs_open_mirrors(path, oflags);
 }
 
 static int
 emuxfs_opendir(const char *path, [[maybe_unused]] struct fuse_file_info *ffi)
 {
 	EMUXFS_TRACE("enter");
-	dind		   dev_count, i;
-	struct emuxfs_dev *dev;
-	int		   fd, err, oflags;
+	int oflags;
 
 	emuxfs_wrbuf_flush();
 
@@ -318,22 +345,7 @@ emuxfs_opendir(const char *path, [[maybe_unused]] struct fuse_file_info *ffi)
 	 */
 	oflags = O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC;
 
-	if ((dev_count = emuxfs_dev_count()) == 0)
-		return -EIO;
-	for (i = 0; i < dev_count; ++i) {
-		if (emuxfs_dev_get(&dev, i, 0))
-			continue;
-		emuxfs_eids_set();
-		fd = openat(dev->root_fd, path, oflags);
-		err = errno;
-		emuxfs_eids_reset();
-		if (fd == -1)
-			return -err;
-		if (close(fd))
-			exit(-1);
-		return 0;
-	}
-	return -EIO;
+	return emuxfs_open_mirrors(path, oflags);
 }
 
 static int
@@ -2341,12 +2353,14 @@ emuxfs_op_update(struct emuxfs_op_update_args *args)
 				 O_RDONLY | O_NOFOLLOW | O_CLOEXEC)) == -1)
 				goto fail;
 			if (fsync(subfd))
-				exit(-1);
+				emuxfs_fatal_errno(
+				    "fsync update content", i, args->path, errno);
 			if (close(subfd))
 				exit(-1);
 		}
 		if (fsync(dev->meta_fd))
-			exit(-1);
+			emuxfs_fatal_errno(
+			    "fsync update metadata", i, args->path, errno);
 		/*
 		 * The fault point is after both the content and the metadata
 		 * are durable, matching its name and TESTING.md.  A crash here

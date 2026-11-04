@@ -131,9 +131,14 @@ is the explicit recovery path: it reopens
 even if it is marked as having an interrupted operation, rebuilds it from
 .Ar source ,
 and clears the interrupted-operation state so the array can be mounted again.
-If a restoration fails or two valid copies disagree,
+When several sources are supplied, they must have the same sequence and
+sequence epoch before reconstruction begins.
+The first source defines the recovery history; later sources provide fallback
+copies which must satisfy the checksum validation of that history.
+If a restoration fails,
 .Cm sync
 exits non-zero instead of committing a clean state record.
+To resolve divergent histories, supply only the authoritative source.
 .It Cm version
 Display the program version and exit.
 .El

@@ -1423,16 +1423,13 @@ emuxfs_restore_possible_inner(bool *is_delete_out, dind ddev_index,
 	EMUXFS_TRACE("enter");
 	int		   rc, err;
 	bool		   is_delete, exists;
-	struct emuxfs_meta smeta, spmeta, dpmeta;
+	struct emuxfs_meta smeta, spmeta;
 	struct emuxfs_dir  ddir;
 	int		   dpfd;
-	struct stat	   sst, spst, dst, dpst;
-	ino_t		   sino, spino, dpino;
+	struct stat	   sst, spst, dst;
+	ino_t		   sino, spino;
 	uint8_t		   as_is_sum[EMUXFS_CHKSZ_MAX];
 	uint8_t		   with_patch_sum[EMUXFS_CHKSZ_MAX];
-	uint8_t		   as_is_meta_sum[EMUXFS_CHKSZ_MAX];
-	uint64_t	   dpeno;
-	struct emuxfs_desc dpdesc;
 
 	rc = 1;
 
@@ -1532,26 +1529,6 @@ emuxfs_restore_possible_inner(bool *is_delete_out, dind ddev_index,
 			exit(-1);
 		rc = 2;
 		goto out3;
-	}
-	/*
-	 * The unnecessary restore check will remain disabled until readback
-	 * depth is implemented.
-	 */
-	if (0 && bcmp(with_patch_sum, as_is_sum, chksz) == 0) {
-		if (fstatat(ddev->root_fd, ppath, &dpst, AT_SYMLINK_NOFOLLOW))
-			goto out3;
-		dpino = dpst.st_ino;
-		if (emuxfs_meta_read(&dpmeta, ddev_index, dpino))
-			goto out3;
-		dpeno = dpmeta.header.eno;
-		if (emuxfs_desc_init_from_stat(&dpdesc, &dpst, dpeno))
-			goto out3;
-		memcpy(dpdesc.content_checksum, as_is_sum, chksz);
-		emuxfs_desc_chk_meta(as_is_meta_sum, &dpdesc, alg);
-		if (bcmp(as_is_meta_sum, &spmeta.checksums[0], chksz) == 0) {
-			rc = 4;
-			goto out3;
-		}
 	}
 
 	if (is_delete_out != nullptr)

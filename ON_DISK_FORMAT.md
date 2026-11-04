@@ -464,3 +464,13 @@ refusal of dirty/degraded/ambiguous input; refusal of a mixed array; and a
 byte-for-byte check that v1 arrays are untouched by `mount`, `audit` and
 `sync` when no migration is requested.  No migration command, v2 magic or
 generation field exists yet.
+
+## Sync source revision preflight
+
+When `sync destination source ...` has multiple sources, all sources must
+have equal `seq` and `seq_zero_time` before the destination is opened or
+formatted. The destination is excluded from this comparison because recovering
+its different revision is the purpose of sync. A mismatch fails with a request
+to select one authoritative source. Equal sequence numbers do not prove equal
+content; normal checksum validation still applies to every selected copy.
+This changes command acceptance only and preserves all version 1 bytes.

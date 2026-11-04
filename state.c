@@ -430,6 +430,20 @@ emuxfs_alert(const char *msg, ...)
 	va_end(va_args);
 }
 
+/* Do not clear transaction markers after an uncertain storage failure. */
+[[noreturn]] EMUXFS void
+emuxfs_fatal_errno(const char *op, dind index, const char *path, int error)
+{
+	char detail[256];
+
+	strlcpy(detail, strerror(error), sizeof(detail));
+	emuxfs_alert("%s: device %lu%s%s: %s", op, (unsigned long)index,
+	    path ? ": " : "", path ? path : "", detail);
+	dprintf(2, "Error: %s: device %lu%s%s: %s\n", op,
+	    (unsigned long)index, path ? ": " : "", path ? path : "", detail);
+	exit(-1);
+}
+
 EMUXFS void
 emuxfs_trace(const char *file, int line, const char *fmt, ...)
 {

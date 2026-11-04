@@ -299,6 +299,10 @@ EMUXFS void emuxfs_warn(const char *, ...)
 EMUXFS void emuxfs_alert(const char *, ...)
     __attribute__((__format__(printf, 1, 2)));
 
+/* Fatal I/O failures retain dirty state for explicit recovery. */
+[[noreturn]] EMUXFS void emuxfs_fatal_errno(
+    const char *, dind, const char *, int);
+
 /*
  * Debug tracing.  It is always compiled in and is inert unless enabled at run
  * time: setting EMUXFS_TRACE makes traces go to the standard error, and

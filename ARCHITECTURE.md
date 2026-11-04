@@ -210,3 +210,11 @@ automatic repair would need to choose a source: `heal` then refuses.  A large
 file read verifies only the checksum-tree leaves covering the requested
 range, so corruption elsewhere in that file is found by `audit`, `heal`, a
 restore, or a read of the affected range.
+
+### Shared open checks
+
+The `open` and `opendir` callbacks use `emuxfs_open_mirrors` in `ops.c`.
+This small shared helper performs caller access checks, shallow metadata and
+assignment validation, mirror fallback and deferred repair selection. It does
+not hash content or retain per-open descriptors. Permission denials stop the
+search; missing copies are repaired only after another copy validates.
