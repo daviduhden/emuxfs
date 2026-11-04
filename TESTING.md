@@ -201,7 +201,10 @@ libFuzzer the entry point is run directly under `-fsanitize=fuzzer,address`.
 OpenBSD's base clang has no libFuzzer, so there the bounded run uses the
 standalone mutation driver `tests/fuzz/fuzz_main.c` (half documented-seed
 mutations, half random bytes), built with AddressSanitizer when available and
-without it otherwise.  The step only reports `SKIP` if neither can be built.
+without it otherwise. Toolchain capability is probed separately. Every core
+source is recompiled into a private temporary directory with the selected
+instrumentation; normal objects are never reused. A source or link failure
+is an error, including failure to build the standalone driver.
 Fuzzing is never enabled by the default build.
 
 ## One-command validation
@@ -231,8 +234,10 @@ warnings (`make check`, `-Werror`), unit tests (`make test` and
 FUSE integration tests, the parallel-load stress test,
 fault-injection tests, bounded parser fuzzing, install, manual page
 (`mandoc -T lint`), linkage, a fallback-allocator rebuild and unit test, and a
-final clean rebuild.  The FUSE steps are skipped (not failed) where
-`/dev/fuse0` is unavailable.  No external FUSE package is needed because the
+final clean rebuild.  The common `scripts/ci-openbsd.pl` requires root and `/dev/fuse0` and fails
+when either prerequisite is missing. Local suites retain explicit skips,
+which do not establish stability. Device nodes are prepared only by the
+disposable VM workflow, never by integration or stress tests.  No external FUSE package is needed because the
 FUSE implementation is part of the OpenBSD base system.
 
 CI does not run `make stability`, the legacy suite or `yamllint`; those are
@@ -245,3 +250,46 @@ run above: the compiler, the unit tests, the FUSE suites and the fault suite
 are the point at which behaviour is first observed.  A green run on both
 architectures is the minimum bar for merging; a claim of stability additionally
 requires `make stability` to pass locally.
+
+## Optional performance measurements
+
+Prepare a disposable OpenBSD array using the existing test safety policy.
+With that array already mounted, run:
+
+```sh
+perl tests/benchmark.pl /path/to/disposable/mount 2 [daemon_pid]
+```
+
+Replace the mount path and mirror count; omit the optional PID or supply the
+actual daemon PID (do not pass the bracketed notation literally). The script
+creates and removes only its private `emuxfs-bench.*` directory. It does not
+format, mount, heal or sync. It verifies file contents and reports CSV median
+and maximum wall latency, throughput, mirror count, and optionally the maximum
+**sampled** daemon RSS in KiB, not the OS lifetime peak. Each row includes RSS
+observed up to that point. Timing includes close, but does not add a client
+fsync; this measures the filesystem's normal transaction policy.
+
+Workloads cover 0/1-byte files, the 4096-byte boundary, larger files, a depth
+of 64 and a width of 256. Repeat on separately prepared arrays with 1, 2 and
+3 mirrors and record OS/compiler, commit, hardware, backing filesystem, cache
+conditions and complete output. Use multiple repetitions and compare like
+configurations. No reference performance numbers are claimed without runtime
+measurements. Repair latency can be measured separately around the existing
+corruption/heal suite in its disposable sandbox; this benchmark deliberately
+does not introduce backing-store corruption.
+
+Opening a file or directory now checks metadata and tries later mirrors after
+missing/corrupt copies; it does not hash the entire file at open time. Test
+missing-first-mirror and permission cases through the integration suite.
+Multiple `sync` sources must agree on sequence and epoch before the destination
+is modified; differing histories require one explicit authoritative source.
+
+## Perl tooling checks
+
+`perl scripts/ci-openbsd.pl` runs the common VM sequence and requires root
+and FUSE. `python3 tests/ci-perl-check.py` exercises orchestration using
+temporary mock commands and installed-path substitutions on the development
+host; it does not install or mount anything. The Perl::Critic pass inventory
+and remaining diagnostic justifications are in
+[the Perl audit report](docs/perlcritic-report.md). No new Perl runtime modules
+are required by the CI conversion.

@@ -1,39 +1,61 @@
 #!/bin/sh
 
-# Run the bounded fuzz smoke test using libFuzzer when available, then fall
-# back to the standalone mutation driver with optional AddressSanitizer.
-# Compiler flags and the object list arrive as Make variables and must split
-# into separate command arguments, matching the original Make recipe.
+# Compile every parser dependency with the selected instrumentation. Probe
+# toolchain support separately so source compilation failures remain failures.
+# Compiler flags and source lists are intentionally split as Make arguments.
 # shellcheck disable=SC2086
+set -eu
 
 _cc=$1
 _cflags=$2
 _cppflags=$3
 _runs=$4
-_core_obj=$5
-
-if ${_cc} ${_cflags} ${_cppflags} -DEMUXFS= -I. \
-	-fsanitize=fuzzer,address -o tests/fuzz/fuzz_conf \
-	tests/fuzz/fuzz_conf.c ${_core_obj} -lz >/dev/null 2>&1; then
-	echo "== fuzzing the muxfs.conf parser with libFuzzer (${_runs} runs)"
-	tests/fuzz/fuzz_conf -runs="${_runs}" -max_len=4096
+_core_src=$5
+_mode=${6:-run}
+_fuzz_tmp=$(mktemp -d "${TMPDIR:-/tmp}/emuxfs-fuzz-build.XXXXXXXX")
+trap 'rm -rf "$_fuzz_tmp"' EXIT HUP INT TERM
+printf '%s\n' '#include <stddef.h>' '#include <stdint.h>' \
+    'int LLVMFuzzerTestOneInput(const uint8_t *p, size_t n) { (void)p; (void)n; return 0; }' \
+    >"$_fuzz_tmp/probe.c"
+_san='-fsanitize=fuzzer-no-link,address'
+_link_san='-fsanitize=fuzzer,address'
+_output=tests/fuzz/fuzz_conf
+_driver=''
+if ${_cc} ${_cflags} -fsanitize=fuzzer,address \
+    "$_fuzz_tmp/probe.c" -o "$_fuzz_tmp/probe" >"$_fuzz_tmp/probe.log" 2>&1; then
+    echo '== fuzz instrumentation: libFuzzer + AddressSanitizer'
 else
-	rm -f tests/fuzz/fuzz_conf
-	_san=""
-	if ${_cc} ${_cflags} ${_cppflags} -DEMUXFS= -I. -fsanitize=address \
-		-o tests/fuzz/fuzz_conf_standalone \
-		tests/fuzz/fuzz_conf.c tests/fuzz/fuzz_main.c \
-		${_core_obj} -lz >/dev/null 2>&1; then
-		_san=" + AddressSanitizer"
-	elif ${_cc} ${_cflags} ${_cppflags} -DEMUXFS= -I. \
-		-o tests/fuzz/fuzz_conf_standalone \
-		tests/fuzz/fuzz_conf.c tests/fuzz/fuzz_main.c \
-		${_core_obj} -lz >/dev/null 2>&1; then
-		_san=""
-	else
-		echo "SKIP: no libFuzzer and cannot build the mutation driver"
-		exit 0
-	fi
-	echo "== fuzzing the muxfs.conf parser with the mutation driver${_san} (${_runs} runs)"
-	tests/fuzz/fuzz_conf_standalone "${_runs}"
+    if [ "$_mode" = build ]; then
+        cat "$_fuzz_tmp/probe.log" >&2
+        echo 'FAIL: fuzz-conf requires libFuzzer' >&2
+        exit 1
+    fi
+    printf '%s\n' 'int main(void) { return 0; }' >"$_fuzz_tmp/probe.c"
+    _san='-fsanitize=address'
+    _link_san=$_san
+    if ! ${_cc} ${_cflags} $_san "$_fuzz_tmp/probe.c" \
+        -o "$_fuzz_tmp/probe" >"$_fuzz_tmp/probe.log" 2>&1; then
+        _san=''
+        _link_san=''
+        echo '== sanitizer unavailable; mutation driver runs without instrumentation'
+    else
+        echo '== fuzz instrumentation: AddressSanitizer mutation driver'
+    fi
+    _output=tests/fuzz/fuzz_conf_standalone
+    _driver=tests/fuzz/fuzz_main.c
+fi
+set --
+for _source in $_core_src; do
+    _object="$_fuzz_tmp/$(basename "$_source" .c).o"
+    ${_cc} ${_cflags} ${_cppflags} -DEMUXFS= -I. $_san \
+        -c "$_source" -o "$_object"
+    set -- "$@" "$_object"
+done
+${_cc} ${_cflags} ${_cppflags} -DEMUXFS= -I. $_link_san \
+    -o "$_output" tests/fuzz/fuzz_conf.c $_driver "$@" -lz
+[ "$_mode" != build ] || exit 0
+if [ -z "$_driver" ]; then
+    "$_output" -runs="$_runs" -max_len=4096
+else
+    "$_output" "$_runs"
 fi

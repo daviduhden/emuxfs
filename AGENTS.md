@@ -72,6 +72,7 @@ fix the documentation rather than copying the claim.
 | `conf.c` | `muxfs.conf` parser/writer and format-version check |
 | `format.c`, `scan.c`, `sync.c` | `format`, `audit`/`heal`, `sync` |
 | `state.c` | restore queue, eno allocator, logging, write-buffer state |
+| `scripts/ci-openbsd.pl` | shared OpenBSD VM validation; requires root and FUSE |
 | `sandbox.c`, `sandbox.h` | the only `pledge(2)`/`unveil(2)` calls and promises |
 | `fault.c`, `fault.h` | compile-time-gated fault injection |
 | `ds.c`, `ds.h` | non-thread-safe dynamic stack used by walkers |
@@ -114,8 +115,24 @@ default five-line limit; the bounded fuzz fallback lives in
 `make stability` is the core local sequence, not byte-for-byte CI: CI also
 installs, runs `mandoc` and linkage checks, rebuilds with
 `EMUXFS_DS_MALLOC=1` and performs a final clean rebuild.  A skipped FUSE step
-is **not** a pass.  The actual CI target is OpenBSD 8.0 amd64 and arm64; see
+is **not** a pass. CI must fail when its required root/FUSE prerequisites are
+missing; local integration suites may still report an explicit skip.  The actual CI target is OpenBSD 8.0 amd64 and arm64; see
 `.github/workflows/ci.yml`, not a prose summary.
+
+## Audit improvement workflow
+
+Build fuzz targets from separately instrumented sources or objects; adding
+sanitizer flags only at link time does not instrument existing objects. A
+missing required test binary or a failed fallback build is a failure. Keep
+release evidence tied to a commit and CI run, including architecture and
+omissions; do not infer production readiness from a workflow definition.
+Measure latency, memory and workload dimensions before changing concurrency
+or checksum algorithms. Keep refactors small and preserve per-operation
+transaction ordering. See [audit implementation record](docs/audit-improvements.md).
+
+Perl CI orchestration is checked without system changes using
+`python3 tests/ci-perl-check.py`; see [Perl audit](docs/perlcritic-report.md)
+for severity-pass evidence and justified remaining diagnostics.
 
 ## Safety and testing policy
 

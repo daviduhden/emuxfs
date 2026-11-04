@@ -139,10 +139,24 @@ ownership or timestamps.
 
 The real target is OpenBSD **8.0** on amd64 and arm64, through
 `vmactions/openbsd-vm@v1.4.9`.  Each job runs: build, `make check`, `make
-test` and `test_core`, integration (guarded by `/dev/fuse0`), parallel stress,
+test` and `test_core`, integration (FUSE is a required CI prerequisite), parallel stress,
 fault build and crash suite, bounded fuzzing, install, `mandoc -T lint`,
 `ldd`, a fallback-allocator rebuild and unit test, and a final clean rebuild.
-CI does not run `make stability`, the legacy suite or `yamllint`.
+The VM jobs call `scripts/ci-openbsd.pl`, which requires root and
+`/dev/fuse0` and fails when either is unavailable. Only disposable VM
+preparation may create device nodes. CI does not run `make stability`, the
+legacy suite or `yamllint`.
+
+Fuzz builds compile all core sources into private temporary objects with the
+selected instrumentation, never reuse normal `${CORE_OBJ}`. Probe compiler
+support before building project sources; a project compile or link failure
+must fail the fuzz step, rather than silently select a weaker fallback.
+`make fuzz-conf` requires libFuzzer; `make fuzz-smoke` may use an explicitly
+reported standalone mutation driver with ASan where supported. Temporary
+objects are removed on exit; the requested fuzz binary remains a build product.
+README stability descriptions are evidence criteria, not a claim that a
+specific revision passed CI. Require revision-specific runtime results before
+reporting a stability level.
 
 ## Validation
 
@@ -222,3 +236,29 @@ is sufficient; repeat validation only after fixing an error.
   and CI sequence.
 - `sandbox.c`, `sandbox.h`, `mount.c`, `tests/integration/*.pl`,
   `tests/unit/*`, `.github/workflows/ci.yml`, `Makefile`.
+
+## Performance baseline workflow
+
+Use `perl tests/benchmark.pl mountpoint mirror_count [daemon_pid]` only on
+an already mounted disposable array. The script creates and deletes its own
+private child, never formats or mounts, and reports file boundary sizes,
+directory width/depth, wall latency and optionally sampled daemon RSS. RSS
+is not a lifetime peak. Record commit, OpenBSD/toolchain, hardware, cache
+conditions and mirror count with repeated CSV results before optimizing.
+No Linux static check establishes an OpenBSD performance baseline.
+
+## Perl static analysis and CI runner
+
+The shared CI entry point is `perl scripts/ci-openbsd.pl`; use list-form
+process execution, preserve raw wait status for captured children, and scope
+environment overrides locally. `python3 tests/ci-perl-check.py` tests its
+orchestration with temporary mock commands; it does not validate OpenBSD.
+For Perl::Critic installed under `/var/home/david/perl5`, prepend its `bin`
+and `lib/perl5` only to the invocation environment. Inspect severities 5, 4,
+3, 2 and 1 in order. Keep intentional process credentials in forked children
+unlocalized: restoring privilege implicitly would be unsafe and they exit
+with `POSIX::_exit`. Preserve `$?` immediately after closing command pipes.
+Do not add regex flags without considering byte and whitespace semantics.
+Remaining diagnostics and policy-specific reasons belong in an explicit
+audit inventory, not global exclusions. Syntax checks cannot replace FUSE
+runtime. See [Perl audit](../../../docs/perlcritic-report.md).

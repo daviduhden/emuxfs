@@ -32,21 +32,17 @@ my $ITERS   = $ENV{PARALLEL_ITERS}   // 20;
 my $TIMEOUT = $ENV{PARALLEL_TIMEOUT} // 900;
 
 if ( !-x $EMUXFS ) {
-    print STDERR "emuxfs binary not found at $EMUXFS (set EMUXFS=...)\n";
+    print {*STDERR} "emuxfs binary not found at $EMUXFS (set EMUXFS=...)\n";
     exit 2;
 }
 
 if ( $> != 0 ) {
-    print STDERR "SKIP: the parallel test requires root\n";
+    print {*STDERR} "SKIP: the parallel test requires root\n";
     exit 0;
 }
 
-# Create the FUSE device node if the image did not populate /dev.
 if ( !-c "/dev/fuse0" ) {
-    system( "sh", "-c", "cd /dev && MAKEDEV fuse >/dev/null 2>&1" );
-}
-if ( !-c "/dev/fuse0" ) {
-    print STDERR "SKIP: /dev/fuse0 is not available\n";
+    print {*STDERR} "SKIP: /dev/fuse0 is not available\n";
     exit 0;
 }
 
@@ -58,7 +54,7 @@ $tmpbase =~ s{/+$}{}x;
 my $sandbox =
   tempdir( "emuxfs-parallel.XXXXXX", DIR => $tmpbase, CLEANUP => 0 );
 if ( $sandbox !~ m{\A\Q$tmpbase\E/[^/]+\z}x ) {
-    print STDERR "Refusing to run: sandbox '$sandbox' is outside '$tmpbase'\n";
+    print {*STDERR} "Refusing to run: sandbox '$sandbox' is outside '$tmpbase'\n";
     exit 2;
 }
 
@@ -76,7 +72,7 @@ my $parent = $$;
 # workers are collected; the final exit status reflects any recorded failure.
 sub fail {
     my ($msg) = @_;
-    print STDERR "FAIL: $msg\n";
+    print {*STDERR} "FAIL: $msg\n";
     $failures++;
     return;
 }
@@ -86,7 +82,7 @@ sub slurp {
     open( my $fh, "<", $path ) or return;
     local $/ = undef;
     my $data = <$fh>;
-    close($fh);
+    close($fh) or return;
     return $data;
 }
 
@@ -242,7 +238,7 @@ sub probe_mount {
         rmdir($dir);
         return 0;
     }
-    print $pf "probe\n" or fail("mount probe write failed: $!");
+    print {$pf} "probe\n" or fail("mount probe write failed: $!");
     close($pf)          or fail("mount probe close failed: $!");
     my $got = slurp("$dev_a/$tag/p");
     fail("mount probe was not mirrored to dev_a")
@@ -273,7 +269,7 @@ sub worker {
     if ( defined $err ) {
         $err =~ s/\s+\z//x;
         if ( open( my $eh, ">", "$sandbox/worker-$tag.err" ) ) {
-            print $eh "$err\n";
+            print {$eh} "$err\n";
             close($eh);
         }
         return 1;
@@ -291,7 +287,7 @@ sub churn_iteration {
     my $name = "$dir/f";
     open( my $fh, ">", $name )
       or die "open $name: $!\n";
-    print $fh "$tag:$i\n"
+    print {$fh} "$tag:$i\n"
       or die "write $name: $!\n";
     close($fh)
       or die "close $name: $!\n";
@@ -313,7 +309,7 @@ sub churn_iteration {
 
     # Best-effort progress for the parent (sandbox, not the mount).
     if ( open( my $pf, ">", "$sandbox/progress/$tag" ) ) {
-        print $pf "$i\n";
+        print {$pf} "$i\n";
         close($pf);
     }
     return;
@@ -324,13 +320,13 @@ sub write_marker {
     my ($tag) = @_;
     open( my $fh, ">", "$mp/final_$tag" )
       or die "open final_$tag: $!\n";
-    print $fh "$tag:done\n"
+    print {$fh} "$tag:done\n"
       or die "write final_$tag: $!\n";
     close($fh)
       or die "close final_$tag: $!\n";
 
     if ( open( my $pf, ">", "$sandbox/progress/$tag" ) ) {
-        print $pf "done\n";
+        print {$pf} "done\n";
         close($pf);
     }
     return;
@@ -483,7 +479,7 @@ sub check_workers {
         for my $id ( 0 .. $WORKERS - 1 ) {
             my $tag = sprintf( "w%02d", $id );
             my $e   = slurp("$sandbox/worker-$tag.err");
-            print STDERR "worker $tag: $e\n" if defined $e;
+            print {*STDERR} "worker $tag: $e\n" if defined $e;
         }
     }
     return;
@@ -582,7 +578,7 @@ sub print_diagnostics {
         my @key = grep { /PHANTOM|:\ fail|stage=|readback:/x } @all;
         @key = @key[ 0 .. 79 ] if @key > 80;
         if (@key) {
-            print STDERR "diag: daemon failure lines:\n", join( "\n", @key ),
+            print {*STDERR} "diag: daemon failure lines:\n", join( "\n", @key ),
               "\n";
         }
         my $first = -1;
@@ -598,11 +594,11 @@ sub print_diagnostics {
             $s = 0 if $s < 0;
             my $e = $first + 30;
             $e = $#all if $e > $#all;
-            print STDERR "diag: daemon lines around the first failure:\n",
+            print {*STDERR} "diag: daemon lines around the first failure:\n",
               join( "\n", @all[ $s .. $e ] ), "\n";
         }
         my @t = @all > 120 ? @all[ -120 .. -1 ] : @all;
-        print STDERR "diag: daemon trace tail:\n", join( "\n", @t ), "\n";
+        print {*STDERR} "diag: daemon trace tail:\n", join( "\n", @t ), "\n";
     }
     return;
 }
@@ -620,7 +616,7 @@ compare_mirrors();
 
 if ( $failures != 0 ) {
     print_diagnostics();
-    print STDERR "$failures parallel test(s) failed\n";
+    print {*STDERR} "$failures parallel test(s) failed\n";
     exit 1;
 }
 print "All parallel tests passed\n";

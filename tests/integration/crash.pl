@@ -31,17 +31,17 @@ my $FAULT_STATUS = 70;
 
 foreach my $bin ( $EMUXFS, $EMUXFS_FAULT ) {
     if ( !-x $bin ) {
-        print STDERR "SKIP: missing binary $bin\n";
-        exit 0;
+        print {*STDERR} "FAIL: missing binary $bin\n";
+        exit 1;
     }
 }
 
 if ( $> != 0 ) {
-    print STDERR "SKIP: crash tests require root\n";
+    print {*STDERR} "SKIP: crash tests require root\n";
     exit 0;
 }
 if ( !-c "/dev/fuse0" ) {
-    print STDERR "SKIP: /dev/fuse0 is not available\n";
+    print {*STDERR} "SKIP: /dev/fuse0 is not available\n";
     exit 0;
 }
 
@@ -50,7 +50,7 @@ $tmpbase =~ s{/+$}{}x;
 
 my $sandbox = tempdir( "emuxfs-crash.XXXXXX", DIR => $tmpbase, CLEANUP => 0 );
 if ( $sandbox !~ m{\A\Q$tmpbase\E/[^/]+\z}x ) {
-    print STDERR "Refusing to run: sandbox '$sandbox' is outside '$tmpbase'\n";
+    print {*STDERR} "Refusing to run: sandbox '$sandbox' is outside '$tmpbase'\n";
     exit 2;
 }
 
@@ -64,7 +64,7 @@ my $daemon_pid;
 
 sub fail {
     my ($msg) = @_;
-    print STDERR "FAIL: $msg\n";
+    print {*STDERR} "FAIL: $msg\n";
     $failures++;
     return;
 }
@@ -92,7 +92,7 @@ sub cleanup {
         remove_tree( $sandbox, { safe => 1, error => \$err } );
     }
     else {
-        print STDERR "Refusing to remove '" . ( $sandbox // "undef" ) . "'\n";
+        print {*STDERR} "Refusing to remove '" . ( $sandbox // "undef" ) . "'\n";
     }
     return;
 }
@@ -123,7 +123,7 @@ sub put {
         fail("cannot write $path: $!");
         return 0;
     };
-    print $fh $content;
+    print {$fh} $content;
     close($fh) or do {
         fail("cannot write $path: $!");
         return 0;
@@ -136,7 +136,7 @@ sub slurp {
     open( my $fh, "<", $path ) or return;
     local $/ = undef;
     my $data = <$fh>;
-    close($fh);
+    close($fh) or return;
     return $data;
 }
 
@@ -196,7 +196,7 @@ sub run_fault {
 sub try_put {
     my ( $path, $content ) = @_;
     open( my $fh, ">", $path ) or return;
-    print $fh $content;
+    print {$fh} $content;
     close($fh);
     return;
 }
@@ -517,7 +517,7 @@ sub test_fuse_callback_faults {
 test_fuse_callback_faults();
 
 if ( $failures != 0 ) {
-    print STDERR "$failures crash test(s) failed\n";
+    print {*STDERR} "$failures crash test(s) failed\n";
     exit 1;
 }
 print "All crash tests passed\n";

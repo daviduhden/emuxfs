@@ -4,19 +4,10 @@ emuxfs is a mirroring, checksumming and self-healing filesystem layer for
 OpenBSD.  It mirrors a filesystem tree across a series of directories and uses
 checksum databases to validate and restore files automatically.
 
-> **emuxfs is stable and ready for production use.**
->
-> The on-disk format is frozen at version 1, and the complete validation
-> suite — strict-warning build, unit tests, FUSE integration, a 32-worker
-> parallel-load stress test, fault-injection recovery and a bounded parser
-> fuzz run — passes in CI on OpenBSD 8.0, on both amd64 and arm64.
-> `make stability` reproduces the core sequence locally; CI additionally
-> installs, lints the manual page, checks linkage, rebuilds with the fallback
-> allocator and performs a final clean rebuild.
->
-> As with any mirror, a mirror is not a backup: keep at least one independent
-> copy of anything irreplaceable.  The operational notes in
-> [`RECOVERY.md`](RECOVERY.md) still apply.
+> The on-disk format is frozen at version 1. The validation workflow targets
+> OpenBSD 8.0 on amd64 and arm64; see the checks and evidence criteria below.
+> A mirror is not a backup: keep an independent copy of irreplaceable data.
+> See [`RECOVERY.md`](RECOVERY.md) for operational guidance.
 
 ## Identity and provenance
 
@@ -54,13 +45,11 @@ linting, linkage checks, a fallback-allocator rebuild and a final clean
 rebuild, on OpenBSD 8.0 amd64 and arm64.  A stability claim is never made from
 static analysis alone.
 
-emuxfs is **Tested and Hardened**: the CI run above is green on OpenBSD 8.0
-amd64 and arm64 for the full sequence, including the 32-worker parallel-load
-stress test with a clean `audit` and mirror trees that compare equal in
-content, mode, size and symlink target, fault-injection
-recovery from an interrupted create, update, delete, heal and sync, repeated
-mount/unmount cycles, the refusal of a second mount of a mounted array, and
-the bounded parser fuzz run.  The on-disk format is frozen at version 1.
+The workflow configuration defines intended validation, rather than proving a
+particular revision passed. Assess stability using a completed CI run for the
+revision and architecture being deployed, including runtime FUSE results.
+Skipped checks do not establish a stability level. Crash injection verifies
+process interruption; it does not establish power-loss safety.
 
 ## Installation
 

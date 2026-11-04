@@ -169,10 +169,9 @@ check-tests: test integration
 
 # Optional libFuzzer target.  Not built by 'all'; 'fuzz-smoke' runs a bounded
 # session of it as part of the stability target.
-fuzz-conf: tests/fuzz/fuzz_conf.c ${CORE_OBJ}
-	${CC} ${CFLAGS} ${CPPFLAGS} -DEMUXFS= -I. \
-	    -fsanitize=fuzzer,address \
-	    -o tests/fuzz/fuzz_conf tests/fuzz/fuzz_conf.c ${CORE_OBJ} -lz
+fuzz-conf:
+	sh tests/fuzz-smoke.sh "${CC}" "${CFLAGS}" "${CPPFLAGS}" \
+	    0 "${CORE_OBJ:.o=.c}" build
 
 # Bounded fuzzing smoke run: the muxfs.conf parser must survive a fixed number
 # of mutations without a crash or sanitizer report.  libFuzzer is used when the
@@ -180,9 +179,9 @@ fuzz-conf: tests/fuzz/fuzz_conf.c ${CORE_OBJ}
 # (tests/fuzz/fuzz_main.c) is built, under AddressSanitizer if available.  This
 # keeps the step meaningful on OpenBSD's base clang, which has no libFuzzer.
 FUZZ_RUNS ?= 20000
-fuzz-smoke: ${CORE_OBJ}
+fuzz-smoke:
 	sh tests/fuzz-smoke.sh "${CC}" "${CFLAGS}" "${CPPFLAGS}" \
-	    "${FUZZ_RUNS}" "${CORE_OBJ}"
+	    "${FUZZ_RUNS}" "${CORE_OBJ:.o=.c}"
 
 # Crash-consistency build: the normal modular objects plus fault injection.
 .PHONY: faultbuild
@@ -197,8 +196,8 @@ faulttest: ${PROG} emuxfs-fault
 # Complete pre-release validation.  CI runs the same core sequence on OpenBSD
 # 8.0 amd64 and arm64, plus installation, mandoc, linkage checks, the fallback
 # allocator build and a final clean rebuild.  The FUSE suites require root and
-# /dev/fuse0 and skip themselves when unavailable; fuzzing needs a clang with
-# libFuzzer.  Nothing else may be claimed as "stable" until this passes.
+# /dev/fuse0 and skip themselves when unavailable; fuzzing uses libFuzzer or
+# a standalone mutation driver. Skipped suites do not establish stability.
 stability: check
 	${MAKE} test && ./tests/unit/test_core
 	${MAKE} integration
