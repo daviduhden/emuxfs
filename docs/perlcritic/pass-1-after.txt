@@ -1,0 +1,1586 @@
+2|Modules::RequireVersionVar|test.pl|1|1|No package-scoped "$VERSION" variable found
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|24|30|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|test.pl|29|6|Magic punctuation variable $> used
+1|InputOutput::RequireCheckedSyscalls|test.pl|30|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|33|10|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|test.pl|34|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|49|14|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|test.pl|50|9|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|55|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|55|20|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|55|25|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|test.pl|55|46|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|57|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|57|24|Magic punctuation variable $! used in interpolated string
+2|RegularExpressions::RequireDotMatchAnything|test.pl|60|42|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|test.pl|60|42|Regular expression without "/m" flag
+2|RegularExpressions::RequireDotMatchAnything|test.pl|61|42|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|test.pl|61|42|Regular expression without "/m" flag
+2|RegularExpressions::RequireDotMatchAnything|test.pl|62|42|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|test.pl|62|42|Regular expression without "/m" flag
+2|RegularExpressions::RequireDotMatchAnything|test.pl|63|42|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|test.pl|63|42|Regular expression without "/m" flag
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|64|29|Builtin function called with parentheses
+2|RegularExpressions::RequireDotMatchAnything|test.pl|64|36|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|test.pl|64|36|Regular expression without "/m" flag
+2|ControlStructures::ProhibitPostfixControls|test.pl|65|14|Postfix control "unless" used
+2|RegularExpressions::RequireDotMatchAnything|test.pl|66|17|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|test.pl|66|17|Regular expression without "/m" flag
+2|ControlStructures::ProhibitPostfixControls|test.pl|88|43|Postfix control "unless" used
+2|RegularExpressions::RequireDotMatchAnything|test.pl|88|59|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|test.pl|88|59|Regular expression without "/m" flag
+1|RegularExpressions::ProhibitEscapedMetacharacters|test.pl|90|54|Use character classes for literal metachars instead of escapes
+2|RegularExpressions::RequireDotMatchAnything|test.pl|90|54|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|test.pl|90|54|Regular expression without "/m" flag
+2|ControlStructures::ProhibitPostfixControls|test.pl|113|7|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|119|15|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|131|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|131|40|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|133|5|Builtin function called with parentheses
+2|InputOutput::RequireCheckedClose|test.pl|133|5|Return value of "close" ignored
+1|InputOutput::RequireCheckedSyscalls|test.pl|133|5|Return value of flagged function ignored - close
+2|Variables::ProhibitPunctuationVars|test.pl|134|12|Magic punctuation variable $? used
+2|ValuesAndExpressions::ProhibitMagicNumbers|test.pl|134|18|8 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|156|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|156|40|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|158|5|Builtin function called with parentheses
+2|InputOutput::RequireCheckedClose|test.pl|158|5|Return value of "close" ignored
+1|InputOutput::RequireCheckedSyscalls|test.pl|158|5|Return value of flagged function ignored - close
+2|Variables::ProhibitPunctuationVars|test.pl|159|14|Magic punctuation variable $? used
+2|ValuesAndExpressions::ProhibitMagicNumbers|test.pl|159|20|8 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|166|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|166|19|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|test.pl|166|39|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|167|11|Magic punctuation variable $/ used
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|169|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|169|23|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|175|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|175|19|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|test.pl|175|39|Magic punctuation variable $! used in interpolated string
+1|InputOutput::RequireCheckedSyscalls|test.pl|176|5|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|177|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|177|23|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|183|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|183|19|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|test.pl|183|40|Magic punctuation variable $! used in interpolated string
+1|InputOutput::RequireCheckedSyscalls|test.pl|184|5|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|185|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|185|23|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|193|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|193|20|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|193|25|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|test.pl|193|49|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|194|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|194|20|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|test.pl|194|49|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|197|11|Builtin function called with parentheses
+2|ValuesAndExpressions::ProhibitMagicNumbers|test.pl|197|44|65_536 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|test.pl|197|53|65_536 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+1|InputOutput::RequireCheckedSyscalls|test.pl|199|9|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|202|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|202|24|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|203|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|203|24|Magic punctuation variable $! used in interpolated string
+2|ValuesAndExpressions::ProhibitMagicNumbers|test.pl|216|24|0.01 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|222|35|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|224|12|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|232|37|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|232|46|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|test.pl|237|45|Postfix control "if" used
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|245|5|Builtin function called with parentheses
+2|ControlStructures::ProhibitPostfixControls|test.pl|245|16|Postfix control "if" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|255|18|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|255|28|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|256|18|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|271|16|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|295|16|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|296|16|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|297|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|297|30|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|297|36|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|301|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|301|31|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|302|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|302|31|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|303|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|303|31|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|304|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|304|31|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|304|37|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|308|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|308|18|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|test.pl|308|42|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|309|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|309|35|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|310|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|310|35|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|311|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|311|35|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|311|47|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|316|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|316|42|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|317|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|317|18|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|test.pl|317|42|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|318|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|318|30|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|318|36|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|324|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|324|30|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|324|36|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|330|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|330|30|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|330|36|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|335|9|Builtin function called with parentheses
+2|ValuesAndExpressions::ProhibitMagicNumbers|test.pl|335|16|0700 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|test.pl|335|39|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|336|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|336|30|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|336|36|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|340|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|340|39|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|341|9|Builtin function called with parentheses
+2|ValuesAndExpressions::ProhibitMagicNumbers|test.pl|341|16|0700 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|test.pl|341|39|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|342|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|342|30|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|342|36|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|346|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|346|18|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|test.pl|346|42|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|347|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|347|33|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|347|42|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|347|48|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|348|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|348|30|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|348|36|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|353|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|353|30|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|354|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|354|30|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|354|39|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|358|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|358|31|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|359|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|359|30|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|360|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|360|30|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|360|39|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|364|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|364|18|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|test.pl|364|42|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|365|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|365|33|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|365|42|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|366|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|366|30|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|366|36|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|371|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|371|44|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|372|16|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|373|16|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|374|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|374|30|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|374|36|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|379|16|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|389|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|389|18|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|test.pl|389|42|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|390|17|Builtin function called with parentheses
+2|ControlStructures::ProhibitPostfixControls|test.pl|391|26|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|391|53|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|396|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|396|42|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|397|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|397|18|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|test.pl|397|42|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|398|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|398|30|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|398|36|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|403|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|403|32|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|404|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|404|30|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|404|36|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|408|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|408|18|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|test.pl|408|42|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|409|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|409|42|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|410|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|410|30|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|410|36|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|414|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|414|31|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|415|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|415|31|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|416|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|416|30|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|416|36|Useless interpolation of literal string
+2|ValuesAndExpressions::ProhibitMagicNumbers|test.pl|420|42|7168 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|test.pl|421|47|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|422|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|422|16|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|425|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|425|30|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|425|36|Useless interpolation of literal string
+2|ValuesAndExpressions::ProhibitMagicNumbers|test.pl|429|42|7168 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|test.pl|430|47|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|432|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|432|30|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|432|36|Useless interpolation of literal string
+2|ValuesAndExpressions::ProhibitMagicNumbers|test.pl|442|42|7168 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|test.pl|443|47|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|445|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|445|16|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|test.pl|446|27|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|test.pl|447|27|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|448|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|448|30|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|448|36|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|test.pl|453|47|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|458|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|458|16|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|461|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|461|30|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|461|36|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|474|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|474|16|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|test.pl|476|32|Postfix control "unless" used
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|480|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|480|18|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|test.pl|480|42|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|481|16|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|481|22|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|481|29|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|482|17|Builtin function called with parentheses
+2|ControlStructures::ProhibitPostfixControls|test.pl|483|32|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|483|59|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|487|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|487|31|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|489|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|489|16|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|491|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|491|55|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|test.pl|492|40|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|492|68|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|test.pl|493|40|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|test.pl|498|47|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|499|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|499|16|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|514|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|514|16|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|516|16|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|test.pl|517|33|Postfix control "unless" used
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|521|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|521|18|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|test.pl|521|42|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|522|16|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|522|22|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|522|29|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|523|16|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|524|17|Builtin function called with parentheses
+2|ControlStructures::ProhibitPostfixControls|test.pl|525|33|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|525|60|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|529|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|529|31|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|531|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|531|16|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|533|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|533|55|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|534|16|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|test.pl|535|41|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|535|72|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|test.pl|536|41|Postfix control "unless" used
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|541|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|541|16|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|542|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|542|35|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|543|16|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|test.pl|544|41|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|test.pl|549|47|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|550|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|550|16|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|552|16|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|565|20|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|565|39|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|566|20|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|566|39|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|570|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|570|18|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|test.pl|570|50|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|571|20|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|571|39|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|575|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|575|31|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|576|20|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|576|31|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|577|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|577|18|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|test.pl|577|40|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|578|20|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|578|39|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|583|20|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|583|30|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|584|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|584|18|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|test.pl|584|40|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|585|20|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|585|31|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|590|20|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|590|36|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|591|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|591|31|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|592|20|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|592|36|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|604|19|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|604|25|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|604|31|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|604|37|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|604|63|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|610|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|610|39|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|617|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|617|39|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|623|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|623|31|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|626|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|626|39|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|633|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|633|39|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|640|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|640|39|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|647|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|647|39|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|654|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|654|39|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|667|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|667|40|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|668|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|668|30|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|669|37|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|669|45|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|669|51|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|test.pl|671|11|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|671|54|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|676|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|676|40|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|677|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|677|30|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|678|37|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|678|45|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|678|51|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|test.pl|680|11|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|680|54|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|694|22|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|694|32|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|695|22|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|699|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|699|32|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|701|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|701|57|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|705|48|Useless interpolation of literal string
+2|RegularExpressions::RequireDotMatchAnything|test.pl|706|19|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|test.pl|706|19|Regular expression without "/m" flag
+2|ControlStructures::ProhibitPostfixControls|test.pl|708|11|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|716|22|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|716|32|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|717|22|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|721|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|721|32|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|723|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|723|57|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|727|48|Useless interpolation of literal string
+2|RegularExpressions::RequireDotMatchAnything|test.pl|728|19|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|test.pl|728|19|Regular expression without "/m" flag
+2|ControlStructures::ProhibitPostfixControls|test.pl|730|11|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|732|27|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|732|35|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|732|41|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|732|47|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|741|22|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|741|32|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|742|22|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|746|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|746|32|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|test.pl|748|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|test.pl|748|57|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|750|22|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|751|25|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|751|33|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|751|39|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|751|45|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|752|25|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|752|33|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|752|39|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|752|45|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|test.pl|803|9|Return value of flagged function ignored - print
+2|ControlStructures::ProhibitPostfixControls|test.pl|804|36|Postfix control "unless" used
+1|InputOutput::RequireCheckedSyscalls|test.pl|820|13|Return value of flagged function ignored - print
+1|InputOutput::RequireCheckedSyscalls|test.pl|827|13|Return value of flagged function ignored - print
+1|InputOutput::RequireCheckedSyscalls|test.pl|849|13|Return value of flagged function ignored - print
+1|InputOutput::RequireCheckedSyscalls|test.pl|852|17|Return value of flagged function ignored - print
+2|Variables::ProhibitPunctuationVars|test.pl|860|19|Magic punctuation variable $@ used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|test.pl|860|25|Useless interpolation of literal string
+2|RegularExpressions::RequireDotMatchAnything|test.pl|861|17|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|test.pl|861|17|Regular expression without "/m" flag
+1|InputOutput::RequireCheckedSyscalls|test.pl|862|9|Return value of flagged function ignored - print
+1|InputOutput::RequireCheckedSyscalls|test.pl|872|1|Return value of flagged function ignored - print
+1|CodeLayout::RequireTidyCode|tests/benchmark.pl|1|1|Code is not tidy
+3|Modules::ProhibitExcessMainComplexity|tests/benchmark.pl|1|1|Main code has high complexity score (25)
+2|Modules::RequireVersionVar|tests/benchmark.pl|1|1|No package-scoped "$VERSION" variable found
+3|ControlStructures::ProhibitNegativeExpressionsInUnlessAndUntilConditions|tests/benchmark.pl|13|5|Found "!" in condition for an "unless"
+2|ControlStructures::ProhibitPostfixControls|tests/benchmark.pl|13|5|Postfix control "unless" used
+1|RegularExpressions::ProhibitEnumeratedClasses|tests/benchmark.pl|13|64|Use named character classes ([0-9] vs. \d)
+2|RegularExpressions::RequireDotMatchAnything|tests/benchmark.pl|13|64|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/benchmark.pl|13|64|Regular expression without "/m" flag
+1|RegularExpressions::ProhibitEnumeratedClasses|tests/benchmark.pl|14|36|Use named character classes ([0-9] vs. \d)
+2|RegularExpressions::RequireDotMatchAnything|tests/benchmark.pl|14|36|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/benchmark.pl|14|36|Regular expression without "/m" flag
+2|ControlStructures::ProhibitPostfixControls|tests/benchmark.pl|16|50|Postfix control "unless" used
+2|RegularExpressions::RequireDotMatchAnything|tests/benchmark.pl|17|11|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/benchmark.pl|17|11|Regular expression without "/m" flag
+2|ControlStructures::ProhibitPostfixControls|tests/benchmark.pl|17|21|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/benchmark.pl|17|38|Useless interpolation of literal string
+2|ValuesAndExpressions::ProhibitNoisyQuotes|tests/benchmark.pl|17|38|Quotes used with a noisy string
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|19|13|Magic punctuation variable $$ used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/benchmark.pl|20|24|Useless interpolation of literal string
+2|ValuesAndExpressions::ProhibitNoisyQuotes|tests/benchmark.pl|20|24|Quotes used with a noisy string
+2|ValuesAndExpressions::ProhibitEmptyQuotes|tests/benchmark.pl|20|30|Quotes used with a string containing no non-whitespace characters
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/benchmark.pl|20|30|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|22|31|Magic punctuation variable $$ used
+2|ControlStructures::ProhibitPostfixControls|tests/benchmark.pl|24|13|Postfix control "unless" used
+1|RegularExpressions::ProhibitEscapedMetacharacters|tests/benchmark.pl|24|32|Use character classes for literal metachars instead of escapes
+2|RegularExpressions::RequireDotMatchAnything|tests/benchmark.pl|24|32|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/benchmark.pl|24|32|Regular expression without "/m" flag
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/benchmark.pl|28|49|130 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ControlStructures::ProhibitPostfixControls|tests/benchmark.pl|31|12|Postfix control "unless" used
+2|ValuesAndExpressions::ProhibitNoisyQuotes|tests/benchmark.pl|32|18|Quotes used with a noisy string
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|32|62|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/benchmark.pl|35|36|Postfix control "unless" used
+1|RegularExpressions::ProhibitEnumeratedClasses|tests/benchmark.pl|35|68|Use named character classes ([0-9] vs. \d)
+2|RegularExpressions::RequireDotMatchAnything|tests/benchmark.pl|35|68|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/benchmark.pl|35|68|Regular expression without "/m" flag
+2|ControlStructures::ProhibitPostfixControls|tests/benchmark.pl|36|19|Postfix control "if" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/benchmark.pl|43|21|Builtin function called with parentheses
+2|ControlStructures::ProhibitPostfixControls|tests/benchmark.pl|50|18|Postfix control "for" used
+1|InputOutput::RequireCheckedSyscalls|tests/benchmark.pl|57|1|Return value of flagged function ignored - print
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/benchmark.pl|58|22|4095 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/benchmark.pl|58|28|4096 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/benchmark.pl|58|34|4097 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/benchmark.pl|58|40|65536 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::RequireNumberSeparators|tests/benchmark.pl|58|40|Long number not separated with underscores
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/benchmark.pl|58|47|1048576 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::RequireNumberSeparators|tests/benchmark.pl|58|47|Long number not separated with underscores
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/benchmark.pl|60|36|10 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|62|61|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|63|36|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|64|28|Magic punctuation variable $! used in interpolated string
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/benchmark.pl|66|34|10 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|68|61|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|69|15|Magic punctuation variable $/ used
+2|ValuesAndExpressions::ProhibitEmptyQuotes|tests/benchmark.pl|70|33|Quotes used with a string containing no non-whitespace characters
+2|ControlStructures::ProhibitPostfixControls|tests/benchmark.pl|71|34|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|72|28|Magic punctuation variable $! used in interpolated string
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/benchmark.pl|76|30|64 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|78|24|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|80|30|Magic punctuation variable $! used in interpolated string
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/benchmark.pl|81|32|256 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|83|51|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|84|30|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|85|24|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|88|45|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|90|26|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/benchmark.pl|91|29|Postfix control "unless" used
+1|CodeLayout::RequireTidyCode|tests/integration/crash.pl|1|1|Code is not tidy
+2|Modules::RequireVersionVar|tests/integration/crash.pl|1|1|No package-scoped "$VERSION" variable found
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|28|55|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|29|55|Useless interpolation of literal string
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/crash.pl|30|20|70 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+1|InputOutput::RequireCheckedSyscalls|tests/integration/crash.pl|34|9|Return value of flagged function ignored - print
+2|Variables::ProhibitPunctuationVars|tests/integration/crash.pl|39|6|Magic punctuation variable $> used
+1|InputOutput::RequireCheckedSyscalls|tests/integration/crash.pl|40|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|43|10|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/crash.pl|44|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|48|31|Useless interpolation of literal string
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/crash.pl|49|13|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/crash.pl|49|13|Regular expression without "/m" flag
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|51|24|Useless interpolation of literal string
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/crash.pl|52|18|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/crash.pl|52|18|Regular expression without "/m" flag
+1|InputOutput::RequireCheckedSyscalls|tests/integration/crash.pl|53|5|Return value of flagged function ignored - print
+1|InputOutput::RequireCheckedSyscalls|tests/integration/crash.pl|67|5|Return value of flagged function ignored - print
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/crash.pl|74|39|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/crash.pl|74|39|Regular expression without "/m" flag
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|82|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|82|17|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|86|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|86|15|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|87|9|Builtin function called with parentheses
+1|InputOutput::RequireCheckedSyscalls|tests/integration/crash.pl|95|9|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|95|25|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|95|64|Useless interpolation of literal string
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/crash.pl|100|60|130 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|104|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/crash.pl|105|12|Magic punctuation variable $? used
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/crash.pl|112|48|8 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|122|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|122|19|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/crash.pl|123|14|Magic punctuation variable $! used in interpolated string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/crash.pl|126|5|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|127|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/crash.pl|128|14|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|136|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|136|19|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/crash.pl|137|11|Magic punctuation variable $/ used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|139|5|Builtin function called with parentheses
+2|ControlStructures::ProhibitCStyleForLoops|tests/integration/crash.pl|147|9|C-style "for" loop used
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/crash.pl|147|28|500 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/crash.pl|149|45|40 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|150|21|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|150|29|Useless interpolation of literal string
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/crash.pl|151|56|3 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/crash.pl|153|28|0.02 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|165|7|Postfix control "unless" used
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/crash.pl|165|49|5 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/crash.pl|165|53|8 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|166|14|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|166|22|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|172|11|Builtin function called with parentheses
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|177|61|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|178|61|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|179|61|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|180|50|Postfix control "if" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|189|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/crash.pl|190|14|Magic punctuation variable $? used
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/crash.pl|191|19|8 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|198|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|198|19|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/crash.pl|199|5|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|200|5|Builtin function called with parentheses
+2|InputOutput::RequireCheckedClose|tests/integration/crash.pl|200|5|Return value of "close" ignored
+1|InputOutput::RequireCheckedSyscalls|tests/integration/crash.pl|200|5|Return value of flagged function ignored - close
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|214|5|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|215|15|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/crash.pl|217|14|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|221|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|221|23|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|222|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|222|23|Useless interpolation of literal string
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/crash.pl|223|34|Magic variable "$ENV" should be assigned as "local"
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/crash.pl|224|34|Magic variable "$ENV" should be assigned as "local"
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|224|43|Postfix control "if" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|224|46|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|225|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|225|21|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|225|30|Useless interpolation of literal string
+2|ControlStructures::ProhibitCStyleForLoops|tests/integration/crash.pl|233|9|C-style "for" loop used
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/crash.pl|235|35|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/crash.pl|235|35|Regular expression without "/m" flag
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|241|57|Postfix control "if" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|249|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|249|13|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|250|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|250|13|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|250|23|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|253|9|Builtin function called with parentheses
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|271|7|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|271|50|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|271|60|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|271|66|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|285|40|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|286|40|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/crash.pl|298|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|299|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|299|34|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|299|44|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|299|50|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/crash.pl|302|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|303|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|303|33|Useless interpolation of literal string
+2|ControlStructures::ProhibitCStyleForLoops|tests/integration/crash.pl|308|9|C-style "for" loop used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|309|17|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|312|42|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|313|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|313|26|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|314|42|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|315|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|315|25|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|317|38|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|318|38|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|328|16|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|329|40|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|330|40|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|342|53|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|343|53|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|344|39|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|346|7|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|348|7|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|350|7|Postfix control "unless" used
+1|InputOutput::RequireCheckedSyscalls|tests/integration/crash.pl|357|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|358|13|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|360|18|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|360|51|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|361|50|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|362|23|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/crash.pl|364|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|365|13|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|366|22|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|366|54|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|367|50|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|368|23|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/crash.pl|370|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|371|22|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|371|55|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|373|7|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|377|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|377|41|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|378|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|378|35|Postfix control "if" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|379|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|380|7|Postfix control "if" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|381|27|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/crash.pl|391|5|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|394|15|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|399|18|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|399|32|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|400|17|Builtin function called with parentheses
+1|InputOutput::RequireBracedFileHandleWithPrint|tests/integration/crash.pl|401|17|File handle for "print" or "printf" is not braced
+1|InputOutput::RequireCheckedSyscalls|tests/integration/crash.pl|401|17|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|401|27|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|401|33|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|402|17|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/crash.pl|402|36|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/crash.pl|405|22|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|409|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|409|53|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|410|27|Useless interpolation of literal string
+3|Subroutines::ProhibitExcessComplexity|tests/integration/crash.pl|422|1|Subroutine "test_fuse_callback_faults" with high complexity score (21)
+1|InputOutput::RequireCheckedSyscalls|tests/integration/crash.pl|423|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|425|9|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|429|18|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|429|44|Postfix control "if" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|430|18|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|431|15|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|432|18|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|433|15|Postfix control "if" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|435|9|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/crash.pl|438|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|440|9|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|444|18|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|445|15|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|446|18|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|447|15|Postfix control "if" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|449|9|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/crash.pl|452|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|454|9|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|455|15|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|458|18|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|458|44|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|459|18|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|460|15|Postfix control "if" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|462|9|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/crash.pl|465|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|467|9|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|468|15|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|471|18|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|471|44|Postfix control "if" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|472|18|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|473|15|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|474|18|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|475|15|Postfix control "if" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|477|9|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/crash.pl|480|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|482|9|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|485|13|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|489|18|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|490|15|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|491|18|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|492|15|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|493|18|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|494|15|Postfix control "if" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|497|9|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/crash.pl|500|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|502|9|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/crash.pl|503|15|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|506|18|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|506|44|Postfix control "if" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|507|18|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|508|15|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|509|18|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|510|15|Postfix control "if" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/crash.pl|512|9|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/crash.pl|520|5|Return value of flagged function ignored - print
+1|InputOutput::RequireCheckedSyscalls|tests/integration/crash.pl|523|1|Return value of flagged function ignored - print
+1|CodeLayout::RequireTidyCode|tests/integration/integration.pl|1|1|Code is not tidy
+2|Modules::RequireVersionVar|tests/integration/integration.pl|1|1|No package-scoped "$VERSION" variable found
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|25|43|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|28|5|Return value of flagged function ignored - print
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|32|6|Magic punctuation variable $> used
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|33|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|37|10|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|38|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|42|31|Useless interpolation of literal string
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/integration.pl|43|13|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/integration.pl|43|13|Regular expression without "/m" flag
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|46|24|Useless interpolation of literal string
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/integration.pl|50|18|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/integration.pl|50|18|Regular expression without "/m" flag
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|51|5|Return value of flagged function ignored - print
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|68|5|Return value of flagged function ignored - print
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/integration.pl|78|39|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/integration.pl|78|39|Regular expression without "/m" flag
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|86|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|86|17|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|90|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|90|15|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|91|9|Builtin function called with parentheses
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|100|13|Return value of flagged function ignored - print
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|104|9|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|104|25|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|104|64|Useless interpolation of literal string
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/integration.pl|116|60|130 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|122|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|123|12|Magic punctuation variable $? used
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/integration.pl|132|27|8 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|142|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|143|14|Magic punctuation variable $! used in interpolated string
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/integration.pl|144|22|-1 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|147|5|Builtin function called with parentheses
+2|InputOutput::RequireCheckedClose|tests/integration/integration.pl|147|5|Return value of "close" ignored
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|147|5|Return value of flagged function ignored - close
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|148|14|Magic punctuation variable $? used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|157|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|157|19|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|158|11|Magic punctuation variable $/ used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|160|5|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|166|12|Builtin function called with parentheses
+2|ControlStructures::ProhibitCStyleForLoops|tests/integration/integration.pl|174|9|C-style "for" loop used
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/integration.pl|174|28|500 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/integration.pl|176|45|40 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|177|21|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|177|29|Useless interpolation of literal string
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/integration.pl|178|56|3 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/integration.pl|180|28|0.02 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/integration.pl|190|12|-1 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|190|15|Postfix control "unless" used
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/integration.pl|190|53|40 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|191|13|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|191|21|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|205|5|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|209|15|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|211|14|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|215|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|215|23|Useless interpolation of literal string
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/integration.pl|215|56|127 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|216|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|216|23|Useless interpolation of literal string
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/integration.pl|217|28|Magic variable "$ENV" should be assigned as "local"
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|218|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|218|24|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|218|33|Useless interpolation of literal string
+2|ControlStructures::ProhibitCStyleForLoops|tests/integration/integration.pl|227|9|C-style "for" loop used
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/integration.pl|229|35|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/integration.pl|229|35|Regular expression without "/m" flag
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|236|14|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|246|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|246|25|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|249|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|255|14|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|255|46|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|256|14|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|256|46|Postfix control "unless" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|258|14|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|259|22|Builtin function called with parentheses
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/integration.pl|259|29|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/integration.pl|259|29|Regular expression without "/m" flag
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|261|13|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|263|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|263|16|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|299|5|Return value of flagged function ignored - print
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|302|1|Return value of flagged function ignored - print
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|310|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|311|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|311|34|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|311|44|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|311|50|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|317|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|320|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|320|26|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|321|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|321|26|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|322|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|322|26|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|322|35|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|322|41|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|323|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|323|35|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|324|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|324|35|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|325|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|325|35|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|326|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|326|35|Postfix control "unless" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|328|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|328|20|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|328|45|Magic punctuation variable $! used in interpolated string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|329|5|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|330|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|330|25|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|331|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|331|31|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|332|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|332|31|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|333|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|333|31|Postfix control "unless" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|337|18|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|338|14|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|338|46|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|339|14|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|339|46|Postfix control "unless" used
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|345|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|348|19|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|348|32|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|349|19|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|351|18|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|354|13|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|354|27|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|355|13|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|355|27|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|358|13|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|358|28|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|358|37|Useless interpolation of literal string
+2|ControlStructures::ProhibitCStyleForLoops|tests/integration/integration.pl|365|17|C-style "for" loop used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|370|22|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|371|17|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|371|23|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|372|17|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|373|17|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|376|14|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|377|11|Postfix control "unless" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|383|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|383|20|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|383|45|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|384|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|384|45|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|385|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|385|35|Postfix control "if" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|387|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|387|25|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|388|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|388|33|Postfix control "unless" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|392|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|392|20|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|392|46|Magic punctuation variable $! used in interpolated string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|393|5|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|394|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|394|25|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|395|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|395|39|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|396|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|397|7|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|398|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|399|7|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|401|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|401|25|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|402|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|402|33|Postfix control "if" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|403|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|403|24|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|404|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|404|35|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|404|41|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|404|48|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|405|18|Builtin function called with parentheses
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|406|19|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|407|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|407|37|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|407|55|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|412|5|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|414|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|414|24|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|414|50|Magic punctuation variable $! used in interpolated string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|415|9|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|416|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|416|29|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|417|19|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|417|33|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|417|42|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|418|13|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|419|17|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|420|17|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|421|14|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|421|41|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|422|14|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|422|40|Postfix control "unless" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|422|57|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|422|72|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|423|14|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|423|40|Postfix control "unless" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|423|57|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|423|72|Builtin function called with parentheses
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|429|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|431|19|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|431|30|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|432|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|432|24|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|432|49|Magic punctuation variable $! used in interpolated string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|433|9|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|434|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|434|29|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|435|19|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|435|30|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|437|18|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|439|14|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|439|43|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|440|14|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|440|36|Postfix control "unless" used
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|446|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|450|23|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|450|29|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|451|13|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|453|36|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|454|13|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|455|44|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|456|44|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|457|44|Postfix control "if" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|458|38|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|458|44|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|464|5|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|470|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|470|24|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|470|43|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitCStyleForLoops|tests/integration/integration.pl|471|13|C-style "for" loop used
+1|InputOutput::RequireBracedFileHandleWithPrint|tests/integration/integration.pl|472|13|File handle for "print" or "printf" is not braced
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|472|25|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|474|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|474|29|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|476|19|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|476|41|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|477|19|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|477|41|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|482|21|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|484|13|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|484|27|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|485|22|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|488|13|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|488|52|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|489|52|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|490|13|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|490|52|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|493|13|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|494|14|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|495|11|Postfix control "if" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|496|14|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|497|11|Postfix control "if" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|498|14|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|499|11|Postfix control "if" used
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|505|5|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|512|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|512|24|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|512|43|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitCStyleForLoops|tests/integration/integration.pl|513|13|C-style "for" loop used
+1|InputOutput::RequireBracedFileHandleWithPrint|tests/integration/integration.pl|514|13|File handle for "print" or "printf" is not braced
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|514|25|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|516|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|516|29|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|519|19|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|519|38|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|525|13|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|525|27|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|526|22|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|529|13|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|530|27|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|531|22|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|532|17|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|532|36|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|536|23|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|537|13|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|537|32|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|540|50|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|547|19|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|547|37|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|547|43|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|553|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|557|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|557|30|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|557|36|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|566|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|566|20|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|566|46|Magic punctuation variable $! used in interpolated string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|567|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|567|18|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|568|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|568|25|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|569|11|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|570|14|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|574|14|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|574|27|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|576|18|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|577|15|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|577|47|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|578|18|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|579|15|Postfix control "unless" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|589|11|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|590|14|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|594|14|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|595|11|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|597|18|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|598|15|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|598|47|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|599|18|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|600|15|Postfix control "unless" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|607|11|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|608|14|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|612|14|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|612|29|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|614|18|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|615|15|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|615|47|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|616|18|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|617|15|Postfix control "unless" used
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|624|5|Return value of flagged function ignored - print
+2|ControlStructures::ProhibitCStyleForLoops|tests/integration/integration.pl|626|9|C-style "for" loop used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|628|36|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|630|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|630|20|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|630|48|Magic punctuation variable $! used in interpolated string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|631|5|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|632|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|632|25|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|633|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|633|31|Postfix control "unless" used
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|638|5|Return value of flagged function ignored - print
+2|ValuesAndExpressions::ProhibitEscapedCharacters|tests/integration/integration.pl|639|56|Numeric escapes in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|642|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|642|24|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|643|18|Magic punctuation variable $! used in interpolated string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|646|9|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|647|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|647|29|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|649|30|Postfix control "unless" used
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|655|5|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|656|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|656|20|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|656|48|Magic punctuation variable $! used in interpolated string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|657|5|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|658|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|658|25|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|659|9|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|660|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|660|20|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|660|51|Magic punctuation variable $! used in interpolated string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|661|5|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|662|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|662|25|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|663|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|663|28|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|664|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|665|7|Postfix control "unless" used
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|670|5|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|671|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|671|20|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|671|46|Magic punctuation variable $! used in interpolated string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|672|5|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|673|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|673|25|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|674|9|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|675|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|675|39|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|675|45|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|676|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|676|26|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|677|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|677|39|Postfix control "unless" used
+3|Subroutines::ProhibitExcessComplexity|tests/integration/integration.pl|681|1|Subroutine "open_fallback" with high complexity score (21)
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|682|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|683|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|683|44|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|684|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|684|46|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|685|10|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|686|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|686|31|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|689|14|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|691|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|691|36|Postfix control "unless" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|692|10|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|692|24|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|693|9|Builtin function called with parentheses
+2|InputOutput::RequireCheckedClose|tests/integration/integration.pl|693|9|Return value of "close" ignored
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|693|9|Return value of flagged function ignored - close
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|694|14|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|696|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|697|7|Postfix control "if" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|699|5|Builtin function called with parentheses
+3|ErrorHandling::RequireCarping|tests/integration/integration.pl|699|32|"die" used instead of "croak"
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|699|36|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|700|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|700|34|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|700|43|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|701|15|Builtin function called with parentheses
+3|ErrorHandling::RequireCarping|tests/integration/integration.pl|702|5|"die" used instead of "croak"
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|702|9|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|702|42|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|704|9|Magic punctuation variable $) used
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/integration.pl|704|12|Magic variable "$)" should be assigned as "local"
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|704|14|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|705|9|Magic punctuation variable $> used
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/integration.pl|705|12|Magic variable "$>" should be assigned as "local"
+2|ValuesAndExpressions::RequireNumberSeparators|tests/integration/integration.pl|705|14|Long number not separated with underscores
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|706|25|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|706|32|Magic punctuation variable $> used
+2|ValuesAndExpressions::RequireNumberSeparators|tests/integration/integration.pl|706|38|Long number not separated with underscores
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|707|18|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|707|32|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|708|9|Builtin function called with parentheses
+2|InputOutput::RequireCheckedClose|tests/integration/integration.pl|708|9|Return value of "close" ignored
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|708|9|Return value of flagged function ignored - close
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|708|20|Postfix control "if" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|711|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|712|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|712|42|Postfix control "if" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|712|45|Magic punctuation variable $? used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|713|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|713|35|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|713|44|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|714|12|Builtin function called with parentheses
+3|ErrorHandling::RequireCarping|tests/integration/integration.pl|715|5|"die" used instead of "croak"
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|715|9|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|715|38|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|717|9|Magic punctuation variable $) used
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/integration.pl|717|12|Magic variable "$)" should be assigned as "local"
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|717|14|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|718|9|Magic punctuation variable $> used
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/integration.pl|718|12|Magic variable "$>" should be assigned as "local"
+2|ValuesAndExpressions::RequireNumberSeparators|tests/integration/integration.pl|718|14|Long number not separated with underscores
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|719|25|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|719|32|Magic punctuation variable $> used
+2|ValuesAndExpressions::RequireNumberSeparators|tests/integration/integration.pl|719|38|Long number not separated with underscores
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|720|18|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|720|32|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|721|9|Builtin function called with parentheses
+2|InputOutput::RequireCheckedClose|tests/integration/integration.pl|721|9|Return value of "close" ignored
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|721|9|Return value of flagged function ignored - close
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|721|20|Postfix control "if" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|724|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|725|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|725|59|Postfix control "if" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|725|62|Magic punctuation variable $? used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|726|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|726|36|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|726|45|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|731|5|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|733|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|733|24|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|733|51|Magic punctuation variable $! used in interpolated string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|734|9|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|735|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|735|29|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|736|13|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|737|19|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|738|13|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|738|22|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|738|28|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|739|13|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|740|19|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|741|14|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|741|40|Postfix control "unless" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|742|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|742|24|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|742|54|Magic punctuation variable $! used in interpolated string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|743|9|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|744|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|744|29|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|745|14|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|746|11|Postfix control "unless" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|747|19|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|748|14|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|748|42|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|749|14|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|749|45|Postfix control "if" used
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|755|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|756|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|756|34|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|756|40|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|756|46|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|757|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|757|34|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|757|40|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|758|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|758|34|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|758|40|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|758|46|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|759|14|Builtin function called with parentheses
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|760|15|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|761|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|761|31|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|761|45|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|762|11|Builtin function called with parentheses
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|763|15|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|764|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|764|35|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|764|49|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|769|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|772|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|773|7|Postfix control "unless" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|774|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|774|20|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|774|46|Magic punctuation variable $! used in interpolated string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|775|5|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|776|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|776|25|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|777|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|777|27|Postfix control "unless" used
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|783|5|Return value of flagged function ignored - print
+2|ControlStructures::ProhibitCStyleForLoops|tests/integration/integration.pl|784|9|C-style "for" loop used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|787|11|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|789|11|Postfix control "unless" used
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|796|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|803|59|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|804|13|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|808|20|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|808|31|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|809|9|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|815|19|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|815|45|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|820|19|Postfix control "unless" used
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|830|5|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|831|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|831|20|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|831|50|Magic punctuation variable $! used in interpolated string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|832|5|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|833|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|833|25|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|835|25|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|837|15|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|842|48|Postfix control "unless" used
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|848|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|849|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|849|32|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|854|25|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|854|33|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|855|17|Return value of flagged function ignored - print
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|859|17|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|863|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|864|7|Postfix control "if" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|865|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|865|44|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|870|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|871|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|871|32|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|872|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|872|25|Postfix control "if" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|873|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|873|25|Postfix control "if" used
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|878|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|883|18|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|884|14|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|885|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|885|17|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|885|23|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|890|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|890|40|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|893|46|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|894|14|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|894|53|Postfix control "if" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|896|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|896|13|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|896|19|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|897|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|898|18|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|903|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|904|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|904|35|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|910|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|916|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|916|46|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|916|56|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|916|62|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|919|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|919|42|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|921|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|921|45|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|926|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|926|23|Useless interpolation of literal string
+3|ErrorHandling::RequireCarping|tests/integration/integration.pl|926|44|"die" used instead of "croak"
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|926|48|Magic punctuation variable $! used in interpolated string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|927|9|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|928|9|Builtin function called with parentheses
+3|ErrorHandling::RequireCarping|tests/integration/integration.pl|928|23|"die" used instead of "croak"
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|928|27|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|930|9|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|932|22|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|933|11|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|935|19|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|935|43|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|937|19|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|937|53|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|937|59|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|940|14|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|941|11|Postfix control "if" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|944|14|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|944|28|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|945|43|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/integration.pl|946|13|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|946|32|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|948|14|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|949|11|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|950|14|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|951|11|Postfix control "unless" used
+1|InputOutput::RequireCheckedSyscalls|tests/integration/integration.pl|961|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|967|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|967|51|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|967|61|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|967|67|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|975|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|975|42|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|978|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|979|7|Postfix control "if" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|979|24|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|982|11|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|985|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|985|55|Postfix control "if" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|986|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|986|53|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|987|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|987|45|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|989|25|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|990|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|990|49|Postfix control "if" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/integration.pl|991|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|991|62|Postfix control "if" used
+1|CodeLayout::RequireTidyCode|tests/integration/parallel.pl|1|1|Code is not tidy
+2|Modules::RequireVersionVar|tests/integration/parallel.pl|1|1|No package-scoped "$VERSION" variable found
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|29|54|Useless interpolation of literal string
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/parallel.pl|30|41|32 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/parallel.pl|31|41|20 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/parallel.pl|32|41|900 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+1|InputOutput::RequireCheckedSyscalls|tests/integration/parallel.pl|35|5|Return value of flagged function ignored - print
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|39|6|Magic punctuation variable $> used
+1|InputOutput::RequireCheckedSyscalls|tests/integration/parallel.pl|40|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|44|10|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/parallel.pl|45|5|Return value of flagged function ignored - print
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|49|7|Magic punctuation variable $| used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|51|31|Useless interpolation of literal string
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/parallel.pl|52|13|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/parallel.pl|52|13|Regular expression without "/m" flag
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|55|12|Useless interpolation of literal string
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/parallel.pl|56|18|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/parallel.pl|56|18|Regular expression without "/m" flag
+1|InputOutput::RequireCheckedSyscalls|tests/integration/parallel.pl|57|5|Return value of flagged function ignored - print
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|69|14|Magic punctuation variable $$ used
+1|InputOutput::RequireCheckedSyscalls|tests/integration/parallel.pl|75|5|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|82|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|82|19|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|83|11|Magic punctuation variable $/ used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|85|5|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|92|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|93|12|Magic punctuation variable $? used
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/parallel.pl|100|48|8 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|109|15|Magic punctuation variable $$ used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|112|9|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|113|9|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|117|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|117|15|Useless interpolation of literal string
+2|ControlStructures::ProhibitCStyleForLoops|tests/integration/parallel.pl|118|13|C-style "for" loop used
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/parallel.pl|118|32|50 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/parallel.pl|120|32|0.02 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|122|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|122|15|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|123|9|Builtin function called with parentheses
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/parallel.pl|126|22|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/parallel.pl|126|22|Regular expression without "/m" flag
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/parallel.pl|132|60|130 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|137|12|Postfix control "unless" used
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/parallel.pl|137|54|5 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/parallel.pl|137|58|8 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|138|14|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|138|22|Useless interpolation of literal string
+2|ControlStructures::ProhibitCStyleForLoops|tests/integration/parallel.pl|143|9|C-style "for" loop used
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/parallel.pl|143|28|500 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|153|5|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|157|15|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|159|14|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|163|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|163|23|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|164|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|164|23|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|166|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|166|24|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|166|33|Useless interpolation of literal string
+2|ControlStructures::ProhibitCStyleForLoops|tests/integration/parallel.pl|173|9|C-style "for" loop used
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/parallel.pl|175|35|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/parallel.pl|175|35|Regular expression without "/m" flag
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|181|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|181|40|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|187|14|Postfix control "unless" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|188|13|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|190|14|Magic punctuation variable $? used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|192|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|195|15|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|203|12|Postfix control "unless" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|204|5|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|213|9|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|214|9|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|215|9|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|218|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|220|14|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|221|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|229|15|Magic punctuation variable $$ used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|231|11|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|232|14|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|236|11|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|236|22|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|237|14|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|238|9|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|241|35|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|242|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|242|33|Magic punctuation variable $! used in interpolated string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|244|10|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|245|7|Postfix control "unless" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|246|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|246|34|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|247|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|247|34|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|256|15|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|256|24|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|267|19|Magic punctuation variable $@ used
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/parallel.pl|270|17|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/parallel.pl|270|17|Regular expression without "/m" flag
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|271|14|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|271|28|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/parallel.pl|272|13|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|273|13|Builtin function called with parentheses
+2|InputOutput::RequireCheckedClose|tests/integration/parallel.pl|273|13|Return value of "close" ignored
+1|InputOutput::RequireCheckedSyscalls|tests/integration/parallel.pl|273|13|Return value of flagged function ignored - close
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|285|9|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|285|28|Postfix control "unless" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|285|35|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|288|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|288|19|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|289|14|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|291|14|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|292|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|293|14|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|297|7|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|300|9|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|301|7|Postfix control "unless" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|301|14|Builtin function called with parentheses
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|305|7|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|307|9|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|307|31|Postfix control "unless" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|307|38|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|308|9|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|308|31|Postfix control "unless" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|308|38|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|311|10|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|311|24|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/parallel.pl|312|9|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|313|9|Builtin function called with parentheses
+2|InputOutput::RequireCheckedClose|tests/integration/parallel.pl|313|9|Return value of "close" ignored
+1|InputOutput::RequireCheckedSyscalls|tests/integration/parallel.pl|313|9|Return value of flagged function ignored - close
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|321|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|321|19|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|322|14|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|324|14|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|325|5|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|326|14|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|328|10|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|328|24|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/parallel.pl|329|9|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|330|9|Builtin function called with parentheses
+2|InputOutput::RequireCheckedClose|tests/integration/parallel.pl|330|9|Return value of "close" ignored
+1|InputOutput::RequireCheckedSyscalls|tests/integration/parallel.pl|330|9|Return value of flagged function ignored - close
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|343|19|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|343|28|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|345|14|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|347|20|Useless interpolation of literal string
+1|RegularExpressions::ProhibitEnumeratedClasses|tests/integration/parallel.pl|351|23|Use named character classes ([0-9] vs. \d)
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/parallel.pl|351|23|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/parallel.pl|351|23|Regular expression without "/m" flag
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|368|9|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|369|19|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|370|9|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|374|30|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|375|22|Builtin function called with parentheses
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|376|18|Postfix control "unless" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|377|33|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|379|25|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|380|29|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|383|29|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|383|38|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|389|28|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|390|48|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|393|29|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|393|38|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/parallel.pl|406|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|407|15|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|407|34|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|407|44|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|407|50|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/parallel.pl|410|5|Return value of flagged function ignored - print
+1|InputOutput::RequireCheckedSyscalls|tests/integration/parallel.pl|418|5|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|421|19|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|423|18|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|441|23|Builtin function called with parentheses
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|444|21|Builtin function called with parentheses
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|446|33|Magic punctuation variable $? used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|450|14|Postfix control "unless" used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|454|21|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|455|13|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|455|19|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|456|13|Builtin function called with parentheses
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|456|30|Postfix control "for" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|461|28|Builtin function called with parentheses
+1|InputOutput::RequireCheckedSyscalls|tests/integration/parallel.pl|462|13|Return value of flagged function ignored - print
+1|InputOutput::RequireCheckedSyscalls|tests/integration/parallel.pl|466|5|Return value of flagged function ignored - print
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|475|16|Postfix control "if" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|480|23|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|480|32|Useless interpolation of literal string
+1|InputOutput::RequireCheckedSyscalls|tests/integration/parallel.pl|482|13|Return value of flagged function ignored - print
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|482|49|Postfix control "if" used
+1|InputOutput::RequireCheckedSyscalls|tests/integration/parallel.pl|508|5|Return value of flagged function ignored - print
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|510|19|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|510|28|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|513|11|Postfix control "unless" used
+1|InputOutput::RequireCheckedSyscalls|tests/integration/parallel.pl|520|5|Return value of flagged function ignored - print
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|523|38|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|524|38|Useless interpolation of literal string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|529|5|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|529|20|Useless interpolation of literal string
+2|ValuesAndExpressions::ProhibitNoisyQuotes|tests/integration/parallel.pl|529|20|Quotes used with a noisy string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|529|35|Useless interpolation of literal string
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|530|15|Magic punctuation variable $! used in interpolated string
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|534|5|Builtin function called with parentheses
+2|InputOutput::RequireCheckedClose|tests/integration/parallel.pl|534|5|Return value of "close" ignored
+1|InputOutput::RequireCheckedSyscalls|tests/integration/parallel.pl|534|5|Return value of flagged function ignored - close
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|535|20|Magic punctuation variable $? used
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|536|11|Useless interpolation of literal string
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|536|56|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|537|7|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|538|55|Postfix control "if" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|541|19|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|541|28|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|545|15|Postfix control "unless" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|555|28|Builtin function called with parentheses
+1|ValuesAndExpressions::ProhibitInterpolationOfLiterals|tests/integration/parallel.pl|556|14|Useless interpolation of literal string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|564|40|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|567|39|Postfix control "unless" used
+1|CodeLayout::ProhibitParensWithBuiltins|tests/integration/parallel.pl|577|19|Builtin function called with parentheses
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/parallel.pl|577|26|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/parallel.pl|577|26|Regular expression without "/m" flag
+1|RegularExpressions::ProhibitEscapedMetacharacters|tests/integration/parallel.pl|578|26|Use character classes for literal metachars instead of escapes
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/parallel.pl|578|26|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/parallel.pl|578|26|Regular expression without "/m" flag
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|579|32|Postfix control "if" used
+1|InputOutput::RequireCheckedSyscalls|tests/integration/parallel.pl|581|13|Return value of flagged function ignored - print
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/parallel.pl|586|30|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/parallel.pl|586|30|Regular expression without "/m" flag
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|594|20|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|596|24|Postfix control "if" used
+1|InputOutput::RequireCheckedSyscalls|tests/integration/parallel.pl|597|13|Return value of flagged function ignored - print
+1|InputOutput::RequireCheckedSyscalls|tests/integration/parallel.pl|601|9|Return value of flagged function ignored - print
+1|InputOutput::RequireCheckedSyscalls|tests/integration/parallel.pl|619|5|Return value of flagged function ignored - print
+1|InputOutput::RequireCheckedSyscalls|tests/integration/parallel.pl|622|1|Return value of flagged function ignored - print

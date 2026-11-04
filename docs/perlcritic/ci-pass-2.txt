@@ -1,0 +1,31 @@
+2|Modules::RequireVersionVar|scripts/ci-openbsd.pl|1|1|No package-scoped "$VERSION" variable found
+2|Variables::ProhibitPunctuationVars|scripts/ci-openbsd.pl|11|9|Magic punctuation variable $? used in interpolated string
+2|Variables::ProhibitPunctuationVars|scripts/ci-openbsd.pl|11|48|Magic punctuation variable $? used
+2|ValuesAndExpressions::ProhibitNoisyQuotes|scripts/ci-openbsd.pl|18|32|Quotes used with a noisy string
+2|Variables::ProhibitPunctuationVars|scripts/ci-openbsd.pl|19|9|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|scripts/ci-openbsd.pl|19|28|Postfix control "unless" used
+2|ValuesAndExpressions::ProhibitMagicNumbers|scripts/ci-openbsd.pl|21|53|127 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|scripts/ci-openbsd.pl|22|55|127 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|InputOutput::RequireCheckedClose|scripts/ci-openbsd.pl|25|5|Return value of "close" ignored
+2|Variables::ProhibitPunctuationVars|scripts/ci-openbsd.pl|26|18|Magic punctuation variable $? used
+2|ControlStructures::ProhibitPostfixControls|scripts/ci-openbsd.pl|31|42|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|scripts/ci-openbsd.pl|36|32|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|scripts/ci-openbsd.pl|36|39|Magic punctuation variable $> used
+2|ControlStructures::ProhibitPostfixControls|scripts/ci-openbsd.pl|40|5|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|scripts/ci-openbsd.pl|41|25|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|scripts/ci-openbsd.pl|59|38|Magic punctuation variable $^X used
+2|BuiltinFunctions::ProhibitBooleanGrep|scripts/ci-openbsd.pl|62|28|"grep" used in boolean context
+2|RegularExpressions::RequireDotMatchAnything|scripts/ci-openbsd.pl|62|35|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|scripts/ci-openbsd.pl|62|35|Regular expression without "/m" flag
+2|ValuesAndExpressions::ProhibitMagicNumbers|scripts/ci-openbsd.pl|68|36|1800 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|scripts/ci-openbsd.pl|70|9|Magic punctuation variable $^X used
+2|Variables::ProhibitPunctuationVars|scripts/ci-openbsd.pl|77|9|Magic punctuation variable $^X used
+2|ControlStructures::ProhibitPostfixControls|scripts/ci-openbsd.pl|83|40|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|scripts/ci-openbsd.pl|84|40|Postfix control "unless" used
+2|RegularExpressions::RequireDotMatchAnything|scripts/ci-openbsd.pl|90|25|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|scripts/ci-openbsd.pl|90|25|Regular expression without "/m" flag
+2|ValuesAndExpressions::ProhibitMagicNumbers|scripts/ci-openbsd.pl|95|56|127 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|scripts/ci-openbsd.pl|95|63|8 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|scripts/ci-openbsd.pl|95|80|127 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|scripts/ci-openbsd.pl|98|28|80 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|scripts/ci-openbsd.pl|115|21|Magic punctuation variable $@ used

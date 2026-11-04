@@ -27,11 +27,11 @@ my $EMUXFS = $ENV{EMUXFS} // "./emuxfs";
 # and FUSE-device requirements as the other FUSE suites.  Check before touching
 # any configured path.
 if ( $> != 0 ) {
-    print STDERR "SKIP: legacy tests require root\n";
+    print {*STDERR} "SKIP: legacy tests require root\n";
     exit 0;
 }
 if ( !-c "/dev/fuse0" ) {
-    print STDERR "SKIP: /dev/fuse0 is not available\n";
+    print {*STDERR} "SKIP: /dev/fuse0 is not available\n";
     exit 0;
 }
 
@@ -47,14 +47,14 @@ my %conf;
 # validate_config() can report the resulting missing paths.
 sub parse_conf {
     if ( !-e "test.conf" ) {
-        print STDERR "Please read test.conf.dist.\n";
+        print {*STDERR} "Please read test.conf.dist.\n";
         exit 1;
     }
 
   # Parse test.conf in Perl: 'key = value' lines, '#' comments, optional quotes.
     open( my $cfh, "<", "test.conf" ) or die "test.conf: $!\n";
     my @conf_lines = <$cfh>;
-    close($cfh);
+    close($cfh) or die "close test.conf: $!\n";
     foreach my $line (@conf_lines) {
         chomp $line;
         $line                         =~ s/\r\z//x;    # tolerate CRLF
@@ -166,14 +166,14 @@ sub slurp {
     open( my $fh, "<", $path ) or die "$path: $!\n";
     local $/ = undef;
     my $data = <$fh>;
-    close($fh);
+    close($fh) or die "close $path: $!\n";
     return $data;
 }
 
 sub spit {
     my ( $path, $data ) = @_;
     open( my $fh, ">", $path ) or die "$path: $!\n";
-    print $fh $data;
+    print {$fh} $data;
     close($fh) or die "$path: $!\n";
     return;
 }
@@ -181,7 +181,7 @@ sub spit {
 sub append_to {
     my ( $path, $data ) = @_;
     open( my $fh, ">>", $path ) or die "$path: $!\n";
-    print $fh $data;
+    print {$fh} $data;
     close($fh) or die "$path: $!\n";
     return;
 }
@@ -196,7 +196,7 @@ sub make_random_file {
         my $got =
           read( $in, my $buf, $remaining > 65_536 ? 65_536 : $remaining )
           or die "short read from /dev/urandom\n";
-        print $out $buf;
+        print {$out} $buf;
         $remaining -= $got;
     }
     close($in)  or die "/dev/urandom: $!\n";
@@ -859,7 +859,7 @@ sub run_all_tests {
     if ( !$ok ) {
         my $err = $@ // "unknown failure";
         $err =~ s/\n\z//x;
-        print STDERR "$err\n";
+        print {*STDERR} "$err\n";
         whether_mounted();
         exit 1;
     }

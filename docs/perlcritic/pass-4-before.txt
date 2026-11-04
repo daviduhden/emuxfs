@@ -1,0 +1,13 @@
+test.pl source OK
+4|Variables::RequireLocalizedPunctuationVars|tests/benchmark.pl|28|11|Magic variable "$SIG" should be assigned as "local"
+4|Variables::RequireLocalizedPunctuationVars|tests/benchmark.pl|28|24|Magic variable "$SIG" should be assigned as "local"
+4|Subroutines::RequireFinalReturn|tests/benchmark.pl|30|1|Subroutine "sample_rss" does not end with "return"
+4|Subroutines::RequireFinalReturn|tests/benchmark.pl|38|1|Subroutine "measure" does not end with "return"
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/crash.pl|223|34|Magic variable "$ENV" should be assigned as "local"
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/crash.pl|224|34|Magic variable "$ENV" should be assigned as "local"
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/integration.pl|217|28|Magic variable "$ENV" should be assigned as "local"
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/integration.pl|704|12|Magic variable "$)" should be assigned as "local"
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/integration.pl|705|12|Magic variable "$>" should be assigned as "local"
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/integration.pl|717|12|Magic variable "$)" should be assigned as "local"
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/integration.pl|718|12|Magic variable "$>" should be assigned as "local"
+tests/integration/parallel.pl source OK

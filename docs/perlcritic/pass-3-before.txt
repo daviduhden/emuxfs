@@ -1,0 +1,24 @@
+test.pl source OK
+3|Modules::ProhibitExcessMainComplexity|tests/benchmark.pl|1|1|Main code has high complexity score (25)
+3|ControlStructures::ProhibitNegativeExpressionsInUnlessAndUntilConditions|tests/benchmark.pl|13|5|Found "!" in condition for an "unless"
+3|RegularExpressions::RequireExtendedFormatting|tests/benchmark.pl|13|64|Regular expression without "/x" flag
+3|RegularExpressions::RequireExtendedFormatting|tests/benchmark.pl|14|36|Regular expression without "/x" flag
+3|RegularExpressions::RequireExtendedFormatting|tests/benchmark.pl|17|11|Regular expression without "/x" flag
+3|RegularExpressions::RequireExtendedFormatting|tests/benchmark.pl|24|32|Regular expression without "/x" flag
+3|RegularExpressions::RequireExtendedFormatting|tests/benchmark.pl|35|68|Regular expression without "/x" flag
+3|Variables::RequireInitializationForLocalVars|tests/benchmark.pl|69|9|"local" variable not initialized
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/crash.pl|223|34|Magic variable "$ENV" should be assigned as "local"
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/crash.pl|224|34|Magic variable "$ENV" should be assigned as "local"
+3|Subroutines::ProhibitExcessComplexity|tests/integration/crash.pl|422|1|Subroutine "test_fuse_callback_faults" with high complexity score (21)
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/integration.pl|217|28|Magic variable "$ENV" should be assigned as "local"
+3|Subroutines::ProhibitExcessComplexity|tests/integration/integration.pl|681|1|Subroutine "open_fallback" with high complexity score (21)
+3|ErrorHandling::RequireCarping|tests/integration/integration.pl|699|32|"die" used instead of "croak"
+3|ErrorHandling::RequireCarping|tests/integration/integration.pl|702|5|"die" used instead of "croak"
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/integration.pl|704|12|Magic variable "$)" should be assigned as "local"
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/integration.pl|705|12|Magic variable "$>" should be assigned as "local"
+3|ErrorHandling::RequireCarping|tests/integration/integration.pl|715|5|"die" used instead of "croak"
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/integration.pl|717|12|Magic variable "$)" should be assigned as "local"
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/integration.pl|718|12|Magic variable "$>" should be assigned as "local"
+3|ErrorHandling::RequireCarping|tests/integration/integration.pl|926|44|"die" used instead of "croak"
+3|ErrorHandling::RequireCarping|tests/integration/integration.pl|928|23|"die" used instead of "croak"
+tests/integration/parallel.pl source OK

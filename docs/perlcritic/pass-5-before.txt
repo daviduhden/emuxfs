@@ -1,0 +1,5 @@
+test.pl source OK
+tests/benchmark.pl source OK
+tests/integration/crash.pl source OK
+tests/integration/integration.pl source OK
+tests/integration/parallel.pl source OK

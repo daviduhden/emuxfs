@@ -1,0 +1,548 @@
+2|Modules::RequireVersionVar|test.pl|1|1|No package-scoped "$VERSION" variable found
+2|Variables::ProhibitPunctuationVars|test.pl|29|6|Magic punctuation variable $> used
+2|Variables::ProhibitPunctuationVars|test.pl|55|46|Magic punctuation variable $! used in interpolated string
+2|InputOutput::RequireCheckedClose|test.pl|57|5|Return value of "close" ignored
+2|RegularExpressions::RequireDotMatchAnything|test.pl|60|42|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|test.pl|60|42|Regular expression without "/m" flag
+2|RegularExpressions::RequireDotMatchAnything|test.pl|61|42|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|test.pl|61|42|Regular expression without "/m" flag
+2|RegularExpressions::RequireDotMatchAnything|test.pl|62|42|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|test.pl|62|42|Regular expression without "/m" flag
+2|RegularExpressions::RequireDotMatchAnything|test.pl|63|42|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|test.pl|63|42|Regular expression without "/m" flag
+2|RegularExpressions::RequireDotMatchAnything|test.pl|64|36|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|test.pl|64|36|Regular expression without "/m" flag
+2|ControlStructures::ProhibitPostfixControls|test.pl|65|14|Postfix control "unless" used
+2|RegularExpressions::RequireDotMatchAnything|test.pl|66|17|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|test.pl|66|17|Regular expression without "/m" flag
+2|ControlStructures::ProhibitPostfixControls|test.pl|88|43|Postfix control "unless" used
+2|RegularExpressions::RequireDotMatchAnything|test.pl|88|59|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|test.pl|88|59|Regular expression without "/m" flag
+2|RegularExpressions::RequireDotMatchAnything|test.pl|90|54|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|test.pl|90|54|Regular expression without "/m" flag
+2|ControlStructures::ProhibitPostfixControls|test.pl|113|7|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|test.pl|131|40|Magic punctuation variable $! used in interpolated string
+2|InputOutput::RequireCheckedClose|test.pl|133|5|Return value of "close" ignored
+2|Variables::ProhibitPunctuationVars|test.pl|134|12|Magic punctuation variable $? used
+2|ValuesAndExpressions::ProhibitMagicNumbers|test.pl|134|18|8 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|test.pl|156|40|Magic punctuation variable $! used in interpolated string
+2|InputOutput::RequireCheckedClose|test.pl|158|5|Return value of "close" ignored
+2|Variables::ProhibitPunctuationVars|test.pl|159|14|Magic punctuation variable $? used
+2|ValuesAndExpressions::ProhibitMagicNumbers|test.pl|159|20|8 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|test.pl|166|39|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|167|11|Magic punctuation variable $/ used
+2|InputOutput::RequireCheckedClose|test.pl|169|5|Return value of "close" ignored
+2|Variables::ProhibitPunctuationVars|test.pl|175|39|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|177|23|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|183|40|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|185|23|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|193|49|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|194|49|Magic punctuation variable $! used in interpolated string
+2|ValuesAndExpressions::ProhibitMagicNumbers|test.pl|197|44|65_536 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|test.pl|197|53|65_536 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|test.pl|202|24|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|203|24|Magic punctuation variable $! used in interpolated string
+2|ValuesAndExpressions::ProhibitMagicNumbers|test.pl|216|24|0.01 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ControlStructures::ProhibitPostfixControls|test.pl|237|45|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|test.pl|245|16|Postfix control "if" used
+2|Variables::ProhibitPunctuationVars|test.pl|301|31|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|308|42|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|316|42|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|317|42|Magic punctuation variable $! used in interpolated string
+2|ValuesAndExpressions::ProhibitMagicNumbers|test.pl|335|16|0700 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|test.pl|335|39|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|340|39|Magic punctuation variable $! used in interpolated string
+2|ValuesAndExpressions::ProhibitMagicNumbers|test.pl|341|16|0700 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|test.pl|341|39|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|346|42|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|358|31|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|364|42|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|371|44|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|389|42|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|test.pl|391|26|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|test.pl|396|42|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|397|42|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|403|32|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|408|42|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|409|42|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|414|31|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|415|31|Magic punctuation variable $! used in interpolated string
+2|ValuesAndExpressions::ProhibitMagicNumbers|test.pl|420|42|7168 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|test.pl|421|47|Magic punctuation variable $! used in interpolated string
+2|ValuesAndExpressions::ProhibitMagicNumbers|test.pl|429|42|7168 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|test.pl|430|47|Magic punctuation variable $! used in interpolated string
+2|ValuesAndExpressions::ProhibitMagicNumbers|test.pl|442|42|7168 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|test.pl|443|47|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|test.pl|446|27|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|test.pl|447|27|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|test.pl|453|47|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|test.pl|476|32|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|test.pl|480|42|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|test.pl|483|32|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|test.pl|487|31|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|491|55|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|test.pl|492|40|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|test.pl|493|40|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|test.pl|498|47|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|test.pl|517|33|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|test.pl|521|42|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|test.pl|525|33|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|test.pl|529|31|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|533|55|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|test.pl|535|41|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|test.pl|536|41|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|test.pl|542|35|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|test.pl|544|41|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|test.pl|549|47|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|570|50|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|575|31|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|577|40|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|584|40|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|591|31|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|610|39|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|617|39|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|623|31|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|626|39|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|633|39|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|640|39|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|647|39|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|654|39|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|667|40|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|test.pl|671|11|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|test.pl|676|40|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|test.pl|680|11|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|test.pl|699|32|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|701|57|Magic punctuation variable $! used in interpolated string
+2|RegularExpressions::RequireDotMatchAnything|test.pl|706|19|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|test.pl|706|19|Regular expression without "/m" flag
+2|ControlStructures::ProhibitPostfixControls|test.pl|708|11|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|test.pl|721|32|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|723|57|Magic punctuation variable $! used in interpolated string
+2|RegularExpressions::RequireDotMatchAnything|test.pl|728|19|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|test.pl|728|19|Regular expression without "/m" flag
+2|ControlStructures::ProhibitPostfixControls|test.pl|730|11|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|test.pl|746|32|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|test.pl|748|57|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|test.pl|804|36|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|test.pl|860|19|Magic punctuation variable $@ used
+2|RegularExpressions::RequireDotMatchAnything|test.pl|861|17|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|test.pl|861|17|Regular expression without "/m" flag
+3|Modules::ProhibitExcessMainComplexity|tests/benchmark.pl|1|1|Main code has high complexity score (25)
+2|Modules::RequireVersionVar|tests/benchmark.pl|1|1|No package-scoped "$VERSION" variable found
+3|ControlStructures::ProhibitNegativeExpressionsInUnlessAndUntilConditions|tests/benchmark.pl|13|5|Found "!" in condition for an "unless"
+2|ControlStructures::ProhibitPostfixControls|tests/benchmark.pl|13|5|Postfix control "unless" used
+2|RegularExpressions::RequireDotMatchAnything|tests/benchmark.pl|13|64|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/benchmark.pl|13|64|Regular expression without "/m" flag
+2|RegularExpressions::RequireDotMatchAnything|tests/benchmark.pl|14|36|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/benchmark.pl|14|36|Regular expression without "/m" flag
+2|ControlStructures::ProhibitPostfixControls|tests/benchmark.pl|16|50|Postfix control "unless" used
+2|RegularExpressions::RequireDotMatchAnything|tests/benchmark.pl|17|11|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/benchmark.pl|17|11|Regular expression without "/m" flag
+2|ControlStructures::ProhibitPostfixControls|tests/benchmark.pl|17|21|Postfix control "unless" used
+2|ValuesAndExpressions::ProhibitNoisyQuotes|tests/benchmark.pl|17|38|Quotes used with a noisy string
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|19|13|Magic punctuation variable $$ used
+2|ValuesAndExpressions::ProhibitNoisyQuotes|tests/benchmark.pl|20|24|Quotes used with a noisy string
+2|ValuesAndExpressions::ProhibitEmptyQuotes|tests/benchmark.pl|20|30|Quotes used with a string containing no non-whitespace characters
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|22|31|Magic punctuation variable $$ used
+2|ControlStructures::ProhibitPostfixControls|tests/benchmark.pl|24|13|Postfix control "unless" used
+2|RegularExpressions::RequireDotMatchAnything|tests/benchmark.pl|24|32|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/benchmark.pl|24|32|Regular expression without "/m" flag
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/benchmark.pl|28|49|130 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ControlStructures::ProhibitPostfixControls|tests/benchmark.pl|31|12|Postfix control "unless" used
+2|ValuesAndExpressions::ProhibitNoisyQuotes|tests/benchmark.pl|32|18|Quotes used with a noisy string
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|32|62|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/benchmark.pl|35|36|Postfix control "unless" used
+2|RegularExpressions::RequireDotMatchAnything|tests/benchmark.pl|35|68|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/benchmark.pl|35|68|Regular expression without "/m" flag
+2|ControlStructures::ProhibitPostfixControls|tests/benchmark.pl|36|19|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/benchmark.pl|50|18|Postfix control "for" used
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/benchmark.pl|58|22|4095 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/benchmark.pl|58|28|4096 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/benchmark.pl|58|34|4097 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/benchmark.pl|58|40|65536 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::RequireNumberSeparators|tests/benchmark.pl|58|40|Long number not separated with underscores
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/benchmark.pl|58|47|1048576 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::RequireNumberSeparators|tests/benchmark.pl|58|47|Long number not separated with underscores
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/benchmark.pl|60|36|10 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|62|61|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|63|36|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|64|28|Magic punctuation variable $! used in interpolated string
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/benchmark.pl|66|34|10 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|68|61|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|69|15|Magic punctuation variable $/ used
+2|ValuesAndExpressions::ProhibitEmptyQuotes|tests/benchmark.pl|70|33|Quotes used with a string containing no non-whitespace characters
+2|ControlStructures::ProhibitPostfixControls|tests/benchmark.pl|71|34|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|72|28|Magic punctuation variable $! used in interpolated string
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/benchmark.pl|76|30|64 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|78|24|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|80|30|Magic punctuation variable $! used in interpolated string
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/benchmark.pl|81|32|256 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|83|51|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|84|30|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|85|24|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|88|45|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/benchmark.pl|90|26|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/benchmark.pl|91|29|Postfix control "unless" used
+2|Modules::RequireVersionVar|tests/integration/crash.pl|1|1|No package-scoped "$VERSION" variable found
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/crash.pl|30|20|70 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|tests/integration/crash.pl|39|6|Magic punctuation variable $> used
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/crash.pl|49|13|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/crash.pl|49|13|Regular expression without "/m" flag
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/crash.pl|52|18|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/crash.pl|52|18|Regular expression without "/m" flag
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/crash.pl|74|39|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/crash.pl|74|39|Regular expression without "/m" flag
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/crash.pl|100|60|130 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|tests/integration/crash.pl|105|12|Magic punctuation variable $? used
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/crash.pl|112|48|8 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|tests/integration/crash.pl|123|14|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/crash.pl|128|14|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/crash.pl|137|11|Magic punctuation variable $/ used
+2|InputOutput::RequireCheckedClose|tests/integration/crash.pl|139|5|Return value of "close" ignored
+2|ControlStructures::ProhibitCStyleForLoops|tests/integration/crash.pl|147|9|C-style "for" loop used
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/crash.pl|147|28|500 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/crash.pl|149|45|40 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/crash.pl|151|56|3 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/crash.pl|153|28|0.02 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|165|7|Postfix control "unless" used
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/crash.pl|165|49|5 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/crash.pl|165|53|8 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|177|61|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|178|61|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|179|61|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|180|50|Postfix control "if" used
+2|Variables::ProhibitPunctuationVars|tests/integration/crash.pl|190|14|Magic punctuation variable $? used
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/crash.pl|191|19|8 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|InputOutput::RequireCheckedClose|tests/integration/crash.pl|200|5|Return value of "close" ignored
+2|Variables::ProhibitPunctuationVars|tests/integration/crash.pl|217|14|Magic punctuation variable $! used in interpolated string
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/crash.pl|223|34|Magic variable "$ENV" should be assigned as "local"
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/crash.pl|224|34|Magic variable "$ENV" should be assigned as "local"
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|224|43|Postfix control "if" used
+2|ControlStructures::ProhibitCStyleForLoops|tests/integration/crash.pl|233|9|C-style "for" loop used
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/crash.pl|235|35|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/crash.pl|235|35|Regular expression without "/m" flag
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|241|57|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|271|7|Postfix control "unless" used
+2|ControlStructures::ProhibitCStyleForLoops|tests/integration/crash.pl|308|9|C-style "for" loop used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|344|39|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|346|7|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|348|7|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|350|7|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|361|50|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|367|50|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|373|7|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|378|35|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|380|7|Postfix control "if" used
+2|Variables::ProhibitPunctuationVars|tests/integration/crash.pl|402|36|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/crash.pl|405|22|Magic punctuation variable $! used in interpolated string
+3|Subroutines::ProhibitExcessComplexity|tests/integration/crash.pl|422|1|Subroutine "test_fuse_callback_faults" with high complexity score (21)
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|429|44|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|431|15|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|433|15|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|445|15|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|447|15|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|458|44|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|460|15|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|471|44|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|473|15|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|475|15|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|490|15|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|492|15|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|494|15|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|506|44|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|508|15|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/crash.pl|510|15|Postfix control "if" used
+2|Modules::RequireVersionVar|tests/integration/integration.pl|1|1|No package-scoped "$VERSION" variable found
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|32|6|Magic punctuation variable $> used
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/integration.pl|43|13|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/integration.pl|43|13|Regular expression without "/m" flag
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/integration.pl|50|18|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/integration.pl|50|18|Regular expression without "/m" flag
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/integration.pl|78|39|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/integration.pl|78|39|Regular expression without "/m" flag
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/integration.pl|116|60|130 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|123|12|Magic punctuation variable $? used
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/integration.pl|132|27|8 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|143|14|Magic punctuation variable $! used in interpolated string
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/integration.pl|144|22|-1 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|InputOutput::RequireCheckedClose|tests/integration/integration.pl|147|5|Return value of "close" ignored
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|148|14|Magic punctuation variable $? used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|158|11|Magic punctuation variable $/ used
+2|InputOutput::RequireCheckedClose|tests/integration/integration.pl|160|5|Return value of "close" ignored
+2|ControlStructures::ProhibitCStyleForLoops|tests/integration/integration.pl|174|9|C-style "for" loop used
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/integration.pl|174|28|500 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/integration.pl|176|45|40 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/integration.pl|178|56|3 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/integration.pl|180|28|0.02 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/integration.pl|190|12|-1 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|190|15|Postfix control "unless" used
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/integration.pl|190|53|40 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|211|14|Magic punctuation variable $! used in interpolated string
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/integration.pl|215|56|127 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/integration.pl|217|28|Magic variable "$ENV" should be assigned as "local"
+2|ControlStructures::ProhibitCStyleForLoops|tests/integration/integration.pl|227|9|C-style "for" loop used
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/integration.pl|229|35|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/integration.pl|229|35|Regular expression without "/m" flag
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|255|46|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|256|46|Postfix control "unless" used
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/integration.pl|259|29|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/integration.pl|259|29|Regular expression without "/m" flag
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|323|35|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|324|35|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|325|35|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|326|35|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|328|45|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|330|25|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|331|31|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|332|31|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|333|31|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|338|46|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|339|46|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|351|18|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitCStyleForLoops|tests/integration/integration.pl|365|17|C-style "for" loop used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|377|11|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|383|45|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|384|45|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|385|35|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|388|33|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|392|46|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|394|25|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|397|7|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|399|7|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|402|33|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|406|19|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|407|37|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|414|50|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|416|29|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|421|41|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|422|40|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|423|40|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|432|49|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|434|29|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|439|43|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|440|36|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|455|44|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|456|44|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|457|44|Postfix control "if" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|470|43|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitCStyleForLoops|tests/integration/integration.pl|471|13|C-style "for" loop used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|474|29|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|485|22|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|488|52|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|489|52|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|490|52|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|495|11|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|497|11|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|499|11|Postfix control "if" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|512|43|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitCStyleForLoops|tests/integration/integration.pl|513|13|C-style "for" loop used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|516|29|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|526|22|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|531|22|Magic punctuation variable $! used in interpolated string
+2|InputOutput::RequireCheckedClose|tests/integration/integration.pl|532|17|Return value of "close" ignored
+2|InputOutput::RequireCheckedClose|tests/integration/integration.pl|537|13|Return value of "close" ignored
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|566|46|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|568|25|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|570|14|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|574|27|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|577|15|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|579|15|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|590|14|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|595|11|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|598|15|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|600|15|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|608|14|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|612|29|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|615|15|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|617|15|Postfix control "unless" used
+2|ControlStructures::ProhibitCStyleForLoops|tests/integration/integration.pl|626|9|C-style "for" loop used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|630|48|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|632|25|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|633|31|Postfix control "unless" used
+2|ValuesAndExpressions::ProhibitEscapedCharacters|tests/integration/integration.pl|639|56|Numeric escapes in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|643|18|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|647|29|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|649|30|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|656|48|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|658|25|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|660|51|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|662|25|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|663|28|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|665|7|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|671|46|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|673|25|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|676|26|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|677|39|Postfix control "unless" used
+3|Subroutines::ProhibitExcessComplexity|tests/integration/integration.pl|681|1|Subroutine "open_fallback" with high complexity score (21)
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|686|31|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|689|14|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|691|36|Postfix control "unless" used
+2|InputOutput::RequireCheckedClose|tests/integration/integration.pl|693|9|Return value of "close" ignored
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|697|7|Postfix control "if" used
+3|ErrorHandling::RequireCarping|tests/integration/integration.pl|699|32|"die" used instead of "croak"
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|699|36|Magic punctuation variable $! used in interpolated string
+3|ErrorHandling::RequireCarping|tests/integration/integration.pl|702|5|"die" used instead of "croak"
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|702|9|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|702|42|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|704|9|Magic punctuation variable $) used
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/integration.pl|704|12|Magic variable "$)" should be assigned as "local"
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|705|9|Magic punctuation variable $> used
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/integration.pl|705|12|Magic variable "$>" should be assigned as "local"
+2|ValuesAndExpressions::RequireNumberSeparators|tests/integration/integration.pl|705|14|Long number not separated with underscores
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|706|25|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|706|32|Magic punctuation variable $> used
+2|ValuesAndExpressions::RequireNumberSeparators|tests/integration/integration.pl|706|38|Long number not separated with underscores
+2|InputOutput::RequireCheckedClose|tests/integration/integration.pl|708|9|Return value of "close" ignored
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|708|20|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|712|42|Postfix control "if" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|712|45|Magic punctuation variable $? used
+3|ErrorHandling::RequireCarping|tests/integration/integration.pl|715|5|"die" used instead of "croak"
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|715|9|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|715|38|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|717|9|Magic punctuation variable $) used
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/integration.pl|717|12|Magic variable "$)" should be assigned as "local"
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|718|9|Magic punctuation variable $> used
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/integration.pl|718|12|Magic variable "$>" should be assigned as "local"
+2|ValuesAndExpressions::RequireNumberSeparators|tests/integration/integration.pl|718|14|Long number not separated with underscores
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|719|25|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|719|32|Magic punctuation variable $> used
+2|ValuesAndExpressions::RequireNumberSeparators|tests/integration/integration.pl|719|38|Long number not separated with underscores
+2|InputOutput::RequireCheckedClose|tests/integration/integration.pl|721|9|Return value of "close" ignored
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|721|20|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|725|59|Postfix control "if" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|725|62|Magic punctuation variable $? used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|733|51|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|735|29|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|741|40|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|742|54|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|744|29|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|746|11|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|748|42|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|749|45|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|760|15|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|761|31|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|763|15|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|764|35|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|773|7|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|774|46|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|776|25|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|777|27|Postfix control "unless" used
+2|ControlStructures::ProhibitCStyleForLoops|tests/integration/integration.pl|784|9|C-style "for" loop used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|787|11|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|789|11|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|820|19|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|831|50|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|833|25|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|842|48|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|864|7|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|872|25|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|873|25|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|894|53|Postfix control "if" used
+3|ErrorHandling::RequireCarping|tests/integration/integration.pl|926|44|"die" used instead of "croak"
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|926|48|Magic punctuation variable $! used in interpolated string
+3|ErrorHandling::RequireCarping|tests/integration/integration.pl|928|23|"die" used instead of "croak"
+2|Variables::ProhibitPunctuationVars|tests/integration/integration.pl|928|27|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|941|11|Postfix control "if" used
+2|InputOutput::RequireCheckedClose|tests/integration/integration.pl|946|13|Return value of "close" ignored
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|949|11|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|951|11|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|979|7|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|982|11|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|985|55|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|987|45|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|990|49|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/integration.pl|991|62|Postfix control "if" used
+2|Modules::RequireVersionVar|tests/integration/parallel.pl|1|1|No package-scoped "$VERSION" variable found
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/parallel.pl|30|41|32 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/parallel.pl|31|41|20 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/parallel.pl|32|41|900 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|39|6|Magic punctuation variable $> used
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|49|7|Magic punctuation variable $| used
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/parallel.pl|52|13|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/parallel.pl|52|13|Regular expression without "/m" flag
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/parallel.pl|56|18|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/parallel.pl|56|18|Regular expression without "/m" flag
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|69|14|Magic punctuation variable $$ used
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|83|11|Magic punctuation variable $/ used
+2|InputOutput::RequireCheckedClose|tests/integration/parallel.pl|85|5|Return value of "close" ignored
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|93|12|Magic punctuation variable $? used
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/parallel.pl|100|48|8 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|109|15|Magic punctuation variable $$ used
+2|ControlStructures::ProhibitCStyleForLoops|tests/integration/parallel.pl|118|13|C-style "for" loop used
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/parallel.pl|118|32|50 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/parallel.pl|120|32|0.02 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/parallel.pl|126|22|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/parallel.pl|126|22|Regular expression without "/m" flag
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/parallel.pl|132|60|130 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|137|12|Postfix control "unless" used
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/parallel.pl|137|54|5 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/parallel.pl|137|58|8 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|ControlStructures::ProhibitCStyleForLoops|tests/integration/parallel.pl|143|9|C-style "for" loop used
+2|ValuesAndExpressions::ProhibitMagicNumbers|tests/integration/parallel.pl|143|28|500 is not one of the allowed literal values (0, 1, 2). Use the Readonly or Const::Fast module or the "constant" pragma instead
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|159|14|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitCStyleForLoops|tests/integration/parallel.pl|173|9|C-style "for" loop used
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/parallel.pl|175|35|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/parallel.pl|175|35|Regular expression without "/m" flag
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|181|40|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|187|14|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|190|14|Magic punctuation variable $? used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|203|12|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|229|15|Magic punctuation variable $$ used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|232|14|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|237|14|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|241|33|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|242|33|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|245|7|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|246|34|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|247|34|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|267|19|Magic punctuation variable $@ used
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/parallel.pl|270|17|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/parallel.pl|270|17|Regular expression without "/m" flag
+2|InputOutput::RequireCheckedClose|tests/integration/parallel.pl|273|13|Return value of "close" ignored
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|285|9|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|285|28|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|289|14|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|291|14|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|293|14|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|297|7|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|300|9|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|301|7|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|305|7|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|307|9|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|307|31|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|308|9|Magic punctuation variable $! used in interpolated string
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|308|31|Postfix control "unless" used
+2|InputOutput::RequireCheckedClose|tests/integration/parallel.pl|313|9|Return value of "close" ignored
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|322|14|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|324|14|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|326|14|Magic punctuation variable $! used in interpolated string
+2|InputOutput::RequireCheckedClose|tests/integration/parallel.pl|330|9|Return value of "close" ignored
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|345|14|Postfix control "unless" used
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/parallel.pl|351|23|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/parallel.pl|351|23|Regular expression without "/m" flag
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|376|18|Postfix control "unless" used
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|423|18|Magic punctuation variable $! used in interpolated string
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|446|33|Magic punctuation variable $? used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|450|14|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|456|30|Postfix control "for" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|475|16|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|482|46|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|513|11|Postfix control "unless" used
+2|ValuesAndExpressions::ProhibitNoisyQuotes|tests/integration/parallel.pl|529|20|Quotes used with a noisy string
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|530|15|Magic punctuation variable $! used in interpolated string
+2|InputOutput::RequireCheckedClose|tests/integration/parallel.pl|534|5|Return value of "close" ignored
+2|Variables::ProhibitPunctuationVars|tests/integration/parallel.pl|535|20|Magic punctuation variable $? used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|537|7|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|538|55|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|545|15|Postfix control "unless" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|564|40|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|567|39|Postfix control "unless" used
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/parallel.pl|577|26|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/parallel.pl|577|26|Regular expression without "/m" flag
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/parallel.pl|578|26|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/parallel.pl|578|26|Regular expression without "/m" flag
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|579|32|Postfix control "if" used
+2|RegularExpressions::RequireDotMatchAnything|tests/integration/parallel.pl|586|30|Regular expression without "/s" flag
+2|RegularExpressions::RequireLineBoundaryMatching|tests/integration/parallel.pl|586|30|Regular expression without "/m" flag
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|594|20|Postfix control "if" used
+2|ControlStructures::ProhibitPostfixControls|tests/integration/parallel.pl|596|24|Postfix control "if" used

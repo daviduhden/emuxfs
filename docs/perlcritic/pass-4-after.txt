@@ -1,0 +1,10 @@
+test.pl source OK
+tests/benchmark.pl source OK
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/crash.pl|223|34|Magic variable "$ENV" should be assigned as "local"
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/crash.pl|224|34|Magic variable "$ENV" should be assigned as "local"
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/integration.pl|217|28|Magic variable "$ENV" should be assigned as "local"
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/integration.pl|704|12|Magic variable "$)" should be assigned as "local"
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/integration.pl|705|12|Magic variable "$>" should be assigned as "local"
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/integration.pl|717|12|Magic variable "$)" should be assigned as "local"
+4|Variables::RequireLocalizedPunctuationVars|tests/integration/integration.pl|718|12|Magic variable "$>" should be assigned as "local"
+tests/integration/parallel.pl source OK
