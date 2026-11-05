@@ -138,7 +138,7 @@ for f in test.pl scripts/ci-openbsd.pl tests/benchmark.pl tests/integration/*.pl
 python3 tests/ci-perl-check.py
 yamllint .github/workflows/ci.yml
 git diff --check
-python3 scripts/validate-agent-knowledge.py --scope worktree
+perl scripts/validate-agent-knowledge.pl --scope worktree
 ```
 
 All six syntax checks and CI mock fixtures passed. Benchmark invocation was

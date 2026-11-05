@@ -38,7 +38,7 @@ power-loss safety.
 
 ## Validation levels
 
-Shell/Perl syntax, shellcheck, checkmake, Python contract tests and the agent
+Shell/Perl syntax, shellcheck, checkmake, Perl contract tests and the agent
 knowledge validator can be checked on the development host. The C build,
 FUSE integration, path safety, stress and crash suites require OpenBSD; host
 static checks must never be reported as substitutes. No benchmark baseline
