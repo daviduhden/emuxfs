@@ -23,17 +23,6 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
-          fetch-depth: 0
-
-      - name: Run canonical agent knowledge tests
-        run: prove tests/agent_knowledge_validator/test_validator.pl
-
-      - name: Agent Knowledge Validation
-        if: github.event_name == 'pull_request'
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: perl scripts/validate-agent-knowledge.pl --scope range --base "$BASE_SHA" --head "$HEAD_SHA"
 
       - name: Build and test on OpenBSD 8.0 (amd64)
         uses: vmactions/openbsd-vm@f1ca8bc8ecc5b6ef7218e5b914836e067e1546d3  # v1.4.9

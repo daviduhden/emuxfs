@@ -15,7 +15,8 @@ Use this skill when a change affects:
 - `mount.c` lifecycle, canonical paths or mount topology;
 - `tests/integration/integration.pl`, `parallel.pl`, `crash.pl`, `test.pl`,
   `test.conf.dist` or the shell helpers;
-- `.github/workflows/ci.yml`, `Makefile` test targets or `.yamllint`;
+- `.github/workflows/ci.yml`, `.github/workflows/agent-knowledge-validation.yml`,
+  `Makefile` test targets or `.yamllint`;
 - anything that runs, mounts or deletes test data.
 
 ## Sandbox policy
@@ -235,7 +236,8 @@ is sufficient; repeat validation only after fixing an error.
 - [`TESTING.md`](../../../TESTING.md) — suite coverage, environment variables
   and CI sequence.
 - `sandbox.c`, `sandbox.h`, `mount.c`, `tests/integration/*.pl`,
-  `tests/unit/*`, `.github/workflows/ci.yml`, `Makefile`.
+  `tests/unit/*`, `.github/workflows/ci.yml`,
+  `.github/workflows/agent-knowledge-validation.yml`, `Makefile`.
 
 ## Performance baseline workflow
 

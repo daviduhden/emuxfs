@@ -117,7 +117,10 @@ installs, runs `mandoc` and linkage checks, rebuilds with
 `EMUXFS_DS_MALLOC=1` and performs a final clean rebuild.  A skipped FUSE step
 is **not** a pass. CI must fail when its required root/FUSE prerequisites are
 missing; local integration suites may still report an explicit skip.  The actual CI target is OpenBSD 8.0 amd64 and arm64; see
-`.github/workflows/ci.yml`, not a prose summary.
+`.github/workflows/ci.yml`, not a prose summary.  The agent knowledge
+contract is a separate pull-request/manual workflow at
+`.github/workflows/agent-knowledge-validation.yml`; the OpenBSD jobs do not
+run it.
 
 ## Audit improvement workflow
 
